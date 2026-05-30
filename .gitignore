@@ -16,10 +16,9 @@ dist/
 /proto/gen/
 /services/*/internal/gen/
 
-# Go workspace / vendor (optional; uncomment if vendoring)
-# vendor/
-go.work
-go.work.sum
+# Go workspace — COMMITTED for this monorepo (services join via `go work use`).
+# go.work + go.work.sum are tracked on purpose; do not ignore them.
+# vendor/   # uncomment if vendoring
 
 # Coverage
 coverage.out
