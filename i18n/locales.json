@@ -1,0 +1,8 @@
+{
+  "default": "en",
+  "supported": ["en", "fa", "ar", "tr"],
+  "dir": { "en": "ltr", "fa": "rtl", "ar": "rtl", "tr": "ltr" },
+  "label": { "en": "EN", "fa": "فا", "ar": "ع", "tr": "TR" },
+  "fonts": { "ltr": "IBM Plex Sans", "rtl": "Vazirmatn" },
+  "numerals": { "en": "latn", "tr": "latn", "fa": "arabext", "ar": "arab" }
+}

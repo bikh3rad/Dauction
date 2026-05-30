@@ -1,0 +1,212 @@
+syntax = "proto3";
+
+// Package dauction.common.v1 holds the cross-cutting value types, enums, and
+// error vocabulary shared by every Dauction service. It is part of the FROZEN
+// contract: changes land only via a dedicated PR (see proto/README.md).
+package dauction.common.v1;
+
+option go_package = "github.com/bikh3rad/Dauction/proto/gen/dauction/common/v1;commonv1";
+
+// =====================================================================
+// Money & credits — DISTINCT types. They must NEVER share a struct field.
+//   - Money is int64 USDC *cents*. No floats for money, ever.
+//   - BidCredit is int64 *whole credits* ($1 each), a separate unit.
+// Wrapping each in its own message makes accidental mixing a compile error.
+// =====================================================================
+
+// Money is an amount in USDC cents (int64). e.g. cents = 62000000 -> $620,000.00 USDC.
+// The client formats with Intl; the server NEVER pre-formats or rounds to floats.
+message Money {
+  int64 cents = 1;
+}
+
+// BidCredit is a count of whole bid credits (int64), each worth $1.00.
+// Spent one-per-bid in passive (Vickrey/UniqBid) auctions. Never stored as USDC.
+message BidCredit {
+  int64 credits = 1;
+}
+
+// =====================================================================
+// Internationalization
+// =====================================================================
+
+// I18nText is the canonical shape for owner-authored multilingual content
+// (e.g. a lot title/description). Persisted as a JSONB map and returned WHOLE;
+// the client picks the active language and falls back to `en`. The API never
+// returns a single pre-resolved string for these fields.
+//
+// JSON shape on the wire:  { "en": "...", "fa": "...", "ar": "...", "tr": "..." }
+message I18nText {
+  string en = 1; // required; the fallback language
+  string fa = 2;
+  string ar = 3;
+  string tr = 4;
+}
+
+// Locale is a user's preferred language, persisted on the account so the
+// gateway can hint the client and notifications can pick a language. API
+// payloads themselves stay language-neutral regardless of this value.
+enum Locale {
+  LOCALE_UNSPECIFIED = 0;
+  EN = 1;
+  FA = 2;
+  AR = 3;
+  TR = 4;
+}
+
+// =====================================================================
+// State machines — MONOSPACE_UPPERCASE protocol vocabulary, NEVER translated.
+// The proto enum *value name* IS the wire string (proto3 JSON maps to the name),
+// so JSON carries "OPEN", "FULL_LOCKED", etc. The zero value is *_UNSPECIFIED
+// and is never a real state. Value names are globally unique within this file
+// (proto3 C++ enum scoping), so the auction machines share one union enum.
+// =====================================================================
+
+// AuctionState is the union of the Dutch and Passive state machines (CLAUDE.md §3):
+//   Dutch:   DRAFT -> APPRAISING -> SCHEDULED -> OPEN -> HAMMER -> SETTLING -> COMPLETED
+//            (CANCELLED / ABORTED if threshold unmet)
+//   Passive: DRAFT -> APPRAISING -> SCHEDULED -> OPEN -> CLOSING -> RESOLVED -> SETTLING -> COMPLETED
+//            (ABORTED on no-unique / relist)
+// A given auction only ever traverses states valid for its mode.
+enum AuctionState {
+  AUCTION_STATE_UNSPECIFIED = 0;
+  DRAFT = 1;
+  APPRAISING = 2;
+  SCHEDULED = 3;
+  OPEN = 4;
+  HAMMER = 5;     // Dutch only
+  CLOSING = 6;    // Passive only
+  RESOLVED = 7;   // Passive only
+  SETTLING = 8;
+  COMPLETED = 9;
+  CANCELLED = 10; // pre-open abort
+  ABORTED = 11;   // threshold unmet / no unique price
+}
+
+// EscrowState is the funds ledger machine (CLAUDE.md §4). `escrow` is the sole
+// writer of escrow rows. No name collisions with AuctionState.
+enum EscrowState {
+  ESCROW_STATE_UNSPECIFIED = 0;
+  UNLOCKED = 1;
+  DEPOSIT_LOCKED = 2; // 10% reservation deposit (Dutch)
+  FULL_LOCKED = 3;    // 100% locked at open (Dutch)
+  HELD = 4;           // winner funds held (hammer/won + premium)
+  RELEASED = 5;       // released to seller
+  REFUNDED = 6;       // returned to buyer (loser unfreeze or dispute)
+  FORFEITED = 7;      // winner missed the 24h funding window
+  DISPUTED = 8;       // dispute court; manual release suspended
+}
+
+// Tier is the access tier on an account (CLAUDE.md §1).
+enum Tier {
+  TIER_UNSPECIFIED = 0;
+  GUEST = 1;  // browses gallery, cannot participate
+  MEMBER = 2; // redeemed an invite
+  VIP = 3;    // house-granted
+}
+
+// KycState is the identity-verification status.
+enum KycState {
+  KYC_STATE_UNSPECIFIED = 0;
+  PENDING = 1;
+  APPROVED = 2;
+  REJECTED = 3;
+}
+
+// AuctionMode picks the engine. The platform runs all three.
+enum AuctionMode {
+  AUCTION_MODE_UNSPECIFIED = 0;
+  DUTCH = 1;   // live descending price (active)
+  VICKREY = 2; // sealed second-price (timed, passive)
+  UNIQBID = 3; // lowest unique price (timed, passive)
+}
+
+// TimedDuration is the owner-set close window for passive auctions.
+enum TimedDuration {
+  TIMED_DURATION_UNSPECIFIED = 0;
+  DAYS_2 = 1;
+  DAYS_5 = 2;
+  DAYS_7 = 3;
+}
+
+// BuybackMode is the instant-buyback payout choice from the vault.
+enum BuybackMode {
+  BUYBACK_MODE_UNSPECIFIED = 0;
+  CASH = 1;   // 50% in USDC cash
+  CREDIT = 2; // 85% as Vault Credit
+}
+
+// DisputeRuling is the dispute court's verdict (CLAUDE.md §4).
+enum DisputeRuling {
+  DISPUTE_RULING_UNSPECIFIED = 0;
+  REFUND_BUYER = 1;
+  RELEASE_SELLER = 2;
+  SPLIT = 3;
+}
+
+// =====================================================================
+// Errors — the API returns a stable machine `code`, never localized prose.
+// The client maps each code to localized text via the i18n `err.<CODE>` keys.
+// Mapped in Go from biz sentinels via dto.HandleError (see CLAUDE.md §6).
+// =====================================================================
+
+// ErrorCode value names ARE the stable wire codes the client localizes.
+enum ErrorCode {
+  ERROR_CODE_UNSPECIFIED = 0;
+
+  // generic / sentinel-derived
+  VALIDATION_FAILED = 1;  // request DTO failed validate tags
+  RESOURCE_NOT_FOUND = 2; // biz.ErrResourceNotFound
+  RESOURCE_EXISTS = 3;    // biz.ErrResourceExists
+  RESOURCE_INVALID = 4;   // biz.ErrResourceInvalid (generic illegal op)
+  ACCESS_DENIED = 5;      // biz.ErrResourceAccessDenied
+  UNAUTHENTICATED = 6;
+  RATE_LIMITED = 7;
+  INTERNAL_ERROR = 8;
+
+  // access / identity
+  INVITE_INVALID = 20;          // invalid or expired invite code
+  INVITE_ALREADY_REDEEMED = 21;
+  INVITE_REVOKED = 22;
+  KYC_REQUIRED = 23;            // participation needs KYC=APPROVED
+  KYC_PENDING = 24;
+  KYC_REJECTED = 25;
+  TIER_TOO_LOW = 26;           // needs MEMBER/VIP
+  OTP_INVALID = 27;
+  OTP_EXPIRED = 28;
+
+  // bids economy
+  OUT_OF_CREDITS = 40;     // no bid credits to spend on a passive bid
+  PACKAGE_NOT_FOUND = 41;
+
+  // auctions
+  INVALID_TRANSITION = 60;    // illegal state transition
+  AUCTION_NOT_OPEN = 61;
+  AUCTION_CLOSED = 62;
+  BID_TOO_LOW = 63;           // below floor/reserve
+  DUPLICATE_BID = 64;         // Vickrey: one sealed bid per participant
+  RESERVATION_REQUIRED = 65;  // Dutch: reserve 10% before lock
+  DEPOSIT_NOT_LOCKED = 66;
+  FULL_LOCK_REQUIRED = 67;    // Dutch: lock 100% to enter the room
+  PRICE_CHANGED = 68;         // buy attempted at a stale descending price
+  LOT_NOT_CERTIFIED = 69;     // certification gate not passed
+  WEEKLY_CAP_REACHED = 70;    // 32-lot/week supply cap
+
+  // escrow / settlement
+  INSUFFICIENT_FUNDS = 80;
+  FUNDING_WINDOW_EXPIRED = 81; // missed the 24h funding window
+  ALREADY_FUNDED = 82;
+  ESCROW_FORFEITED = 83;
+  DISPUTE_IN_PROGRESS = 84;
+  NOT_ESCROW_PARTICIPANT = 85;
+}
+
+// ErrorResponse is the uniform error envelope returned by dto.HandleError.
+// `code` is the stable machine code; the client localizes it. `field` and
+// `details` carry optional machine-readable context (never prose to display).
+message ErrorResponse {
+  ErrorCode code = 1;
+  string field = 2;                 // optional: offending request field
+  map<string, string> details = 3;  // optional: machine-readable context
+  string trace_id = 4;              // OTel trace id for support correlation
+}

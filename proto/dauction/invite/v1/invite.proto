@@ -1,0 +1,35 @@
+syntax = "proto3";
+
+// invite — codes, redemption, invite chain, revoke/flag.
+package dauction.invite.v1;
+
+option go_package = "github.com/bikh3rad/Dauction/proto/gen/dauction/invite/v1;invitev1";
+
+// POST /apis/invites/redeem
+message RedeemInviteRequest {
+  string code = 1; // validate: required
+}
+message RedeemInviteResponse {
+  string code = 1;
+  string issued_by = 2; // chain parent; client renders "issued by …"
+}
+
+// GET /apis/admin/invites  — admin list
+message Invite {
+  string code = 1;
+  string issued_by = 2;
+  uint32 uses = 3;
+  uint32 max_uses = 4;
+  string status = 5;  // ACTIVE | REDEEMED | FLAGGED | REVOKED (MONOSPACE_UPPERCASE)
+  string chain = 6;   // machine chain repr, not localized prose
+}
+message ListInvitesRequest {
+  string status = 1; // optional filter
+}
+message ListInvitesResponse {
+  repeated Invite invites = 1;
+}
+
+// POST /apis/admin/invites/{code}/revoke
+message RevokeInviteRequest { string code = 1; }
+message RevokeInviteResponse { Invite invite = 1; }

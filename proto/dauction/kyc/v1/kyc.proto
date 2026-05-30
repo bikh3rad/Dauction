@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+// kyc — doc refs, GCC OTP, approval queue.
+package dauction.kyc.v1;
+
+import "dauction/common/v1/common.proto";
+
+option go_package = "github.com/bikh3rad/Dauction/proto/gen/dauction/kyc/v1;kycv1";
+
+// POST /apis/kyc/start — send OTP to a GCC mobile + register doc ref.
+message StartKycRequest {
+  string phone = 1;    // E.164 GCC number; validate: required
+  string doc_ref = 2;  // storage ref to Emirates-ID/passport scan (no PII inline)
+}
+message StartKycResponse {
+  string submission_id = 1;
+  dauction.common.v1.KycState state = 2; // PENDING
+}
+
+// POST /apis/kyc/verify — submit OTP.
+message VerifyKycRequest {
+  string submission_id = 1;
+  string otp = 2; // validate: required,len=6
+}
+message VerifyKycResponse {
+  dauction.common.v1.KycState state = 1; // PENDING (queued) / APPROVED
+}
+
+// GET /apis/admin/kyc — approval queue.
+message KycSubmission {
+  string id = 1;
+  string account_id = 2;
+  string doc_kind = 3;  // EMIRATES_ID | PASSPORT
+  string issued_by = 4;
+  dauction.common.v1.KycState state = 5;
+  string submitted_at = 6; // ISO-8601 UTC
+}
+message ListKycRequest { dauction.common.v1.KycState state = 1; }
+message ListKycResponse { repeated KycSubmission submissions = 1; }
+
+// POST /apis/admin/kyc/{id}/approve | /reject
+message ReviewKycRequest {
+  string id = 1;
+  bool approve = 2;
+  dauction.common.v1.ErrorCode reason = 3; // on reject; machine code, never prose
+}
+message ReviewKycResponse { KycSubmission submission = 1; }

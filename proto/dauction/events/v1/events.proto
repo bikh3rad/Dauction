@@ -1,0 +1,198 @@
+syntax = "proto3";
+
+// Package dauction.events.v1 is the FROZEN async contract: every domain event
+// published to NATS/JetStream (CLAUDE.md §2). Services integrate ONLY through
+// these events + each owner's sync API — never DB -> DB. Cross-service writes
+// use an outbox keyed by EventEnvelope.idempotency_key so a write and its event
+// commit together and consumers can dedup.
+package dauction.events.v1;
+
+import "dauction/common/v1/common.proto";
+
+option go_package = "github.com/bikh3rad/Dauction/proto/gen/dauction/events/v1;eventsv1";
+
+// =====================================================================
+// Envelope — every event on the bus is an EventEnvelope. `type` is the NATS
+// subject (e.g. "auction.won"); `payload` is the matching oneof arm. Consumers
+// MUST be idempotent on `idempotency_key`.
+// =====================================================================
+message EventEnvelope {
+  string event_id = 1;        // unique per emission (ULID/UUID)
+  string idempotency_key = 2; // dedup key; producer-stable for the same logical write
+  string producer = 3;        // emitting service, e.g. "auction-passive"
+  string occurred_at = 4;     // ISO-8601 UTC, never localized
+  string type = 5;            // subject/vocabulary, e.g. "escrow.locked"
+  uint32 version = 6;         // schema version, starts at 1
+
+  oneof payload {
+    AccountTierChanged account_tier_changed = 100; // identity
+    InviteRedeemed invite_redeemed = 101;          // invite
+    KycApproved kyc_approved = 102;                // kyc
+    KycRejected kyc_rejected = 103;                // kyc
+    ObjectListed object_listed = 104;              // vault
+    CreditChanged credit_changed = 105;            // vault
+    LotCertified lot_certified = 106;              // catalog
+    LotScheduled lot_scheduled = 107;              // catalog
+    AttestationRecorded attestation_recorded = 108;// inspector/catalog
+    AuctionOpened auction_opened = 109;            // auction-dutch
+    AuctionHammer auction_hammer = 110;            // auction-dutch
+    AuctionCompleted auction_completed = 111;      // auction-dutch
+    BidPlaced bid_placed = 112;                    // auction-passive
+    AuctionClosed auction_closed = 113;            // auction-passive
+    AuctionWon auction_won = 114;                  // auction-passive
+    BidsPurchased bids_purchased = 115;            // bids
+    BidsDebited bids_debited = 116;                // bids
+    EscrowLocked escrow_locked = 117;              // escrow
+    EscrowReleased escrow_released = 118;          // escrow
+    EscrowForfeited escrow_forfeited = 119;        // escrow
+    DisputeResolved dispute_resolved = 120;        // dispute
+  }
+}
+
+// ---- identity ----
+message AccountTierChanged {
+  string account_id = 1;
+  dauction.common.v1.Tier from = 2;
+  dauction.common.v1.Tier to = 3;
+}
+
+// ---- invite ----
+message InviteRedeemed {
+  string code = 1;
+  string redeemed_by = 2;  // account id of the new member
+  string issued_by = 3;    // account id of the inviter (chain parent)
+}
+
+// ---- kyc ----
+message KycApproved {
+  string account_id = 1;
+  string submission_id = 2;
+}
+message KycRejected {
+  string account_id = 1;
+  string submission_id = 2;
+  dauction.common.v1.ErrorCode reason = 3; // machine code, never prose
+}
+
+// ---- vault ----
+message ObjectListed {
+  string object_id = 1;
+  string owner_id = 2;
+  dauction.common.v1.AuctionMode mode = 3;
+  dauction.common.v1.TimedDuration duration = 4; // unset for DUTCH
+  dauction.common.v1.Money floor = 5;
+}
+message CreditChanged {
+  string account_id = 1;
+  dauction.common.v1.Money delta = 2;   // signed change to vault credit balance
+  dauction.common.v1.Money balance = 3; // resulting balance
+  string reason = 4;                     // machine reason code (BUYBACK/RELEASE/...)
+}
+
+// ---- catalog ----
+message LotCertified {
+  string lot_id = 1;
+  string attestation_id = 2;
+}
+message LotScheduled {
+  string lot_id = 1;
+  string auction_id = 2;
+  dauction.common.v1.AuctionMode mode = 3;
+  string opens_at = 4;            // ISO-8601 UTC
+  string closes_at = 5;           // ISO-8601 UTC; empty for DUTCH
+  uint32 week = 6;                // ISO week of the weekly 32-cap
+}
+message AttestationRecorded {
+  string attestation_id = 1;
+  string lot_id = 2;
+  string inspector = 3;
+  bool pass = 4;                  // true = PASS seal (certification gate)
+}
+
+// ---- auction-dutch ----
+message AuctionOpened {
+  string auction_id = 1;
+  string lot_id = 2;
+  dauction.common.v1.Money ceiling = 3;
+  dauction.common.v1.Money floor = 4;
+  dauction.common.v1.Money drop_step = 5;
+  uint32 drop_interval_secs = 6;
+  string opened_at = 7;           // ISO-8601 UTC; clock origin for price(now)
+}
+message AuctionHammer {
+  string auction_id = 1;
+  string lot_id = 2;
+  string winner_id = 3;
+  dauction.common.v1.Money hammer_price = 4;
+  dauction.common.v1.Money premium = 5;
+  string hammered_at = 6;         // ISO-8601 UTC
+}
+message AuctionCompleted {
+  string auction_id = 1;
+  string lot_id = 2;
+  dauction.common.v1.AuctionState final_state = 3; // COMPLETED / CANCELLED / ABORTED
+}
+
+// ---- auction-passive ----
+message BidPlaced {
+  string auction_id = 1;
+  string bidder_id = 2;
+  string bid_id = 3;
+  dauction.common.v1.Money amount = 4; // sealed until close; broadcast only post-resolution
+  string placed_at = 5;                // ISO-8601 UTC; tiebreaker key
+}
+message AuctionClosed {
+  string auction_id = 1;
+  string lot_id = 2;
+  dauction.common.v1.AuctionMode mode = 3;
+  string closed_at = 4;
+}
+message AuctionWon {
+  string auction_id = 1;
+  string lot_id = 2;
+  string winner_id = 3;
+  dauction.common.v1.Money cleared_price = 4; // Vickrey 2nd-price / UniqBid lowest-unique
+  dauction.common.v1.Money premium = 5;
+}
+
+// ---- bids ----
+message BidsPurchased {
+  string account_id = 1;
+  string package_id = 2;
+  dauction.common.v1.BidCredit credits_granted = 3;
+  dauction.common.v1.Money usdc_charged = 4;
+}
+message BidsDebited {
+  string account_id = 1;
+  dauction.common.v1.BidCredit amount = 2; // normally 1
+  string idempotency_key = 3;              // matches the bid write
+  dauction.common.v1.BidCredit balance = 4;
+}
+
+// ---- escrow ----
+message EscrowLocked {
+  string trade_id = 1;
+  string participant_id = 2;
+  dauction.common.v1.EscrowState state = 3; // DEPOSIT_LOCKED or FULL_LOCKED
+  dauction.common.v1.Money amount = 4;
+}
+message EscrowReleased {
+  string trade_id = 1;
+  string seller_id = 2;
+  dauction.common.v1.Money amount = 3;
+  bool as_vault_credit = 4; // false = 100% cash, true = 110% Vault Credit
+}
+message EscrowForfeited {
+  string trade_id = 1;
+  string participant_id = 2;
+  dauction.common.v1.Money amount = 3;
+}
+
+// ---- dispute ----
+message DisputeResolved {
+  string dispute_id = 1;
+  string trade_id = 2;
+  dauction.common.v1.DisputeRuling ruling = 3;
+  dauction.common.v1.Money buyer_amount = 4;  // for SPLIT
+  dauction.common.v1.Money seller_amount = 5; // for SPLIT
+}

@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+// catalog — lots, weekly 32-cap, certification gate, gallery reads.
+package dauction.catalog.v1;
+
+import "dauction/common/v1/common.proto";
+
+option go_package = "github.com/bikh3rad/Dauction/proto/gen/dauction/catalog/v1;catalogv1";
+
+// A gallery lot. title/description/provenance are multilingual, returned WHOLE.
+message Lot {
+  string id = 1;
+  uint32 no = 2;
+  string ref = 3;                          // house reference, e.g. "DXB·26·W23·007"
+  string maison = 4;
+  dauction.common.v1.I18nText title = 5;
+  dauction.common.v1.I18nText description = 6;
+  dauction.common.v1.I18nText provenance = 7;
+  string category = 8;                     // machine key
+  uint32 year = 9;
+  string condition = 10;                   // machine/owner string
+  dauction.common.v1.AuctionMode mode = 11;
+  dauction.common.v1.AuctionState state = 12;
+  dauction.common.v1.Money floor = 13;
+  dauction.common.v1.Money start = 14;     // Dutch ceiling / start price
+  dauction.common.v1.Money drop_step = 15; // Dutch
+  uint32 drop_interval_secs = 16;          // Dutch
+  string opens_at = 17;                    // ISO-8601 UTC
+  string closes_at = 18;                   // ISO-8601 UTC; empty for DUTCH
+  uint32 watching = 19;
+  uint32 participants = 20;
+  string inspector = 21;
+  bool certified = 22;
+  bool box = 23;
+  int32 premium_bps = 24;                  // buyer's premium in basis points (e.g. 1000 = 10%)
+}
+
+// GET /apis/gallery/weekly
+message GetWeeklyRequest {
+  string filter = 1; // optional: LIVE | UPCOMING | ALL
+}
+message GetWeeklyResponse {
+  repeated Lot lots = 1;
+  uint32 week = 2;
+  uint32 supply_cap = 3; // 32
+}
+
+// GET /apis/lots/{id}
+message GetLotRequest { string id = 1; }
+message GetLotResponse { Lot lot = 1; }
+
+// POST /apis/admin/lots/{id}/certify — house/inspector certification gate.
+message CertifyLotRequest {
+  string lot_id = 1;
+  string attestation_id = 2; // PASS attestation reference
+}
+message CertifyLotResponse { Lot lot = 1; }

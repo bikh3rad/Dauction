@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+// dispute — dispute court, rulings. A ruling drives escrow off DISPUTED.
+package dauction.dispute.v1;
+
+import "dauction/common/v1/common.proto";
+
+option go_package = "github.com/bikh3rad/Dauction/proto/gen/dauction/dispute/v1;disputev1";
+
+// POST /apis/escrow/{tradeId}/dispute — buyer opens a claim (manual release suspended).
+message OpenDisputeRequest {
+  string trade_id = 1;
+  string reason_code = 2; // machine code, never prose
+}
+message OpenDisputeResponse {
+  string dispute_id = 1;
+  dauction.common.v1.EscrowState escrow_state = 2; // DISPUTED
+}
+
+// POST /apis/escrow/{tradeId}/dispute/resolve — house ruling.
+message ResolveDisputeRequest {
+  string dispute_id = 1;
+  dauction.common.v1.DisputeRuling ruling = 2;      // validate: required
+  dauction.common.v1.Money buyer_amount = 3;        // required for SPLIT
+  dauction.common.v1.Money seller_amount = 4;       // required for SPLIT
+}
+message ResolveDisputeResponse {
+  string dispute_id = 1;
+  dauction.common.v1.DisputeRuling ruling = 2;
+  dauction.common.v1.EscrowState escrow_state = 3;  // RELEASED | REFUNDED
+}

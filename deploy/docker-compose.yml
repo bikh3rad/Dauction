@@ -1,0 +1,155 @@
+# Dauction local infra — `make up` / `make down` from the repo root.
+#
+# Brings up: one isolated Postgres PER data-owning service + NATS (JetStream)
+# + Jaeger (OTLP). Service containers themselves are added per build phase
+# (see the commented template at the bottom); each points its koanf config at
+# its OWN database, the shared NATS, and the Jaeger collector.
+#
+# DB isolation is physical here (separate Postgres instances) to enforce the
+# golden rule: no service reaches into another's database (CLAUDE.md §0, §7).
+
+name: dauction
+
+# ---- reusable Postgres template -------------------------------------------
+x-postgres: &postgres
+  image: postgres:16-alpine
+  restart: unless-stopped
+  environment: &postgres-env
+    POSTGRES_USER: dauction
+    POSTGRES_PASSWORD: dauction
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U dauction"]
+    interval: 5s
+    timeout: 3s
+    retries: 10
+
+services:
+  # ===== shared event bus =====
+  nats:
+    image: nats:2.10-alpine
+    container_name: dauction-nats
+    restart: unless-stopped
+    command: ["-c", "/etc/nats/nats.conf", "-js"]
+    volumes:
+      - ./nats/nats.conf:/etc/nats/nats.conf:ro
+      - nats-data:/data/jetstream
+    ports:
+      - "4222:4222"   # client
+      - "8222:8222"   # monitoring
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8222/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ===== tracing (OTLP) =====
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: dauction-jaeger
+    restart: unless-stopped
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686" # Jaeger UI
+      - "4317:4317"   # OTLP gRPC  (services -> here)
+      - "4318:4318"   # OTLP HTTP
+
+  # ===== one Postgres per data-owning service (CLAUDE.md §2/§7) =====
+  pg-identity:
+    <<: *postgres
+    container_name: dauction-pg-identity
+    environment: { <<: *postgres-env, POSTGRES_DB: identity }
+    ports: ["5432:5432"]
+    volumes: ["pg-identity:/var/lib/postgresql/data"]
+
+  pg-invite:
+    <<: *postgres
+    container_name: dauction-pg-invite
+    environment: { <<: *postgres-env, POSTGRES_DB: invite }
+    ports: ["5433:5432"]
+    volumes: ["pg-invite:/var/lib/postgresql/data"]
+
+  pg-kyc:
+    <<: *postgres
+    container_name: dauction-pg-kyc
+    environment: { <<: *postgres-env, POSTGRES_DB: kyc }
+    ports: ["5434:5432"]
+    volumes: ["pg-kyc:/var/lib/postgresql/data"]
+
+  pg-vault:
+    <<: *postgres
+    container_name: dauction-pg-vault
+    environment: { <<: *postgres-env, POSTGRES_DB: vault }
+    ports: ["5435:5432"]
+    volumes: ["pg-vault:/var/lib/postgresql/data"]
+
+  pg-catalog:
+    <<: *postgres
+    container_name: dauction-pg-catalog
+    environment: { <<: *postgres-env, POSTGRES_DB: catalog }
+    ports: ["5436:5432"]
+    volumes: ["pg-catalog:/var/lib/postgresql/data"]
+
+  pg-auction-dutch:
+    <<: *postgres
+    container_name: dauction-pg-auction-dutch
+    environment: { <<: *postgres-env, POSTGRES_DB: auction_dutch }
+    ports: ["5437:5432"]
+    volumes: ["pg-auction-dutch:/var/lib/postgresql/data"]
+
+  pg-auction-passive:
+    <<: *postgres
+    container_name: dauction-pg-auction-passive
+    environment: { <<: *postgres-env, POSTGRES_DB: auction_passive }
+    ports: ["5438:5432"]
+    volumes: ["pg-auction-passive:/var/lib/postgresql/data"]
+
+  pg-bids:
+    <<: *postgres
+    container_name: dauction-pg-bids
+    environment: { <<: *postgres-env, POSTGRES_DB: bids }
+    ports: ["5439:5432"]
+    volumes: ["pg-bids:/var/lib/postgresql/data"]
+
+  pg-escrow:
+    <<: *postgres
+    container_name: dauction-pg-escrow
+    environment: { <<: *postgres-env, POSTGRES_DB: escrow }
+    ports: ["5440:5432"]
+    volumes: ["pg-escrow:/var/lib/postgresql/data"]
+
+  pg-dispute:
+    <<: *postgres
+    container_name: dauction-pg-dispute
+    environment: { <<: *postgres-env, POSTGRES_DB: dispute }
+    ports: ["5441:5432"]
+    volumes: ["pg-dispute:/var/lib/postgresql/data"]
+
+  # ===== service container template (filled in per build phase) =====
+  # Copy per service. gateway + notifier own no DB. Example:
+  #
+  # identity:
+  #   build: ../services/identity
+  #   container_name: dauction-identity
+  #   restart: unless-stopped
+  #   depends_on:
+  #     pg-identity: { condition: service_healthy }
+  #     nats:        { condition: service_healthy }
+  #   environment:
+  #     APP_DATABASE_DSN: postgres://dauction:dauction@pg-identity:5432/identity?sslmode=disable
+  #     APP_NATS_URL: nats://nats:4222
+  #     APP_OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+  #   ports: ["8081:8080"]
+
+volumes:
+  nats-data:
+  pg-identity:
+  pg-invite:
+  pg-kyc:
+  pg-vault:
+  pg-catalog:
+  pg-auction-dutch:
+  pg-auction-passive:
+  pg-bids:
+  pg-escrow:
+  pg-dispute:

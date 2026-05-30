@@ -1,0 +1,96 @@
+syntax = "proto3";
+
+// auction — DTOs for both engines: auction-dutch (live descending) and
+// auction-passive (Vickrey + UniqBid, timed). Price/clock/resolution are
+// always server-authoritative; clients render from parameters and re-validate
+// every buy/bid server-side.
+package dauction.auction.v1;
+
+import "dauction/common/v1/common.proto";
+
+option go_package = "github.com/bikh3rad/Dauction/proto/gen/dauction/auction/v1;auctionv1";
+
+// =================== Dutch (live) ===================
+
+// POST /apis/auctions/{id}/reserve — lock 10% reservation deposit.
+message ReserveRequest {
+  string auction_id = 1;
+  string idempotency_key = 2;
+}
+message ReserveResponse {
+  dauction.common.v1.EscrowState escrow_state = 1; // DEPOSIT_LOCKED
+  dauction.common.v1.Money deposit = 2;
+}
+
+// POST /apis/auctions/{id}/lock — lock 100% at open to enter the room.
+message LockRequest {
+  string auction_id = 1;
+  string idempotency_key = 2;
+}
+message LockResponse {
+  dauction.common.v1.EscrowState escrow_state = 1; // FULL_LOCKED
+  dauction.common.v1.Money locked = 2;
+}
+
+// POST /apis/auctions/{id}/buy — stop the clock at the current descending price.
+// `expected_price` guards against a stale client price -> PRICE_CHANGED.
+message BuyRequest {
+  string auction_id = 1;
+  dauction.common.v1.Money expected_price = 2;
+  string idempotency_key = 3;
+}
+message BuyResponse {
+  dauction.common.v1.Money hammer_price = 1;
+  dauction.common.v1.Money premium = 2;
+  dauction.common.v1.Money total_due = 3;
+}
+
+// WS /apis/live/auctions/{id} — server-computed broadcast frame (read-only).
+message DutchTick {
+  string auction_id = 1;
+  dauction.common.v1.AuctionState state = 2;
+  dauction.common.v1.Money current_price = 3; // max(floor, ceiling - step*floor((now-open)/interval))
+  dauction.common.v1.Money floor = 4;
+  string next_drop_at = 5;                     // ISO-8601 UTC
+  uint32 participants = 6;
+  uint32 watching = 7;
+  string server_now = 8;                       // ISO-8601 UTC clock truth
+}
+
+// =================== Passive (Vickrey / UniqBid) ===================
+
+// POST /apis/auctions/{id}/bid — spends one bid credit (debited BEFORE the
+// write via the bids service; bid row + bids.debited reconciled via outbox).
+message PlaceBidRequest {
+  string auction_id = 1;
+  dauction.common.v1.Money amount = 2;  // validate: required, >= reserve floor
+  string idempotency_key = 3;           // also the bids.Debit key
+}
+message PlaceBidResponse {
+  string bid_id = 1;
+  string placed_at = 2;                 // ISO-8601 UTC; tiebreaker
+  dauction.common.v1.BidCredit credits_remaining = 3;
+}
+
+// GET /apis/auctions/{id}/standing — sealed until close.
+//   Vickrey: your single sealed bid + lead flag.
+//   UniqBid: your prices, each UNIQUE/TAKEN, plus the current lowest-unique.
+message GetStandingRequest { string auction_id = 1; }
+message UniqBidEntry {
+  string bid_id = 1;
+  dauction.common.v1.Money amount = 2;
+  string status = 3; // UNIQUE | TAKEN
+}
+message GetStandingResponse {
+  dauction.common.v1.AuctionMode mode = 1;
+  dauction.common.v1.AuctionState state = 2;
+  string closes_at = 3;                          // ISO-8601 UTC
+  bool sealed = 4;                               // true while OPEN
+  // Vickrey
+  dauction.common.v1.Money your_sealed_bid = 5;
+  bool you_lead = 6;
+  // UniqBid
+  repeated UniqBidEntry your_bids = 7;
+  dauction.common.v1.Money lowest_unique = 8;    // server-computed; revealed per policy
+  uint32 bids_placed = 9;
+}

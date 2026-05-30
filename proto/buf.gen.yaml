@@ -1,0 +1,18 @@
+version: v2
+# Each service generates stubs into its own module during its phase. Override
+# the output module path per service (managed mode below maps the canonical
+# go_package to the service's local gen path).
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/bikh3rad/Dauction/proto/gen
+plugins:
+  - remote: buf.build/protocolbuffers/go
+    out: gen
+    opt: paths=source_relative
+  # gRPC stubs are optional; most inter-service calls are REST + NATS events.
+  # Uncomment per service if it exposes/consumes gRPC:
+  # - remote: buf.build/grpc/go
+  #   out: gen
+  #   opt: paths=source_relative

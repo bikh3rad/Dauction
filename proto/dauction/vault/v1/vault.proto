@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+// vault — objects, buyback, vault-credit ledger, list-to-auction.
+package dauction.vault.v1;
+
+import "dauction/common/v1/common.proto";
+
+option go_package = "github.com/bikh3rad/Dauction/proto/gen/dauction/vault/v1;vaultv1";
+
+// A vault object. title is multilingual (I18nText), returned WHOLE.
+message VaultObject {
+  string id = 1;
+  string maison = 2;
+  dauction.common.v1.I18nText title = 3;
+  string category = 4;             // machine key: HOROLOGY|BAG|SNEAKER|...
+  uint32 year = 5;
+  dauction.common.v1.Money value = 6;
+  string state = 7;                // IN_VAULT | APPRAISING | IN_AUCTION | SOLD
+  string image_ref = 8;
+}
+
+// GET /apis/vault
+message GetVaultRequest {}
+message GetVaultResponse {
+  repeated VaultObject objects = 1;
+  dauction.common.v1.Money vault_credit = 2; // member's vault-credit balance
+}
+
+// POST /apis/vault/objects — add an object.
+message AddObjectRequest {
+  string maison = 1;
+  dauction.common.v1.I18nText title = 2; // owner-authored, all four languages
+  string category = 3;
+  uint32 year = 4;
+  dauction.common.v1.Money declared_value = 5;
+}
+message AddObjectResponse { VaultObject object = 1; }
+
+// POST /apis/vault/objects/{id}/list  { atype, durationDays? }
+message ListObjectRequest {
+  string object_id = 1;
+  dauction.common.v1.AuctionMode mode = 2;         // validate: required
+  dauction.common.v1.TimedDuration duration = 3;   // required for VICKREY/UNIQBID; unset for DUTCH
+  dauction.common.v1.Money floor = 4;              // reserve floor
+}
+message ListObjectResponse {
+  VaultObject object = 1; // state -> APPRAISING
+}
+
+// POST /apis/vault/objects/{id}/buyback  { mode: cash|credit }
+message BuybackRequest {
+  string object_id = 1;
+  dauction.common.v1.BuybackMode mode = 2; // CASH (50%) or CREDIT (85%)
+}
+message BuybackResponse {
+  dauction.common.v1.Money payout = 1;      // cash payout, if CASH
+  dauction.common.v1.Money credit_granted = 2; // vault credit, if CREDIT
+  dauction.common.v1.Money vault_credit_balance = 3;
+}

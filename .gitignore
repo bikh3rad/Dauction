@@ -1,0 +1,55 @@
+# ===== Go =====
+# Binaries & build output
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+bin/
+dist/
+/services/*/tmp/
+/services/*/bin/
+
+# Generated proto stubs (regenerate with `buf generate`)
+/proto/gen/
+/services/*/internal/gen/
+
+# Go workspace / vendor (optional; uncomment if vendoring)
+# vendor/
+go.work
+go.work.sum
+
+# Coverage
+coverage.out
+coverage.html
+
+# ===== Node / React (web/) =====
+node_modules/
+/web/dist/
+/web/build/
+.vite/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ===== Env & secrets =====
+.env
+.env.*
+!.env.example
+config.local.yaml
+*.local.yaml
+
+# ===== Editors / OS =====
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# ===== Local infra data =====
+deploy/**/data/

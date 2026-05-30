@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+// bids — bid-credit wallet, packages, purchase, debit-on-bid. bid_credit is a
+// distinct unit from USDC (CLAUDE.md §5); buying credits is a USDC charge.
+package dauction.bids.v1;
+
+import "dauction/common/v1/common.proto";
+
+option go_package = "github.com/bikh3rad/Dauction/proto/gen/dauction/bids/v1;bidsv1";
+
+// GET /apis/bids/wallet — read-through balance, never recomputed in a handler.
+message GetWalletRequest {}
+message GetWalletResponse {
+  dauction.common.v1.BidCredit balance = 1;
+}
+
+// Seed packages: {100,$80}, {50,$45}, {20,$20}. Each credit = $1.
+message BidPackage {
+  string id = 1;                          // pkg-100 | pkg-50 | pkg-20
+  dauction.common.v1.BidCredit credits = 2;
+  dauction.common.v1.Money price = 3;     // USDC cents
+  bool best_value = 4;
+}
+message ListPackagesRequest {}
+message ListPackagesResponse { repeated BidPackage packages = 1; }
+
+// POST /apis/bids/buy  { packageId }
+message BuyBidsRequest {
+  string package_id = 1; // validate: required
+  string idempotency_key = 2;
+}
+message BuyBidsResponse {
+  dauction.common.v1.BidCredit credits_granted = 1;
+  dauction.common.v1.Money usdc_charged = 2;
+  dauction.common.v1.BidCredit balance = 3;
+}
+
+// internal: bids.Debit(member, n, idempotency_key) — called by auction-passive
+// BEFORE persisting a bid. Failure -> OUT_OF_CREDITS.
+message DebitRequest {
+  string account_id = 1;
+  dauction.common.v1.BidCredit amount = 2; // normally 1
+  string idempotency_key = 3;              // idempotent; matches the bid write
+}
+message DebitResponse {
+  dauction.common.v1.BidCredit balance = 1;
+}

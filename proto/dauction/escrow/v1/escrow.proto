@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+// escrow — the funds ledger + state machine (CLAUDE.md §4). `escrow` is the
+// ONLY writer of escrow ledger rows and enforces funds conservation.
+package dauction.escrow.v1;
+
+import "dauction/common/v1/common.proto";
+
+option go_package = "github.com/bikh3rad/Dauction/proto/gen/dauction/escrow/v1;escrowv1";
+
+// An append-only ledger entry (derived per-(trade, participant) balance).
+message LedgerEntry {
+  string id = 1;
+  string trade_id = 2;
+  string participant_id = 3;
+  dauction.common.v1.EscrowState state = 4;
+  dauction.common.v1.Money amount = 5;
+  string kind = 6;        // LOCK|RELEASE|REFUND|FORFEIT|FEE|PREMIUM|INSPECTOR_FEE
+  string occurred_at = 7; // ISO-8601 UTC
+}
+
+// GET /apis/escrow/{tradeId}
+message GetEscrowRequest { string trade_id = 1; }
+message GetEscrowResponse {
+  string trade_id = 1;
+  dauction.common.v1.EscrowState state = 2;
+  dauction.common.v1.Money locked = 3;
+  dauction.common.v1.Money held = 4;
+  dauction.common.v1.Money total_due = 5;
+  string fund_deadline = 6; // ISO-8601 UTC; 24h funding window
+  repeated LedgerEntry ledger = 7;
+}
+
+// POST /apis/escrow/{tradeId}/fund — winner funds hammer + premium within 24h.
+message FundRequest {
+  string trade_id = 1;
+  dauction.common.v1.Money amount = 2;
+  string idempotency_key = 3;
+}
+message FundResponse {
+  dauction.common.v1.EscrowState state = 1; // HELD
+}
+
+// POST /apis/escrow/{tradeId}/confirm — buyer confirms delivery -> RELEASED.
+message ConfirmRequest {
+  string trade_id = 1;
+  bool as_vault_credit = 2; // false = 100% cash, true = 110% Vault Credit
+  string idempotency_key = 3;
+}
+message ConfirmResponse {
+  dauction.common.v1.EscrowState state = 1; // RELEASED
+}

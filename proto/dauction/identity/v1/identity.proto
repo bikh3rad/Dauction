@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+// identity — accounts, tiers, sessions. Owns the `account` (incl. preferred
+// locale). DTOs for the sync API in CLAUDE.md §6 ("GET /me", tier reads).
+package dauction.identity.v1;
+
+import "dauction/common/v1/common.proto";
+
+option go_package = "github.com/bikh3rad/Dauction/proto/gen/dauction/identity/v1;identityv1";
+
+// GET /apis/me
+message GetMeRequest {}
+message Account {
+  string id = 1;
+  string handle = 2;
+  dauction.common.v1.Tier tier = 3;
+  dauction.common.v1.KycState kyc = 4;
+  dauction.common.v1.Locale preferred_locale = 5; // gateway hints the client; payloads stay neutral
+  string invited_by = 6;
+  string joined_at = 7; // ISO-8601 UTC
+}
+message GetMeResponse {
+  Account account = 1;
+}
+
+// PATCH /apis/me/locale — persist the user's preferred locale.
+message SetLocaleRequest {
+  dauction.common.v1.Locale locale = 1; // validate: required, one of EN|FA|AR|TR
+}
+message SetLocaleResponse {
+  Account account = 1;
+}
+
+// internal tier read (consumed by the gateway guard)
+message GetTierRequest { string account_id = 1; }
+message GetTierResponse {
+  dauction.common.v1.Tier tier = 1;
+  dauction.common.v1.KycState kyc = 2;
+}
