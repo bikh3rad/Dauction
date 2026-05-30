@@ -34,8 +34,8 @@ services:
       - ./nats/nats.conf:/etc/nats/nats.conf:ro
       - nats-data:/data/jetstream
     ports:
-      - "4222:4222"   # client
-      - "8222:8222"   # monitoring
+      - "14222:4222"  # client (host)
+      - "18222:8222"  # monitoring (host)
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://localhost:8222/healthz"]
       interval: 5s
@@ -59,70 +59,70 @@ services:
     <<: *postgres
     container_name: dauction-pg-identity
     environment: { <<: *postgres-env, POSTGRES_DB: identity }
-    ports: ["5432:5432"]
+    ports: ["5532:5432"]
     volumes: ["pg-identity:/var/lib/postgresql/data"]
 
   pg-invite:
     <<: *postgres
     container_name: dauction-pg-invite
     environment: { <<: *postgres-env, POSTGRES_DB: invite }
-    ports: ["5433:5432"]
+    ports: ["5533:5432"]
     volumes: ["pg-invite:/var/lib/postgresql/data"]
 
   pg-kyc:
     <<: *postgres
     container_name: dauction-pg-kyc
     environment: { <<: *postgres-env, POSTGRES_DB: kyc }
-    ports: ["5434:5432"]
+    ports: ["5534:5432"]
     volumes: ["pg-kyc:/var/lib/postgresql/data"]
 
   pg-vault:
     <<: *postgres
     container_name: dauction-pg-vault
     environment: { <<: *postgres-env, POSTGRES_DB: vault }
-    ports: ["5435:5432"]
+    ports: ["5535:5432"]
     volumes: ["pg-vault:/var/lib/postgresql/data"]
 
   pg-catalog:
     <<: *postgres
     container_name: dauction-pg-catalog
     environment: { <<: *postgres-env, POSTGRES_DB: catalog }
-    ports: ["5436:5432"]
+    ports: ["5536:5432"]
     volumes: ["pg-catalog:/var/lib/postgresql/data"]
 
   pg-auction-dutch:
     <<: *postgres
     container_name: dauction-pg-auction-dutch
     environment: { <<: *postgres-env, POSTGRES_DB: auction_dutch }
-    ports: ["5437:5432"]
+    ports: ["5537:5432"]
     volumes: ["pg-auction-dutch:/var/lib/postgresql/data"]
 
   pg-auction-passive:
     <<: *postgres
     container_name: dauction-pg-auction-passive
     environment: { <<: *postgres-env, POSTGRES_DB: auction_passive }
-    ports: ["5438:5432"]
+    ports: ["5538:5432"]
     volumes: ["pg-auction-passive:/var/lib/postgresql/data"]
 
   pg-bids:
     <<: *postgres
     container_name: dauction-pg-bids
     environment: { <<: *postgres-env, POSTGRES_DB: bids }
-    ports: ["5439:5432"]
+    ports: ["5539:5432"]
     volumes: ["pg-bids:/var/lib/postgresql/data"]
 
   pg-escrow:
     <<: *postgres
     container_name: dauction-pg-escrow
     environment: { <<: *postgres-env, POSTGRES_DB: escrow }
-    ports: ["5440:5432"]
+    ports: ["5540:5432"]
     volumes: ["pg-escrow:/var/lib/postgresql/data"]
 
   pg-dispute:
     <<: *postgres
     container_name: dauction-pg-dispute
     environment: { <<: *postgres-env, POSTGRES_DB: dispute }
-    ports: ["5441:5432"]
+    ports: ["5541:5432"]
     volumes: ["pg-dispute:/var/lib/postgresql/data"]
 
   # ===== service container template (filled in per build phase) =====
