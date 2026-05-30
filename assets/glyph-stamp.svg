@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" fill="none">
+  
+  <polygon points="28,8 68,8 88,28 88,68 68,88 28,88 8,68 8,28" stroke="currentColor" stroke-width="2.5" fill="none"></polygon>
+  <polygon points="32,14 64,14 82,32 82,64 64,82 32,82 14,64 14,32" stroke="currentColor" stroke-width="1" fill="none"></polygon>
+  <text x="48" y="44" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="11" letter-spacing="2" fill="currentColor">ATTESTED</text>
+  <line x1="22" y1="50" x2="74" y2="50" stroke="currentColor" stroke-width="0.8"></line>
+  <text x="48" y="64" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="500" font-size="8" letter-spacing="1.5" fill="currentColor" opacity="0.75">INSPECTOR · 0xA1</text>
+  <text x="48" y="76" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="500" font-size="8" letter-spacing="1.5" fill="currentColor" opacity="0.75">2026·04·12</text>
+</svg>

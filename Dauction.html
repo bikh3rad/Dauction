@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dauction — invitation-only luxury Dutch auctions</title>
+<link rel="stylesheet" href="theme.css" />
+<style>
+  html,body { height:100%; }
+  #root { min-height:100vh; }
+  .stage-wrap { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; overflow:hidden; background:
+    radial-gradient(130% 90% at 50% -10%, #1a0c12, #0a0608 60%); }
+  .device-shadow { box-shadow:0 50px 120px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,162,75,0.10); border-radius:48px; }
+  /* button pulse for high-FOMO buy */
+  .buypulse { animation:buypulse 1.6s var(--ease-mech) infinite; }
+  @keyframes buypulse { 0%,100%{ box-shadow:0 0 0 0 var(--gold-glow);} 50%{ box-shadow:0 0 0 7px rgba(201,162,75,0);} }
+  /* stamp-in (the only sanctioned delight, per TRADE motion rules) */
+  .stampin { animation:stampin 480ms var(--ease-doc) both; }
+  @keyframes stampin { 0%{ transform:scale(1.25); opacity:0;} 55%{ transform:scale(0.94);} 100%{ transform:scale(1); opacity:1;} }
+  .iconbtn:hover { background:var(--bg-2) !important; }
+  /* view segmented control */
+  .vseg { display:flex; gap:2px; padding:3px; border-radius:var(--r-pill); background:var(--bg-1); border:1px solid var(--gold-line); }
+  .vseg button { font-family:var(--mono); font-size:11px; letter-spacing:0.06em; padding:7px 14px; border-radius:var(--r-pill);
+    border:none; background:transparent; color:var(--fg-muted); cursor:pointer; display:flex; align-items:center; gap:6px; white-space:nowrap; }
+  .vseg button.on { background:var(--gold); color:#1B1207; font-weight:600; }
+  .desk-frame { border:1px solid var(--gold-line); border-radius:10px; overflow:hidden; background:var(--bg-0);
+    box-shadow:0 50px 120px rgba(0,0,0,0.6); }
+  .desk-bar { height:34px; display:flex; align-items:center; gap:7px; padding:0 14px; background:var(--bg-1); border-bottom:1px solid var(--line); }
+  .desk-dot { width:11px; height:11px; border-radius:50%; }
+</style>
+<template id="__bundler_thumbnail">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+    <rect width="100" height="100" fill="#140C10"/>
+    <g fill="none" stroke="#C9A24B" stroke-width="4" stroke-linejoin="round">
+      <path d="M22 38l13 16 15-22 15 22 13-16v32H22z"/><path d="M22 74h56"/>
+    </g>
+  </svg>
+</template>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- React + Babel (pinned) -->
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<!-- plain-JS data + strings (run before Babel transpiles the JSX) -->
+<script src="i18n.js"></script>
+<script src="data.js"></script>
+
+<!-- starters + components (JSX) -->
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="ios-frame.jsx"></script>
+<script type="text/babel" src="ui.jsx"></script>
+<script type="text/babel" src="buyer.jsx"></script>
+<script type="text/babel" src="auction.jsx"></script>
+<script type="text/babel" src="passive.jsx"></script>
+<script type="text/babel" src="desktop.jsx"></script>
+<script type="text/babel" src="flow.jsx"></script>
+<script type="text/babel" src="admin.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "lang": "en",
+  "palette": "burgundy",
+  "fomo": 4,
+  "auctionLayout": "ledger",
+  "galleryLayout": "magazine"
+}/*EDITMODE-END*/;
+
+/* fit a fixed-size stage into the viewport (letterbox), controls live outside */
+function FitStage({ w, h, children, max = 1 }) {
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const fit = () => {
+      const pad = 24;
+      const s = Math.min((window.innerWidth - pad) / w, (window.innerHeight - pad) / h, max);
+      setScale(s);
+    };
+    fit(); window.addEventListener("resize", fit); return () => window.removeEventListener("resize", fit);
+  }, [w, h, max]);
+  return (
+    <div style={{ width: w * scale, height: h * scale }}>
+      <div style={{ width: w, height: h, transform: `scale(${scale})`, transformOrigin: "top left" }}>{children}</div>
+    </div>
+  );
+}
+
+/* minimal account screen */
+function AccountScreen({ app }) {
+  const { t, lang, setLang, go } = app; const M = window.DATA.MEMBER;
+  return (
+    <ScreenShell top={<TopBar app={app} kicker={M.handle} title={t("nav_account")} right={<LangPill app={app} />} />}>
+      <div style={{ padding:"18px 16px 24px" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:20 }}>
+          <div style={{ width:56, height:56, borderRadius:"50%", border:"1px solid var(--gold-line)", background:"var(--burg)",
+            display:"flex", alignItems:"center", justifyContent:"center", color:"var(--gold-pale)" }}><Icon name="user" size={26}/></div>
+          <div>
+            <div className="serif" style={{ fontSize:19, color:"var(--gold-pale)" }}>{M.name}</div>
+            <div style={{ marginTop:4 }}><Chip state={app.tier==="guest"?"neut":"active"} label={t(app.tier==="vip"?"mem_vip":app.tier==="member"?"member_tag":"guest_tag").toUpperCase()} /></div>
+          </div>
+        </div>
+        <div className="kv">
+          <div className="k">{t("esc_balance")}</div><div className="v" style={{ color:"var(--gold-pale)" }}>{window.DATA.usd(M.walletUSDC)}</div>
+          <div className="k">{t("clo_credit")}</div><div className="v" style={{ color:"var(--gold-pale)" }}>{window.DATA.usd(M.vaultCredit)}</div>
+          <div className="k">{t("bid_wallet")}</div><div className="v" style={{ color:"var(--gold-pale)" }}>{app.bidWallet} {t("credits")}</div>
+          <div className="k">{t("inv_ok").replace("—","")}</div><div className="v" style={{ fontSize:11 }}>{M.invitedBy}</div>
+          <div className="k">joined</div><div className="v">{M.joined}</div>
+        </div>
+        <button className="btn btn-ghost" style={{ width:"100%", marginTop:16 }} onClick={()=>go("bidstore")}><Icon name="coins" size={16}/> {t("buy_bids")}</button>
+        <div style={{ display:"flex", gap:8, marginTop:20 }}>
+          {window.I18N.langs.map(l => (
+            <button key={l} onClick={()=>setLang(l)} className="mono" style={{ flex:1, padding:"11px", borderRadius:"var(--r-1)",
+              border:"1px solid", borderColor: lang===l?"var(--gold)":"var(--line-strong)",
+              background: lang===l?"var(--gold)":"transparent", color: lang===l?"#1B1207":"var(--fg-muted)", cursor:"pointer", fontWeight:600 }}>
+              {window.I18N.label[l]}
+            </button>
+          ))}
+        </div>
+        <button className="btn btn-ghost" style={{ width:"100%", marginTop:14, color:"var(--st-bad)", borderColor:"var(--line)" }} onClick={()=>{ app.setTier("guest"); go("gallery"); }}>
+          Sign out
+        </button>
+      </div>
+    </ScreenShell>
+  );
+}
+
+const SCREENS = { invite:InviteScreen, kyc:KycScreen, gallery:GalleryScreen, lot:LotScreen,
+  auction:AuctionScreen, passive:PassiveAuctionScreen, bidstore:BidStoreScreen, escrow:EscrowScreen,
+  vault:VaultScreen, membership:MembershipScreen, account:AccountScreen };
+const TABS = ["gallery","vault","membership","account"];
+function BuyerRoot({ app }) {
+  const nav = app.nav;
+  const Cur = SCREENS[nav.screen] || GalleryScreen;
+  const showNav = TABS.includes(nav.screen);
+  return (
+    <div dir={app.dir} style={{ height:"100%", display:"flex", flexDirection:"column", background:"var(--bg-void)", color:"var(--fg)",
+      fontFamily: app.dir==="rtl" ? "var(--sans-rtl)" : "var(--sans)" }}>
+      <div style={{ flex:1, minHeight:0, position:"relative" }}>
+        <div key={nav.screen + (nav.params&&nav.params.lotId||"")} style={{ height:"100%" }}>
+          <Cur app={app} />
+        </div>
+      </div>
+      {showNav && <BottomNav app={app} />}
+    </div>
+  );
+}
+
+function App() {
+  const [tw, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  const lang = tw.lang || "en";
+  const dir = window.I18N.dir(lang);
+  const [view, setView] = useState(() => { const v = new URLSearchParams(location.search).get("v"); return ["desktop","admin","flow","mobile"].includes(v) ? v : (v==="buyer"?"mobile":"mobile"); });
+  const [stack, setStack] = useState(() => {
+    const s = new URLSearchParams(location.search).get("screen");
+    const ok = ["gallery","vault","membership","account","kyc","invite"];
+    return ok.includes(s) ? [{ screen:s, params:{} }] : [{ screen:"gallery", params:{} }];
+  });
+  // v2 logic: tier (everyone can browse; invite elevates) + per-lot participation
+  const [tier, setTier] = useState(() => new URLSearchParams(location.search).get("tier") || "guest"); // guest | member | vip
+  const [parts, setParts] = useState({}); // lotId -> 'requested' | 'locked_full' | 'won'
+  const setPart = useCallback((lotId, st) => setParts(p => ({ ...p, [lotId]: st })), []);
+  // bid-credit economy for passive auctions
+  const [bidWallet, setBidWallet] = useState(() => window.DATA.MEMBER.bids);
+  const [placed, setPlaced] = useState({}); // lotId -> [prices]  (UniqBid)
+  const [sealed, setSealed] = useState({}); // lotId -> amount    (Vickrey)
+  const placeBid = useCallback((lotId, price) => {
+    let ok = false;
+    setBidWallet(w => { if (w > 0) { ok = true; return w - 1; } return w; });
+    if (ok !== false) setPlaced(p => ({ ...p, [lotId]: [...(p[lotId] || []), price] }));
+    return true;
+  }, []);
+  const submitSealed = useCallback((lotId, amount) => {
+    let charged = false;
+    setSealed(prev => {
+      if (prev[lotId] == null) { setBidWallet(w => (w > 0 ? w - 1 : w)); charged = true; }
+      return { ...prev, [lotId]: amount };
+    });
+    return true;
+  }, []);
+  const buyBids = useCallback((n) => setBidWallet(w => w + n), []);
+  const nav = stack[stack.length - 1];
+
+  const go = useCallback((screen, params = {}) => {
+    if (TABS.includes(screen) || screen === "invite") setStack([{ screen, params }]);
+    else setStack(s => [...s, { screen, params }]);
+  }, []);
+  const back = useCallback(() => setStack(s => s.length > 1 ? s.slice(0, -1) : s), []);
+
+  // apply theme + dir at document level so CSS vars + RTL cascade everywhere
+  useEffect(() => {
+    document.documentElement.setAttribute("dir", dir);
+    document.documentElement.lang = lang;
+    if (tw.palette === "navy") document.documentElement.setAttribute("data-theme", "navy");
+    else document.documentElement.removeAttribute("data-theme");
+  }, [dir, lang, tw.palette]);
+
+  const app = {
+    t: (k) => window.I18N.t(lang, k),
+    lang, dir, tw, nav, go, back,
+    setLang: (l) => setTweak("lang", l),
+    setView,
+    platform: view === "desktop" ? "desktop" : "mobile",
+    tier, setTier, parts, setPart,
+    bidWallet, placed, sealed, placeBid, submitSealed, buyBids,
+  };
+
+  return (
+    <div style={{ minHeight:"100vh" }}>
+      <div className="stage-wrap">
+        {/* view switch — outside the scaled stage so it stays usable */}
+        <div style={{ position:"fixed", top:16, insetInlineStart:"50%", transform:"translateX(-50%)", zIndex:90 }} dir="ltr">
+          <div className="vseg">
+            <button className={view==="mobile"?"on":""} onClick={()=>setView("mobile")}><Icon name="package" size={14}/> {window.I18N.t(lang,"view_mobile")}</button>
+            <button className={view==="desktop"?"on":""} onClick={()=>setView("desktop")}><Icon name="image" size={14}/> {window.I18N.t(lang,"view_desktop")}</button>
+            <button className={view==="flow"?"on":""} onClick={()=>setView("flow")}><Icon name="layers" size={14}/> {window.I18N.t(lang,"view_flow")}</button>
+            <button className={view==="admin"?"on":""} onClick={()=>setView("admin")}><Icon name="grid" size={14}/> {window.I18N.t(lang,"view_admin")}</button>
+          </div>
+        </div>
+
+        {view === "mobile" ? (
+          <FitStage w={402} h={874} max={1}>
+            <div className="device-shadow" style={{ width:402, height:874 }}>
+              <IOSDevice dark width={402} height={874}>
+                <BuyerRoot app={app} />
+              </IOSDevice>
+            </div>
+          </FitStage>
+        ) : view === "desktop" ? (
+          <FitStage w={1280} h={800} max={1}>
+            <div className="desk-frame" dir={dir} style={{ width:1280, height:800, fontFamily: dir==="rtl"?"var(--sans-rtl)":"var(--sans)" }}>
+              <div className="desk-bar" dir="ltr">
+                <span className="desk-dot" style={{ background:"#A8312A" }} />
+                <span className="desk-dot" style={{ background:"#B8861F" }} />
+                <span className="desk-dot" style={{ background:"#2F7D4F" }} />
+                <span className="mono" style={{ marginInlineStart:10, fontSize:11, color:"var(--fg-faint)" }}>app.dauction.xyz</span>
+              </div>
+              <div style={{ height:766 }}><DesktopBuyer app={app} /></div>
+            </div>
+          </FitStage>
+        ) : view === "flow" ? (
+          <FitStage w={1280} h={800} max={1}>
+            <div className="desk-frame" dir={dir} style={{ width:1280, height:800, fontFamily: dir==="rtl"?"var(--sans-rtl)":"var(--sans)" }}>
+              <div className="desk-bar" dir="ltr">
+                <span className="desk-dot" style={{ background:"#A8312A" }} />
+                <span className="desk-dot" style={{ background:"#B8861F" }} />
+                <span className="desk-dot" style={{ background:"#2F7D4F" }} />
+                <span className="mono" style={{ marginInlineStart:10, fontSize:11, color:"var(--fg-faint)" }}>flow.dauction.xyz</span>
+              </div>
+              <div style={{ height:766 }}><FlowView app={app} /></div>
+            </div>
+          </FitStage>
+        ) : (
+          <FitStage w={1200} h={788} max={1}>
+            <div className="desk-frame" dir={dir} style={{ width:1200, height:788, fontFamily: dir==="rtl"?"var(--sans-rtl)":"var(--sans)" }}>
+              <div className="desk-bar" dir="ltr">
+                <span className="desk-dot" style={{ background:"#A8312A" }} />
+                <span className="desk-dot" style={{ background:"#B8861F" }} />
+                <span className="desk-dot" style={{ background:"#2F7D4F" }} />
+                <span className="mono" style={{ marginInlineStart:10, fontSize:11, color:"var(--fg-faint)" }}>ops.dauction.xyz</span>
+              </div>
+              <div style={{ height:754 }}><AdminApp app={app} /></div>
+            </div>
+          </FitStage>
+        )}
+      </div>
+
+      {/* Tweaks panel (host-wired) */}
+      <TweaksPanel>
+        <TweakSection label={window.I18N.t(lang,"switch_view")} />
+        <TweakSelect label="Language / زبان / اللغة / Dil" value={lang}
+          options={[{value:"en",label:"English (LTR)"},{value:"fa",label:"فارسی (RTL)"},{value:"ar",label:"العربية (RTL)"},{value:"tr",label:"Türkçe (LTR)"}]}
+          onChange={(v)=>setTweak("lang", v)} />
+        <TweakSection label="Palette" />
+        <TweakRadio label="Theme" value={tw.palette} options={[{value:"burgundy",label:"Burgundy + Gold"},{value:"navy",label:"Midnight + Copper"}]}
+          onChange={(v)=>setTweak("palette", v)} />
+        <TweakSection label="Live auction" />
+        <TweakSlider label="FOMO intensity" value={tw.fomo} min={0} max={10} step={1} onChange={(v)=>setTweak("fomo", v)} />
+        <TweakRadio label="Layout" value={tw.auctionLayout} options={["stage","ledger","split"]} onChange={(v)=>setTweak("auctionLayout", v)} />
+        <TweakSection label="Gallery & Vault" />
+        <TweakRadio label="Cards" value={tw.galleryLayout} options={[{value:"grid",label:"Grid"},{value:"magazine",label:"Magazine"}]}
+          onChange={(v)=>setTweak("galleryLayout", v)} />
+      </TweaksPanel>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

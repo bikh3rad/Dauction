@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 96" fill="none">
+  <g stroke="currentColor" stroke-width="2" stroke-linecap="square">
+    <rect x="6" y="22" width="148" height="58"></rect>
+    <line x1="20" y1="22" x2="20" y2="80"></line>
+    <line x1="34" y1="22" x2="34" y2="80"></line>
+    <line x1="48" y1="22" x2="48" y2="80"></line>
+    <line x1="62" y1="22" x2="62" y2="80"></line>
+    <line x1="98" y1="22" x2="98" y2="80"></line>
+    <line x1="112" y1="22" x2="112" y2="80"></line>
+    <line x1="126" y1="22" x2="126" y2="80"></line>
+    <line x1="140" y1="22" x2="140" y2="80"></line>
+    
+    <rect x="6" y="16" width="8" height="8" fill="currentColor"></rect>
+    <rect x="146" y="16" width="8" height="8" fill="currentColor"></rect>
+    <rect x="6" y="78" width="8" height="8" fill="currentColor"></rect>
+    <rect x="146" y="78" width="8" height="8" fill="currentColor"></rect>
+    
+    <line x1="20" y1="86" x2="44" y2="86" stroke-width="3"></line>
+    <line x1="116" y1="86" x2="140" y2="86" stroke-width="3"></line>
+  </g>
+  
+  <text x="74" y="46" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="9" letter-spacing="1" fill="currentColor">TRDU</text>
+  <text x="74" y="58" font-family="IBM Plex Mono, monospace" font-weight="500" font-size="7" letter-spacing="1" fill="currentColor" opacity="0.7">204881·6</text>
+  <text x="74" y="70" font-family="IBM Plex Mono, monospace" font-weight="500" font-size="7" letter-spacing="1" fill="currentColor" opacity="0.6">22G1 · MAX 30,480 KG</text>
+</svg>
