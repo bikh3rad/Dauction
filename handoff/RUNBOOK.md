@@ -96,6 +96,23 @@ cd $ROOT && git worktree remove $WT/dauction-<svc>
 ```
 CI must run: root i18n key-parity (`make check`), the service `make check`, `go test ./...`.
 
+**`go.work` is shared — never touch it in a service PR.** A service PR stages ONLY
+`services/<svc>/` (the `git add services/<svc>` above does exactly that). After the service
+merges, register its module in the workspace via a tiny **serialized** PR off fresh `main`:
+```sh
+cd $ROOT && git fetch origin && git checkout main && git pull
+git worktree add $WT/dauction-gowork -b chore/gowork-<svc> main
+cd $WT/dauction-gowork
+go work use ./services/<svc>                    # appends the module to go.work
+go work sync && make check                      # gate stays green
+git add go.work go.work.sum && git commit -m "chore(go.work): use services/<svc>"
+git push -u origin chore/gowork-<svc> && gh pr create --fill --base main
+gh pr merge --squash --delete-branch
+cd $ROOT && git worktree remove $WT/dauction-gowork
+# then any active agent: git fetch origin && git rebase origin/main
+```
+Batch a whole wave's `go work use` lines into one such PR if the services merged together.
+
 ────────────────────────────────────────────────────────
 ## LEVEL 4 — advance waves (repeat 1→3 per wave, in order)
 ────────────────────────────────────────────────────────

@@ -1,7 +1,8 @@
 go 1.22.2
 
-// Root Go workspace. Empty until services land — each service agent adds its
-// module here on merge (LEVEL 3):  go work use ./services/<svc>
+// Root Go workspace. Empty until services land. `go.work` is SHARED — never edit
+// it in a service PR. After a service merges, register it via a tiny serialized
+// PR (RUNBOOK LEVEL 3):  go work use ./services/<svc>
 // Every service keeps Go module name `application` (the go-template default);
 // the workspace lets `go vet`/`go test`/`go build` span them locally.
 //
