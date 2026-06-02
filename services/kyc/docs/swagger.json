@@ -1,0 +1,541 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API documentation",
+        "title": "Swagger",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://aban.io/support",
+            "email": "info@aban.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "paths": {
+        "/apis/admin/kyc": {
+            "get": {
+                "description": "List submissions awaiting an admin decision (SUBMITTED).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "KYC Admin"
+                ],
+                "summary": "Admin KYC queue",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SubmissionListResp"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/apis/admin/kyc/{id}/approve": {
+            "post": {
+                "description": "Approve a submitted KYC; emits kyc.approved.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "KYC Admin"
+                ],
+                "summary": "Approve KYC",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Admin account UUID (set by gateway)",
+                        "name": "X-Account-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Submission UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SubmissionResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/apis/admin/kyc/{id}/reject": {
+            "post": {
+                "description": "Reject a submitted KYC with a machine reason code; emits kyc.rejected.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "KYC Admin"
+                ],
+                "summary": "Reject KYC",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Admin account UUID (set by gateway)",
+                        "name": "X-Account-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Submission UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Rejection reason",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.RejectKycReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SubmissionResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/apis/kyc/start": {
+            "post": {
+                "description": "Begin KYC: register a document reference and phone, issuing an OTP challenge.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "KYC"
+                ],
+                "summary": "Start KYC",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authenticated account UUID (set by gateway)",
+                        "name": "X-Account-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Start KYC request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.StartKycReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StartKycResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/apis/kyc/status": {
+            "get": {
+                "description": "Return the caller's current KYC submission/state.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "KYC"
+                ],
+                "summary": "KYC status",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authenticated account UUID (set by gateway)",
+                        "name": "X-Account-Id",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SubmissionResp"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/apis/kyc/verify": {
+            "post": {
+                "description": "Verify the OTP code; on success the submission enters the admin queue (SUBMITTED).",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "KYC"
+                ],
+                "summary": "Verify KYC OTP",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authenticated account UUID (set by gateway)",
+                        "name": "X-Account-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Verify OTP request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.VerifyKycReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.SubmissionResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/healthz/liveness": {
+            "get": {
+                "description": "Check the liveness of the service",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "healthz"
+                ],
+                "summary": "Healthz Liveness",
+                "operationId": "healthz-liveness",
+                "responses": {
+                    "200": {
+                        "description": "ok"
+                    }
+                }
+            }
+        },
+        "/healthz/panic": {
+            "get": {
+                "tags": [
+                    "healthz"
+                ],
+                "summary": "Panic for test",
+                "responses": {
+                    "500": {
+                        "description": "panic",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/healthz/rediness": {
+            "get": {
+                "description": "Check the readiness of the service",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "healthz"
+                ],
+                "summary": "Healthz Readiness",
+                "operationId": "healthz-rediness",
+                "responses": {
+                    "200": {
+                        "description": "ok"
+                    }
+                }
+            }
+        },
+        "/healthz/sleep/{time}": {
+            "get": {
+                "tags": [
+                    "healthz"
+                ],
+                "summary": "Long Run for test",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Time to sleep, e.g. 30s",
+                        "name": "time",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok"
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.RejectKycReq": {
+            "type": "object",
+            "required": [
+                "reason"
+            ],
+            "properties": {
+                "reason": {
+                    "type": "string",
+                    "maxLength": 64
+                }
+            }
+        },
+        "dto.StartKycReq": {
+            "type": "object",
+            "required": [
+                "docRef",
+                "docType",
+                "phone"
+            ],
+            "properties": {
+                "docRef": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
+                },
+                "docType": {
+                    "type": "string",
+                    "enum": [
+                        "EMIRATES_ID",
+                        "PASSPORT"
+                    ]
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.StartKycResp": {
+            "type": "object",
+            "properties": {
+                "challengeId": {
+                    "type": "string"
+                },
+                "devCode": {
+                    "type": "string"
+                },
+                "expiresAt": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                },
+                "submissionId": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.SubmissionListResp": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "submissions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.SubmissionResp"
+                    }
+                }
+            }
+        },
+        "dto.SubmissionResp": {
+            "type": "object",
+            "properties": {
+                "accountId": {
+                    "type": "string"
+                },
+                "decidedAt": {
+                    "type": "string"
+                },
+                "docRef": {
+                    "type": "string"
+                },
+                "docType": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "rejectionReason": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                },
+                "submittedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.VerifyKycReq": {
+            "type": "object",
+            "required": [
+                "code"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BasicAuth": {
+            "type": "basic"
+        }
+    },
+    "externalDocs": {
+        "description": "OpenAPI",
+        "url": "https://swagger.io/resources/open-api/"
+    }
+}

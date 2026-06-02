@@ -1,0 +1,50 @@
+name: "identity"
+version: "v1.0.0"
+description: "Dauction identity service — accounts, access tiers, eligibility"
+environment: "development"
+
+app:
+  title: "Dauction Identity"
+  description: "Accounts, access tiers (GUEST/MEMBER/VIP), participation eligibility"
+  version: "v1.0.0"
+  environment: "development"
+
+logger:
+  slog:
+    level: "debug"
+    encoding: "json" # text or json
+
+server:
+  http:
+    addr: ":8080"
+
+# OTLP exporter (traces/metrics/logs). Points at the Jaeger all-in-one collector
+# in deploy/docker-compose.yml. Override endpoint with APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT.
+collector:
+  exporters:
+    otlp:
+      endpoint: "jaeger:4317"
+      insecure: true
+  traces:
+    enabled: true
+  metrics:
+    enabled: true
+  logs:
+    enabled: true
+
+service:
+  scheduler:
+    enabled: false
+    interval: "3s"
+
+datasource:
+  # Owned Postgres (db `identity`). One DB per service — never reach into another's.
+  # Override with APP_DATASOURCE_POSTGRES_DSN.
+  postgres:
+    dsn: "postgres://dauction:dauction@pg-identity:5432/identity?sslmode=disable"
+  # Shared NATS/JetStream event bus. Override with APP_DATASOURCE_NATS_DSN.
+  nats:
+    dsn: "nats://nats:4222"
+    streamName: "DAUCTION"
+    subjects: "account.tier_changed,invite.redeemed,kyc.approved"
+    durable: "identity"

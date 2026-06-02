@@ -1,0 +1,53 @@
+name: "kyc"
+version: "v1.0.0"
+description: "Dauction KYC service"
+environment: "development"
+
+app:
+  title: "Dauction KYC"
+  description: "Identity verification: document refs + GCC phone OTP + admin approval queue"
+  version: "v1.0.0"
+  environment: "development"
+
+logger:
+  slog:
+    level: "debug"
+    encoding: "text" # text or json
+
+server:
+  http:
+    addr: ":8080"
+
+# OTLP collector (traces/metrics/logs). Points at Jaeger in docker-compose.
+collector:
+  exporters:
+    otlp:
+      endpoint: "jaeger:4317"
+      insecure: true
+  traces:
+    enabled: true
+  metrics:
+    enabled: true
+  logs:
+    enabled: true
+
+service:
+  scheduler:
+    enabled: false
+    interval: "3s"
+
+# KYC tuning. Overridable via APP_KYC_* env (e.g. APP_KYC_OTPTTLSECONDS).
+kyc:
+  otpTtlSeconds: 300   # OTP lifetime (default 5 min)
+  maxAttempts: 5       # max OTP verification attempts per challenge
+  production: false    # when true, the dev OTP code is never logged or returned
+
+datasource:
+  postgres:
+    # Overridable via APP_DATASOURCE_POSTGRES_DSN.
+    dsn: "postgresql://dauction:dauction@pg-kyc:5432/kyc?sslmode=disable"
+  nats:
+    dsn: "nats://nats:4222"
+    initJetstream: true
+    streamName: "DAUCTION"
+    subject: "kyc.>"

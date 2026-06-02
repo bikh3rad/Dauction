@@ -22,12 +22,13 @@ Paste:
 > move `handoff/CLAUDE.md` to root `CLAUDE.md`, author and FREEZE `proto/` (events §2 + DTOs §6) and
 > `i18n/` (`keys.md`, `en/fa/ar/tr.json` with identical keys, `locales.json`, error-code→message table,
 > key-parity check wired into `make check`), write `deploy/docker-compose.yml` (pg-per-service + NATS
-> JetStream + Jaeger) and a root `go.work` + `Makefile`. Then STOP.
+> JetStream + Jaeger) and a root `Makefile`. Then STOP. (No root `go.work` — services share the
+> module name `application`, which a single Go workspace cannot hold twice.)
 
 Verify + push:
 ```sh
 cd $ROOT
-go work sync && make check            # i18n key-parity must pass
+make check                            # i18n key-parity must pass
 docker compose -f deploy/docker-compose.yml config -q   # compose is valid
 git add . && git commit -m "chore: scaffold monorepo, proto + i18n contracts, infra"
 git remote add origin https://github.com/bikh3rad/Dauction.git
@@ -96,22 +97,12 @@ cd $ROOT && git worktree remove $WT/dauction-<svc>
 ```
 CI must run: root i18n key-parity (`make check`), the service `make check`, `go test ./...`.
 
-**`go.work` is shared — never touch it in a service PR.** A service PR stages ONLY
-`services/<svc>/` (the `git add services/<svc>` above does exactly that). After the service
-merges, register its module in the workspace via a tiny **serialized** PR off fresh `main`:
-```sh
-cd $ROOT && git fetch origin && git checkout main && git pull
-git worktree add $WT/dauction-gowork -b chore/gowork-<svc> main
-cd $WT/dauction-gowork
-go work use ./services/<svc>                    # appends the module to go.work
-go work sync && make check                      # gate stays green
-git add go.work go.work.sum && git commit -m "chore(go.work): use services/<svc>"
-git push -u origin chore/gowork-<svc> && gh pr create --fill --base main
-gh pr merge --squash --delete-branch
-cd $ROOT && git worktree remove $WT/dauction-gowork
-# then any active agent: git fetch origin && git rebase origin/main
-```
-Batch a whole wave's `go work use` lines into one such PR if the services merged together.
+**There is intentionally NO root `go.work`.** Every service keeps the template's module name
+`application`, and a Go workspace cannot contain two modules with the same module path — so a
+shared workspace is impossible by construction. Each service builds/tests standalone from its own
+folder (`cd services/<svc> && go build ./... && go test ./...`); the root `make check` / `make test`
+loop over `services/*/` and do exactly that. A service PR stages ONLY `services/<svc>/`
+(the `git add services/<svc>` above does exactly that) — nothing else to register after merge.
 
 ────────────────────────────────────────────────────────
 ## LEVEL 4 — advance waves (repeat 1→3 per wave, in order)

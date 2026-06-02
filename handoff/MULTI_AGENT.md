@@ -31,8 +31,9 @@ git worktree add ../dauction-auction-dutch -b feat/auction-dutch main
 Each `../dauction-<service>/` is a full, independent checkout on its own branch. An agent working there
 can build, run `make generate`, and commit without touching anyone else's files.
 
-> Monorepo Go tip: add a root `go.work` (`go work init ./services/*`) so each service stays its own
-> module but they resolve locally. Treat `go.work`, `proto/`, `i18n/`, and `deploy/` as **shared,
+> Monorepo Go note: there is **no root `go.work`** — every service keeps the template's module
+> name `application`, and a Go workspace cannot hold two modules with the same path. Each service
+> builds/tests standalone in its own folder. Treat `proto/`, `i18n/`, and `deploy/` as **shared,
 > change-controlled** files (see §4).
 
 ---

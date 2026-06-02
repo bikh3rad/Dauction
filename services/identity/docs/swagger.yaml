@@ -1,0 +1,198 @@
+definitions:
+  dto.AccessResp:
+    properties:
+      eligible:
+        type: boolean
+      id:
+        type: string
+      kycStatus:
+        type: string
+      tier:
+        type: string
+    type: object
+  dto.AccountResp:
+    properties:
+      createdAt:
+        description: ISO-8601 UTC
+        type: string
+      eligible:
+        type: boolean
+      id:
+        type: string
+      kycStatus:
+        description: PENDING | APPROVED | REJECTED
+        type: string
+      tier:
+        description: GUEST | MEMBER | VIP
+        type: string
+      updatedAt:
+        description: ISO-8601 UTC
+        type: string
+    type: object
+  dto.ErrorResponse:
+    properties:
+      details:
+        type: string
+      message:
+        type: string
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+info:
+  contact:
+    email: info@aban.io
+    name: API Support
+    url: http://aban.io/support
+  description: API documentation
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger
+  version: "1.0"
+paths:
+  /apis/admin/accounts/{id}/vip:
+    post:
+      description: House/admin action that elevates an account to VIP. Tier only rises;
+        a no-op or downgrade returns RESOURCE_INVALID. Emits account.tier_changed.
+      parameters:
+      - description: Account UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AccountResp'
+        "400":
+          description: Invalid transition / bad UUID
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Grant VIP
+      tags:
+      - identity-admin
+  /apis/internal/accounts/{id}/access:
+    get:
+      description: Minimal tier + KYC + eligibility read model for the gateway's authorization
+        guard. Not exposed to end users.
+      parameters:
+      - description: Account UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AccessResp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Internal access read
+      tags:
+      - identity-internal
+  /apis/me:
+    get:
+      description: Returns the authenticated account's tier, KYC status and participation
+        eligibility. The gateway injects the subject via the X-Account-Id header.
+      parameters:
+      - description: Authenticated account UUID (gateway-injected)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AccountResp'
+        "401":
+          description: Unauthenticated
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Current account
+      tags:
+      - identity
+  /healthz/liveness:
+    get:
+      consumes:
+      - application/json
+      description: Check the liveness of the service
+      operationId: healthz-liveness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+      summary: Healthz Liveness
+      tags:
+      - healthz
+  /healthz/panic:
+    get:
+      responses:
+        "500":
+          description: panic
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Panic for test
+      tags:
+      - healthz
+  /healthz/rediness:
+    get:
+      consumes:
+      - application/json
+      description: Check the readiness of the service
+      operationId: healthz-rediness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+      summary: Healthz Readiness
+      tags:
+      - healthz
+  /healthz/sleep/{time}:
+    get:
+      parameters:
+      - description: Time to sleep, e.g. 30s
+        in: path
+        name: time
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ok
+      summary: Long Run for test
+      tags:
+      - healthz
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

@@ -1,0 +1,360 @@
+definitions:
+  dto.ErrorResponse:
+    properties:
+      details:
+        type: string
+      message:
+        type: string
+    type: object
+  dto.RejectKycReq:
+    properties:
+      reason:
+        maxLength: 64
+        type: string
+    required:
+    - reason
+    type: object
+  dto.StartKycReq:
+    properties:
+      docRef:
+        maxLength: 255
+        minLength: 1
+        type: string
+      docType:
+        enum:
+        - EMIRATES_ID
+        - PASSPORT
+        type: string
+      phone:
+        type: string
+    required:
+    - docRef
+    - docType
+    - phone
+    type: object
+  dto.StartKycResp:
+    properties:
+      challengeId:
+        type: string
+      devCode:
+        type: string
+      expiresAt:
+        type: string
+      state:
+        type: string
+      submissionId:
+        type: string
+    type: object
+  dto.SubmissionListResp:
+    properties:
+      count:
+        type: integer
+      submissions:
+        items:
+          $ref: '#/definitions/dto.SubmissionResp'
+        type: array
+    type: object
+  dto.SubmissionResp:
+    properties:
+      accountId:
+        type: string
+      decidedAt:
+        type: string
+      docRef:
+        type: string
+      docType:
+        type: string
+      id:
+        type: string
+      phone:
+        type: string
+      rejectionReason:
+        type: string
+      state:
+        type: string
+      submittedAt:
+        type: string
+    type: object
+  dto.VerifyKycReq:
+    properties:
+      code:
+        type: string
+    required:
+    - code
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+info:
+  contact:
+    email: info@aban.io
+    name: API Support
+    url: http://aban.io/support
+  description: API documentation
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger
+  version: "1.0"
+paths:
+  /apis/admin/kyc:
+    get:
+      description: List submissions awaiting an admin decision (SUBMITTED).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SubmissionListResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Admin KYC queue
+      tags:
+      - KYC Admin
+  /apis/admin/kyc/{id}/approve:
+    post:
+      description: Approve a submitted KYC; emits kyc.approved.
+      parameters:
+      - description: Admin account UUID (set by gateway)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      - description: Submission UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SubmissionResp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Approve KYC
+      tags:
+      - KYC Admin
+  /apis/admin/kyc/{id}/reject:
+    post:
+      consumes:
+      - application/json
+      description: Reject a submitted KYC with a machine reason code; emits kyc.rejected.
+      parameters:
+      - description: Admin account UUID (set by gateway)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      - description: Submission UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Rejection reason
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RejectKycReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SubmissionResp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Reject KYC
+      tags:
+      - KYC Admin
+  /apis/kyc/start:
+    post:
+      consumes:
+      - application/json
+      description: 'Begin KYC: register a document reference and phone, issuing an
+        OTP challenge.'
+      parameters:
+      - description: Authenticated account UUID (set by gateway)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      - description: Start KYC request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.StartKycReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.StartKycResp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Start KYC
+      tags:
+      - KYC
+  /apis/kyc/status:
+    get:
+      description: Return the caller's current KYC submission/state.
+      parameters:
+      - description: Authenticated account UUID (set by gateway)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SubmissionResp'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: KYC status
+      tags:
+      - KYC
+  /apis/kyc/verify:
+    post:
+      consumes:
+      - application/json
+      description: Verify the OTP code; on success the submission enters the admin
+        queue (SUBMITTED).
+      parameters:
+      - description: Authenticated account UUID (set by gateway)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      - description: Verify OTP request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.VerifyKycReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.SubmissionResp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Verify KYC OTP
+      tags:
+      - KYC
+  /healthz/liveness:
+    get:
+      consumes:
+      - application/json
+      description: Check the liveness of the service
+      operationId: healthz-liveness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+      summary: Healthz Liveness
+      tags:
+      - healthz
+  /healthz/panic:
+    get:
+      responses:
+        "500":
+          description: panic
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Panic for test
+      tags:
+      - healthz
+  /healthz/rediness:
+    get:
+      consumes:
+      - application/json
+      description: Check the readiness of the service
+      operationId: healthz-rediness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+      summary: Healthz Readiness
+      tags:
+      - healthz
+  /healthz/sleep/{time}:
+    get:
+      parameters:
+      - description: Time to sleep, e.g. 30s
+        in: path
+        name: time
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ok
+      summary: Long Run for test
+      tags:
+      - healthz
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS outbox;
+DROP TABLE IF EXISTS invite_edge;
+DROP TABLE IF EXISTS invite;

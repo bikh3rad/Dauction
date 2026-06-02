@@ -60,21 +60,28 @@ services:
     container_name: dauction-pg-identity
     environment: { <<: *postgres-env, POSTGRES_DB: identity }
     ports: ["5532:5432"]
-    volumes: ["pg-identity:/var/lib/postgresql/data"]
+    volumes:
+      - pg-identity:/var/lib/postgresql/data
+      # Schema applied on first boot of the volume (.down.sql files are IF EXISTS no-ops).
+      - ../services/identity/migrations:/docker-entrypoint-initdb.d:ro
 
   pg-invite:
     <<: *postgres
     container_name: dauction-pg-invite
     environment: { <<: *postgres-env, POSTGRES_DB: invite }
     ports: ["5533:5432"]
-    volumes: ["pg-invite:/var/lib/postgresql/data"]
+    volumes:
+      - pg-invite:/var/lib/postgresql/data
+      - ../services/invite/migrations:/docker-entrypoint-initdb.d:ro
 
   pg-kyc:
     <<: *postgres
     container_name: dauction-pg-kyc
     environment: { <<: *postgres-env, POSTGRES_DB: kyc }
     ports: ["5534:5432"]
-    volumes: ["pg-kyc:/var/lib/postgresql/data"]
+    volumes:
+      - pg-kyc:/var/lib/postgresql/data
+      - ../services/kyc/migrations:/docker-entrypoint-initdb.d:ro
 
   pg-vault:
     <<: *postgres
@@ -125,21 +132,53 @@ services:
     ports: ["5541:5432"]
     volumes: ["pg-dispute:/var/lib/postgresql/data"]
 
-  # ===== service container template (filled in per build phase) =====
-  # Copy per service. gateway + notifier own no DB. Example:
-  #
-  # identity:
-  #   build: ../services/identity
-  #   container_name: dauction-identity
-  #   restart: unless-stopped
-  #   depends_on:
-  #     pg-identity: { condition: service_healthy }
-  #     nats:        { condition: service_healthy }
-  #   environment:
-  #     APP_DATABASE_DSN: postgres://dauction:dauction@pg-identity:5432/identity?sslmode=disable
-  #     APP_NATS_URL: nats://nats:4222
-  #     APP_OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
-  #   ports: ["8081:8080"]
+  # ===== Dauction services (one container per bounded context) =====
+  # Each image bakes its config.example.yaml in as /app/config.yaml (already pointing at
+  # pg-<svc>, nats, jaeger); env vars below are explicit overrides for clarity.
+
+  identity:
+    build: ../services/identity
+    container_name: dauction-identity
+    restart: unless-stopped
+    depends_on:
+      pg-identity: { condition: service_healthy }
+      nats: { condition: service_healthy }
+    environment:
+      APP_DATASOURCE_POSTGRES_DSN: postgres://dauction:dauction@pg-identity:5432/identity?sslmode=disable
+      APP_DATASOURCE_NATS_DSN: nats://nats:4222
+      APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT: jaeger:4317
+    ports: ["18081:8080"]
+
+  invite:
+    build: ../services/invite
+    container_name: dauction-invite
+    restart: unless-stopped
+    depends_on:
+      pg-invite: { condition: service_healthy }
+      nats: { condition: service_healthy }
+    environment:
+      APP_DATASOURCE_POSTGRES_DSN: postgres://dauction:dauction@pg-invite:5432/invite?sslmode=disable
+      APP_DATASOURCE_NATS_DSN: nats://nats:4222
+      APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT: jaeger:4317
+    ports: ["18082:8080"]
+
+  kyc:
+    build: ../services/kyc
+    container_name: dauction-kyc
+    restart: unless-stopped
+    depends_on:
+      pg-kyc: { condition: service_healthy }
+      nats: { condition: service_healthy }
+    environment:
+      APP_DATASOURCE_POSTGRES_DSN: postgres://dauction:dauction@pg-kyc:5432/kyc?sslmode=disable
+      APP_DATASOURCE_NATS_DSN: nats://nats:4222
+      APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT: jaeger:4317
+    ports: ["18083:8080"]
+
+  # ===== service container template (next build phases append here) =====
+  # vault / catalog / bids / auction-dutch / auction-passive / escrow / dispute:
+  #   same shape as identity above (own pg + nats + jaeger).
+  # gateway + notifier own no DB: depends_on the services they route to / nats only.
 
 volumes:
   nats-data:
