@@ -1,0 +1,378 @@
+definitions:
+  dto.AttestRequest:
+    properties:
+      inspectorId:
+        type: string
+      notesRef:
+        maxLength: 512
+        type: string
+      result:
+        enum:
+        - PASS
+        - FAIL
+        type: string
+    required:
+    - inspectorId
+    - result
+    type: object
+  dto.AttestationResp:
+    properties:
+      id:
+        type: string
+      inspectorId:
+        type: string
+      lotId:
+        type: string
+      notesRef:
+        type: string
+      recordedAt:
+        type: string
+      result:
+        description: PASS | FAIL
+        type: string
+    type: object
+  dto.ErrorResponse:
+    properties:
+      details:
+        type: string
+      message:
+        type: string
+    type: object
+  dto.LotDetailResp:
+    properties:
+      attestations:
+        items:
+          $ref: '#/definitions/dto.AttestationResp'
+        type: array
+      certified:
+        description: has at least one PASS attestation
+        type: boolean
+      lot:
+        $ref: '#/definitions/dto.LotResp'
+    type: object
+  dto.LotResp:
+    properties:
+      appraisedValueCents:
+        type: integer
+      atype:
+        description: DUTCH | VICKREY | UNIQBID
+        type: string
+      createdAt:
+        description: ISO-8601 UTC
+        type: string
+      description:
+        type: string
+      durationDays:
+        description: null for DUTCH
+        type: integer
+      id:
+        type: string
+      isoWeek:
+        description: e.g. "2026-W23"
+        type: string
+      objectId:
+        type: string
+      reserveCents:
+        type: integer
+      scheduledAt:
+        type: string
+      sellerAccountId:
+        type: string
+      state:
+        description: DRAFT | CERTIFIED | SCHEDULED | REJECTED
+        type: string
+      title:
+        type: string
+    type: object
+  dto.ScheduleRequest:
+    properties:
+      scheduledAt:
+        description: ISO-8601 UTC; defaults to now
+        type: string
+    type: object
+  dto.WeeklyResp:
+    properties:
+      lots:
+        items:
+          $ref: '#/definitions/dto.LotResp'
+        type: array
+      supplyCap:
+        description: "32"
+        type: integer
+      week:
+        type: string
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+info:
+  contact:
+    email: info@aban.io
+    name: API Support
+    url: http://aban.io/support
+  description: API documentation
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger
+  version: "1.0"
+paths:
+  /apis/admin/lots:
+    get:
+      description: House/admin lot listing, optionally filtered by ?state=DRAFT|CERTIFIED|SCHEDULED|REJECTED
+        and ?week=YYYY-Www.
+      parameters:
+      - description: State filter
+        in: query
+        name: state
+        type: string
+      - description: ISO week filter
+        in: query
+        name: week
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.LotResp'
+            type: array
+        "400":
+          description: Bad filter
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Admin lot list
+      tags:
+      - catalog-admin
+  /apis/admin/lots/{id}/attest:
+    post:
+      consumes:
+      - application/json
+      description: House/inspector records an attestation. A PASS seal unlocks certification
+        (the gate). A FAIL on a DRAFT lot rejects it. Emits attestation.recorded.
+      parameters:
+      - description: Lot UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Attestation
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AttestRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.AttestationResp'
+        "400":
+          description: Bad request / invalid state
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Lot not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Attest a lot
+      tags:
+      - catalog-admin
+  /apis/admin/lots/{id}/certify:
+    post:
+      description: House certifies a DRAFT lot. The certification gate requires an
+        existing PASS attestation; without one this returns RESOURCE_INVALID. Emits
+        lot.certified.
+      parameters:
+      - description: Lot UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LotResp'
+        "400":
+          description: No PASS attestation / illegal transition
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Lot not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Certify a lot
+      tags:
+      - catalog-admin
+  /apis/admin/lots/{id}/schedule:
+    post:
+      consumes:
+      - application/json
+      description: House schedules a CERTIFIED lot into its ISO week's gallery. Enforces
+        the weekly 32-lot supply cap; exceeding it returns RESOURCE_INVALID. Emits
+        lot.scheduled with atype + params.
+      parameters:
+      - description: Lot UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Optional scheduledAt (ISO-8601 UTC)
+        in: body
+        name: body
+        schema:
+          $ref: '#/definitions/dto.ScheduleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LotResp'
+        "400":
+          description: Weekly cap reached / not certified
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Lot not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Schedule a lot
+      tags:
+      - catalog-admin
+  /apis/gallery/weekly:
+    get:
+      description: This ISO week's SCHEDULED lots (public, no auth). Pass ?week=YYYY-Www
+        to read a specific week; defaults to the current ISO week. Returns the 32-lot
+        supply cap so the client can render "n of 32".
+      parameters:
+      - description: ISO week, e.g. 2026-W23 (defaults to current)
+        in: query
+        name: week
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.WeeklyResp'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Weekly gallery
+      tags:
+      - catalog
+  /apis/lots/{id}:
+    get:
+      description: 'Public lot detail: atype, params, state, and the attestation summary
+        (the certification gate''s evidence).'
+      parameters:
+      - description: Lot UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LotDetailResp'
+        "400":
+          description: Bad UUID
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Lot detail
+      tags:
+      - catalog
+  /healthz/liveness:
+    get:
+      consumes:
+      - application/json
+      description: Check the liveness of the service
+      operationId: healthz-liveness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+      summary: Healthz Liveness
+      tags:
+      - healthz
+  /healthz/panic:
+    get:
+      responses:
+        "500":
+          description: panic
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Panic for test
+      tags:
+      - healthz
+  /healthz/rediness:
+    get:
+      consumes:
+      - application/json
+      description: Check the readiness of the service
+      operationId: healthz-rediness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+      summary: Healthz Readiness
+      tags:
+      - healthz
+  /healthz/sleep/{time}:
+    get:
+      parameters:
+      - description: Time to sleep, e.g. 30s
+        in: path
+        name: time
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ok
+      summary: Long Run for test
+      tags:
+      - healthz
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

@@ -88,14 +88,18 @@ services:
     container_name: dauction-pg-vault
     environment: { <<: *postgres-env, POSTGRES_DB: vault }
     ports: ["5535:5432"]
-    volumes: ["pg-vault:/var/lib/postgresql/data"]
+    volumes:
+      - pg-vault:/var/lib/postgresql/data
+      - ../services/vault/migrations:/docker-entrypoint-initdb.d:ro
 
   pg-catalog:
     <<: *postgres
     container_name: dauction-pg-catalog
     environment: { <<: *postgres-env, POSTGRES_DB: catalog }
     ports: ["5536:5432"]
-    volumes: ["pg-catalog:/var/lib/postgresql/data"]
+    volumes:
+      - pg-catalog:/var/lib/postgresql/data
+      - ../services/catalog/migrations:/docker-entrypoint-initdb.d:ro
 
   pg-auction-dutch:
     <<: *postgres
@@ -175,8 +179,34 @@ services:
       APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT: jaeger:4317
     ports: ["18083:8080"]
 
+  vault:
+    build: ../services/vault
+    container_name: dauction-vault
+    restart: unless-stopped
+    depends_on:
+      pg-vault: { condition: service_healthy }
+      nats: { condition: service_healthy }
+    environment:
+      APP_DATASOURCE_POSTGRES_DSN: postgres://dauction:dauction@pg-vault:5432/vault?sslmode=disable
+      APP_DATASOURCE_NATS_DSN: nats://nats:4222
+      APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT: jaeger:4317
+    ports: ["18084:8080"]
+
+  catalog:
+    build: ../services/catalog
+    container_name: dauction-catalog
+    restart: unless-stopped
+    depends_on:
+      pg-catalog: { condition: service_healthy }
+      nats: { condition: service_healthy }
+    environment:
+      APP_DATASOURCE_POSTGRES_DSN: postgres://dauction:dauction@pg-catalog:5432/catalog?sslmode=disable
+      APP_DATASOURCE_NATS_DSN: nats://nats:4222
+      APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT: jaeger:4317
+    ports: ["18085:8080"]
+
   # ===== service container template (next build phases append here) =====
-  # vault / catalog / bids / auction-dutch / auction-passive / escrow / dispute:
+  # bids / auction-dutch / auction-passive / escrow / dispute:
   #   same shape as identity above (own pg + nats + jaeger).
   # gateway + notifier own no DB: depends_on the services they route to / nats only.
 

@@ -1,0 +1,327 @@
+definitions:
+  dto.BuybackReq:
+    properties:
+      mode:
+        enum:
+        - CASH
+        - CREDIT
+        type: string
+    required:
+    - mode
+    type: object
+  dto.BuybackResp:
+    properties:
+      balanceCents:
+        type: integer
+      mode:
+        type: string
+      object:
+        $ref: '#/definitions/dto.VaultObjectResp'
+      payoutCents:
+        type: integer
+    type: object
+  dto.CreateObjectReq:
+    properties:
+      appraisedValueCents:
+        type: integer
+      description:
+        maxLength: 2000
+        type: string
+      title:
+        maxLength: 200
+        type: string
+    required:
+    - appraisedValueCents
+    - title
+    type: object
+  dto.ErrorResponse:
+    properties:
+      details:
+        type: string
+      message:
+        type: string
+    type: object
+  dto.ListObjectReq:
+    properties:
+      atype:
+        enum:
+        - DUTCH
+        - VICKREY
+        - UNIQBID
+        type: string
+      durationDays:
+        enum:
+        - 2
+        - 5
+        - 7
+        type: integer
+    required:
+    - atype
+    type: object
+  dto.VaultObjectResp:
+    properties:
+      appraisedValueCents:
+        type: integer
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      state:
+        description: IN_VAULT | APPRAISING | IN_AUCTION | SOLD | BOUGHT_BACK
+        type: string
+      title:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  dto.VaultViewResp:
+    properties:
+      creditBalanceCents:
+        type: integer
+      objects:
+        items:
+          $ref: '#/definitions/dto.VaultObjectResp'
+        type: array
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+info:
+  contact:
+    email: info@aban.io
+    name: API Support
+    url: http://aban.io/support
+  description: API documentation
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger
+  version: "1.0"
+paths:
+  /apis/vault:
+    get:
+      description: Returns the authenticated member's vault objects plus their derived
+        Vault-Credit balance (USDC cents). Subject from the gateway-injected X-Account-Id
+        header.
+      parameters:
+      - description: Authenticated account UUID (gateway-injected)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.VaultViewResp'
+        "401":
+          description: Unauthenticated
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: List my vault
+      tags:
+      - vault
+  /apis/vault/objects:
+    post:
+      consumes:
+      - application/json
+      description: Adds a new IN_VAULT object to the caller's collection. Appraised
+        value is int64 USDC cents.
+      parameters:
+      - description: Authenticated account UUID (gateway-injected)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      - description: Object to add
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateObjectReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.VaultObjectResp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthenticated
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Add a vault object
+      tags:
+      - vault
+  /apis/vault/objects/{id}/buyback:
+    post:
+      consumes:
+      - application/json
+      description: Instant buyback on an owned IN_VAULT object. CASH pays 50% of the
+        appraised value in USDC; CREDIT credits 85% to the Vault-Credit ledger (emits
+        credit.changed). Object -> BOUGHT_BACK.
+      parameters:
+      - description: Authenticated account UUID (gateway-injected)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      - description: Object UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Payout mode
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BuybackReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.BuybackResp'
+        "400":
+          description: Invalid mode or state
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthenticated / not owner
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Instant buyback
+      tags:
+      - vault
+  /apis/vault/objects/{id}/list:
+    post:
+      consumes:
+      - application/json
+      description: Moves an owned IN_VAULT object to APPRAISING and emits object.listed.
+        durationDays is REQUIRED for VICKREY/UNIQBID (2/5/7) and FORBIDDEN for DUTCH.
+      parameters:
+      - description: Authenticated account UUID (gateway-injected)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      - description: Object UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Auction type + optional duration
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ListObjectReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.VaultObjectResp'
+        "400":
+          description: Invalid mode/duration or state
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthenticated / not owner
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: List an object to auction
+      tags:
+      - vault
+  /healthz/liveness:
+    get:
+      consumes:
+      - application/json
+      description: Check the liveness of the service
+      operationId: healthz-liveness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+      summary: Healthz Liveness
+      tags:
+      - healthz
+  /healthz/panic:
+    get:
+      responses:
+        "500":
+          description: panic
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Panic for test
+      tags:
+      - healthz
+  /healthz/rediness:
+    get:
+      consumes:
+      - application/json
+      description: Check the readiness of the service
+      operationId: healthz-rediness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+      summary: Healthz Readiness
+      tags:
+      - healthz
+  /healthz/sleep/{time}:
+    get:
+      parameters:
+      - description: Time to sleep, e.g. 30s
+        in: path
+        name: time
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ok
+      summary: Long Run for test
+      tags:
+      - healthz
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"
