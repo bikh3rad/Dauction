@@ -1,0 +1,52 @@
+name: "auction-dutch"
+version: "v1.0.0"
+description: "Dauction auction-dutch service — live descending-price engine, reservation, full-lock, hammer"
+environment: "development"
+
+app:
+  title: "Dauction Auction-Dutch"
+  description: "The live descending-price (Dutch) auction engine: reservations, full locks, server-authoritative price, hammer"
+  version: "v1.0.0"
+  environment: "development"
+
+logger:
+  slog:
+    level: "debug"
+    encoding: "json" # text or json
+
+server:
+  http:
+    addr: ":8080"
+
+# OTLP exporter (traces/metrics/logs). Points at the Jaeger all-in-one collector
+# in deploy/docker-compose.yml. Override endpoint with APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT.
+collector:
+  exporters:
+    otlp:
+      endpoint: "jaeger:4317"
+      insecure: true
+  traces:
+    enabled: true
+  metrics:
+    enabled: true
+  logs:
+    enabled: true
+
+service:
+  scheduler:
+    enabled: false
+    interval: "3s"
+
+datasource:
+  # Owned Postgres (db `auction_dutch`). One DB per service — never reach into another's.
+  # Override with APP_DATASOURCE_POSTGRES_DSN.
+  postgres:
+    dsn: "postgres://dauction:dauction@pg-auction-dutch:5432/auction_dutch?sslmode=disable"
+  # Shared NATS/JetStream event bus. Override with APP_DATASOURCE_NATS_DSN.
+  # subjects lists the subjects this service emits AND consumes (the platform
+  # stream binds them; the auction-dutch consumer filters lot.scheduled + escrow.locked).
+  nats:
+    dsn: "nats://nats:4222"
+    streamName: "DAUCTION"
+    subjects: "auction.opened,auction.hammer,auction.completed,escrow.lock_requested,lot.scheduled,escrow.locked"
+    durable: "auction-dutch"

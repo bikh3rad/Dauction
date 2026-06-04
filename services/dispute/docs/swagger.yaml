@@ -1,0 +1,463 @@
+definitions:
+  dto.AddEvidenceReq:
+    properties:
+      detailRef:
+        maxLength: 512
+        type: string
+    required:
+    - detailRef
+    type: object
+  dto.DisputeDetailResp:
+    properties:
+      dispute:
+        $ref: '#/definitions/dto.DisputeResp'
+      events:
+        items:
+          $ref: '#/definitions/dto.DisputeEventResp'
+        type: array
+    type: object
+  dto.DisputeEventResp:
+    properties:
+      action:
+        type: string
+      actor:
+        type: string
+      createdAt:
+        type: string
+      detailRef:
+        type: string
+      id:
+        type: string
+    type: object
+  dto.DisputeListResp:
+    properties:
+      count:
+        type: integer
+      disputes:
+        items:
+          $ref: '#/definitions/dto.DisputeResp'
+        type: array
+    type: object
+  dto.DisputeResp:
+    properties:
+      claimant:
+        type: string
+      createdAt:
+        type: string
+      evidenceRef:
+        type: string
+      id:
+        type: string
+      reasonCode:
+        type: string
+      resolvedAt:
+        type: string
+      respondent:
+        type: string
+      ruledBy:
+        type: string
+      ruling:
+        type: string
+      state:
+        type: string
+      tradeId:
+        type: string
+    type: object
+  dto.ErrorResponse:
+    properties:
+      details:
+        type: string
+      message:
+        type: string
+    type: object
+  dto.OpenDisputeReq:
+    properties:
+      evidenceRef:
+        maxLength: 512
+        type: string
+      reasonCode:
+        enum:
+        - AUTHENTICITY
+        - CONDITION
+        - NOT_DELIVERED
+        - OTHER
+        type: string
+      respondent:
+        description: Respondent is the seller account UUID (the party the claim is
+          against).
+        type: string
+    required:
+    - reasonCode
+    - respondent
+    type: object
+  dto.ResolveReq:
+    properties:
+      ruledBy:
+        type: string
+      ruling:
+        enum:
+        - REFUND_BUYER
+        - RELEASE_SELLER
+        - SPLIT
+        type: string
+    required:
+    - ruledBy
+    - ruling
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+info:
+  contact:
+    email: info@aban.io
+    name: API Support
+    url: http://aban.io/support
+  description: API documentation
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger
+  version: "1.0"
+paths:
+  /apis/admin/disputes:
+    get:
+      description: House/admin queue of disputes, optionally filtered by state (?state=OPEN|UNDER_REVIEW|RESOLVED|WITHDRAWN),
+        newest first.
+      parameters:
+      - description: Filter by state
+        in: query
+        name: state
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DisputeListResp'
+        "400":
+          description: Unknown state filter
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: List disputes (admin queue)
+      tags:
+      - dispute-admin
+  /apis/admin/disputes/{id}/review:
+    post:
+      description: House/admin moves a dispute from OPEN to UNDER_REVIEW (triage before
+        a ruling). Records a REVIEW_STARTED audit row.
+      parameters:
+      - description: Dispute UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Admin account UUID (gateway-injected)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DisputeResp'
+        "400":
+          description: Not OPEN / bad UUID
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: No such dispute
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Start review
+      tags:
+      - dispute-admin
+  /apis/escrow/{tradeId}/dispute:
+    get:
+      description: 'Returns the current dispute for a trade plus its immutable audit
+        trail. Only the claimant, the respondent, or an admin (X-Admin: true) may
+        read it.'
+      parameters:
+      - description: Escrow trade / auction id
+        in: path
+        name: tradeId
+        required: true
+        type: string
+      - description: Caller account UUID (gateway-injected)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      - description: Set to 'true' for house/admin access
+        in: header
+        name: X-Admin
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DisputeDetailResp'
+        "401":
+          description: Unauthenticated / not a party
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: No dispute for trade
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get a dispute
+      tags:
+      - dispute
+    post:
+      consumes:
+      - application/json
+      description: 'A buyer (claimant) raises an authenticity/condition/delivery claim
+        on a trade post-delivery. Creates an OPEN dispute + audit row and emits dispute.opened
+        (escrow suspends release: HELD -> DISPUTED). Only one non-terminal dispute
+        may exist per trade.'
+      parameters:
+      - description: Escrow trade / auction id
+        in: path
+        name: tradeId
+        required: true
+        type: string
+      - description: Claimant (buyer) account UUID (gateway-injected)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      - description: Dispute reason + respondent
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.OpenDisputeReq'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.DisputeResp'
+        "400":
+          description: Invalid body / reason
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthenticated
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "409":
+          description: A non-terminal dispute already exists
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Open a dispute
+      tags:
+      - dispute
+  /apis/escrow/{tradeId}/dispute/evidence:
+    post:
+      consumes:
+      - application/json
+      description: Either party (claimant or respondent) appends an evidence reference
+        to a non-terminal dispute. Records an EVIDENCE_ADDED audit row.
+      parameters:
+      - description: Escrow trade / auction id
+        in: path
+        name: tradeId
+        required: true
+        type: string
+      - description: Caller account UUID (gateway-injected)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      - description: Evidence reference
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddEvidenceReq'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: ""
+        "400":
+          description: Invalid body / terminal dispute
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthenticated / not a party
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: No dispute for trade
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Add evidence
+      tags:
+      - dispute
+  /apis/escrow/{tradeId}/dispute/resolve:
+    post:
+      consumes:
+      - application/json
+      description: House/admin rules on a dispute that is UNDER_REVIEW, moving it
+        to RESOLVED and emitting dispute.resolved {trade_id, ruling} (escrow executes
+        the funds movement). The ruling is immutable once set.
+      parameters:
+      - description: Escrow trade / auction id
+        in: path
+        name: tradeId
+        required: true
+        type: string
+      - description: Ruling + ruledBy
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ResolveReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DisputeResp'
+        "400":
+          description: Invalid ruling / not UNDER_REVIEW / already resolved
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: No dispute for trade
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Resolve a dispute
+      tags:
+      - dispute-admin
+  /apis/escrow/{tradeId}/dispute/withdraw:
+    post:
+      description: The claimant retracts a dispute that is still OPEN, moving it to
+        WITHDRAWN. Only the claimant may withdraw, and only from OPEN.
+      parameters:
+      - description: Escrow trade / auction id
+        in: path
+        name: tradeId
+        required: true
+        type: string
+      - description: Claimant account UUID (gateway-injected)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DisputeResp'
+        "400":
+          description: Not OPEN
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthenticated / not the claimant
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: No dispute for trade
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Withdraw a dispute
+      tags:
+      - dispute
+  /healthz/liveness:
+    get:
+      consumes:
+      - application/json
+      description: Check the liveness of the service
+      operationId: healthz-liveness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+      summary: Healthz Liveness
+      tags:
+      - healthz
+  /healthz/panic:
+    get:
+      responses:
+        "500":
+          description: panic
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Panic for test
+      tags:
+      - healthz
+  /healthz/rediness:
+    get:
+      consumes:
+      - application/json
+      description: Check the readiness of the service
+      operationId: healthz-rediness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+      summary: Healthz Readiness
+      tags:
+      - healthz
+  /healthz/sleep/{time}:
+    get:
+      parameters:
+      - description: Time to sleep, e.g. 30s
+        in: path
+        name: time
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ok
+      summary: Long Run for test
+      tags:
+      - healthz
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

@@ -1,0 +1,36 @@
+#code
+.vscode
+.devcontainer
+
+
+#git
+.github
+.gitea
+.git
+.gitignore
+.gitlab-ci.yml
+.golangci.yml
+.mockery.yaml
+
+
+#Docker
+# .dockerignore
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+#folders
+infra/
+tmp/
+doc/
+charts/
+
+# other
+Makefile
+dagger
+dagger.json
+Tiltfile
+cmd/ReadMe.md
+LICENSE
+README.md
+

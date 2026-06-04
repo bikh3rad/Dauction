@@ -1,0 +1,22 @@
+quiet: False
+# keeptree: True
+disable-version-string: True
+with-expecter: True
+# mockname: "{{.InterfaceName}}"
+# filename: "{{.MockName}}.go"
+outpkg: mocks
+packages:
+  application/internal/biz:
+    config:
+      dir: ./internal/mocks
+      all: true
+      recursive: true
+    interfaces:
+      # UsecaseAuction references biz types (ReserveInput, AuctionView,
+      # LotScheduledInput, EscrowLockedInput) in its signature, so its mock must
+      # live in a sub-package: keeping it in ./internal/mocks would make the
+      # in-package biz tests (which import the mocks) form an import cycle
+      # (biz -> mocks -> biz).
+      UsecaseAuction:
+        config:
+          dir: ./internal/mocks/usecase

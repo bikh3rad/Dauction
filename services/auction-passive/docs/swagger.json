@@ -1,0 +1,451 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API documentation",
+        "title": "Swagger",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://aban.io/support",
+            "email": "info@aban.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "paths": {
+        "/apis/admin/auctions/{id}/close": {
+            "post": {
+                "description": "House closes an OPEN passive auction: OPEN -\u003e CLOSING -\u003e runs the deterministic resolution (Vickrey 2nd-price / UniqBid lowest-unique) -\u003e RESOLVED (winner) or ABORTED (UniqBid no-unique). Emits auction.closed then auction.won.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auction-passive-admin"
+                ],
+                "summary": "Close \u0026 resolve an auction",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Auction UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AuctionResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Not OPEN",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Auction not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/apis/auctions/{id}": {
+            "get": {
+                "description": "Public passive-auction info: state, closes_at, participant count. Never exposes other bidders' prices (bids stay sealed until close).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auction-passive"
+                ],
+                "summary": "Auction info",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Auction UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.AuctionResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad UUID",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/apis/auctions/{id}/bid": {
+            "post": {
+                "description": "Submit a sealed bid on a timed passive auction. Spends one bid credit (debited synchronously via the bids service BEFORE the bid is recorded). VICKREY allows one bid per bidder; UNIQBID allows many distinct prices. Out of credits / closed auction -\u003e RESOURCE_INVALID. Emits bid.placed.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auction-passive"
+                ],
+                "summary": "Place a sealed bid",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Caller account UUID (gateway-injected)",
+                        "name": "X-Account-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Auction UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Bid",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.PlaceBidRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.BidResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request / out of credits / closed",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Missing caller",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Auction not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/apis/auctions/{id}/standing": {
+            "get": {
+                "description": "The caller's own sealed view. VICKREY: your single sealed bid. UNIQBID: each of your distinct prices, flagged with whether it is currently the lowest unique price (server-computed). Never reveals other bidders' prices.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auction-passive"
+                ],
+                "summary": "Your standing",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Caller account UUID (gateway-injected)",
+                        "name": "X-Account-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Auction UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.StandingResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad UUID",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Missing caller",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Auction not found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/healthz/liveness": {
+            "get": {
+                "description": "Check the liveness of the service",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "healthz"
+                ],
+                "summary": "Healthz Liveness",
+                "operationId": "healthz-liveness",
+                "responses": {
+                    "200": {
+                        "description": "ok"
+                    }
+                }
+            }
+        },
+        "/healthz/panic": {
+            "get": {
+                "tags": [
+                    "healthz"
+                ],
+                "summary": "Panic for test",
+                "responses": {
+                    "500": {
+                        "description": "panic",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/healthz/rediness": {
+            "get": {
+                "description": "Check the readiness of the service",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "healthz"
+                ],
+                "summary": "Healthz Readiness",
+                "operationId": "healthz-rediness",
+                "responses": {
+                    "200": {
+                        "description": "ok"
+                    }
+                }
+            }
+        },
+        "/healthz/sleep/{time}": {
+            "get": {
+                "tags": [
+                    "healthz"
+                ],
+                "summary": "Long Run for test",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Time to sleep, e.g. 30s",
+                        "name": "time",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok"
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.AuctionResp": {
+            "type": "object",
+            "properties": {
+                "atype": {
+                    "description": "VICKREY | UNIQBID",
+                    "type": "string"
+                },
+                "clearedPriceCents": {
+                    "type": "integer"
+                },
+                "closesAt": {
+                    "description": "ISO-8601 UTC",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "lotId": {
+                    "type": "string"
+                },
+                "participantCount": {
+                    "type": "integer"
+                },
+                "reserveCents": {
+                    "type": "integer"
+                },
+                "state": {
+                    "type": "string"
+                },
+                "winnerAccountId": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.BidResp": {
+            "type": "object",
+            "properties": {
+                "auctionId": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "placedAt": {
+                    "type": "string"
+                },
+                "priceCents": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PlaceBidRequest": {
+            "type": "object",
+            "required": [
+                "priceCents"
+            ],
+            "properties": {
+                "priceCents": {
+                    "type": "integer"
+                },
+                "requestId": {
+                    "type": "string",
+                    "maxLength": 128
+                }
+            }
+        },
+        "dto.StandingPriceResp": {
+            "type": "object",
+            "properties": {
+                "isLowestUnique": {
+                    "type": "boolean"
+                },
+                "placedAt": {
+                    "type": "string"
+                },
+                "priceCents": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.StandingResp": {
+            "type": "object",
+            "properties": {
+                "atype": {
+                    "type": "string"
+                },
+                "auctionId": {
+                    "type": "string"
+                },
+                "closesAt": {
+                    "type": "string"
+                },
+                "prices": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.StandingPriceResp"
+                    }
+                },
+                "state": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BasicAuth": {
+            "type": "basic"
+        }
+    },
+    "externalDocs": {
+        "description": "OpenAPI",
+        "url": "https://swagger.io/resources/open-api/"
+    }
+}

@@ -1,0 +1,678 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API documentation",
+        "title": "Swagger",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://aban.io/support",
+            "email": "info@aban.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "paths": {
+        "/apis/admin/disputes": {
+            "get": {
+                "description": "House/admin queue of disputes, optionally filtered by state (?state=OPEN|UNDER_REVIEW|RESOLVED|WITHDRAWN), newest first.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dispute-admin"
+                ],
+                "summary": "List disputes (admin queue)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Filter by state",
+                        "name": "state",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.DisputeListResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Unknown state filter",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/apis/admin/disputes/{id}/review": {
+            "post": {
+                "description": "House/admin moves a dispute from OPEN to UNDER_REVIEW (triage before a ruling). Records a REVIEW_STARTED audit row.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dispute-admin"
+                ],
+                "summary": "Start review",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Dispute UUID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Admin account UUID (gateway-injected)",
+                        "name": "X-Account-Id",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.DisputeResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Not OPEN / bad UUID",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "No such dispute",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/apis/escrow/{tradeId}/dispute": {
+            "get": {
+                "description": "Returns the current dispute for a trade plus its immutable audit trail. Only the claimant, the respondent, or an admin (X-Admin: true) may read it.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dispute"
+                ],
+                "summary": "Get a dispute",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Escrow trade / auction id",
+                        "name": "tradeId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Caller account UUID (gateway-injected)",
+                        "name": "X-Account-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Set to 'true' for house/admin access",
+                        "name": "X-Admin",
+                        "in": "header"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.DisputeDetailResp"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated / not a party",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "No dispute for trade",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "A buyer (claimant) raises an authenticity/condition/delivery claim on a trade post-delivery. Creates an OPEN dispute + audit row and emits dispute.opened (escrow suspends release: HELD -\u003e DISPUTED). Only one non-terminal dispute may exist per trade.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dispute"
+                ],
+                "summary": "Open a dispute",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Escrow trade / auction id",
+                        "name": "tradeId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Claimant (buyer) account UUID (gateway-injected)",
+                        "name": "X-Account-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Dispute reason + respondent",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.OpenDisputeReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/dto.DisputeResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid body / reason",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "A non-terminal dispute already exists",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/apis/escrow/{tradeId}/dispute/evidence": {
+            "post": {
+                "description": "Either party (claimant or respondent) appends an evidence reference to a non-terminal dispute. Records an EVIDENCE_ADDED audit row.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dispute"
+                ],
+                "summary": "Add evidence",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Escrow trade / auction id",
+                        "name": "tradeId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Caller account UUID (gateway-injected)",
+                        "name": "X-Account-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "description": "Evidence reference",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.AddEvidenceReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    },
+                    "400": {
+                        "description": "Invalid body / terminal dispute",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated / not a party",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "No dispute for trade",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/apis/escrow/{tradeId}/dispute/resolve": {
+            "post": {
+                "description": "House/admin rules on a dispute that is UNDER_REVIEW, moving it to RESOLVED and emitting dispute.resolved {trade_id, ruling} (escrow executes the funds movement). The ruling is immutable once set.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dispute-admin"
+                ],
+                "summary": "Resolve a dispute",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Escrow trade / auction id",
+                        "name": "tradeId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Ruling + ruledBy",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ResolveReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.DisputeResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid ruling / not UNDER_REVIEW / already resolved",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "No dispute for trade",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/apis/escrow/{tradeId}/dispute/withdraw": {
+            "post": {
+                "description": "The claimant retracts a dispute that is still OPEN, moving it to WITHDRAWN. Only the claimant may withdraw, and only from OPEN.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "dispute"
+                ],
+                "summary": "Withdraw a dispute",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Escrow trade / auction id",
+                        "name": "tradeId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Claimant account UUID (gateway-injected)",
+                        "name": "X-Account-Id",
+                        "in": "header",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.DisputeResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Not OPEN",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated / not the claimant",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "No dispute for trade",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/healthz/liveness": {
+            "get": {
+                "description": "Check the liveness of the service",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "healthz"
+                ],
+                "summary": "Healthz Liveness",
+                "operationId": "healthz-liveness",
+                "responses": {
+                    "200": {
+                        "description": "ok"
+                    }
+                }
+            }
+        },
+        "/healthz/panic": {
+            "get": {
+                "tags": [
+                    "healthz"
+                ],
+                "summary": "Panic for test",
+                "responses": {
+                    "500": {
+                        "description": "panic",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/healthz/rediness": {
+            "get": {
+                "description": "Check the readiness of the service",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "healthz"
+                ],
+                "summary": "Healthz Readiness",
+                "operationId": "healthz-rediness",
+                "responses": {
+                    "200": {
+                        "description": "ok"
+                    }
+                }
+            }
+        },
+        "/healthz/sleep/{time}": {
+            "get": {
+                "tags": [
+                    "healthz"
+                ],
+                "summary": "Long Run for test",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Time to sleep, e.g. 30s",
+                        "name": "time",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok"
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.AddEvidenceReq": {
+            "type": "object",
+            "required": [
+                "detailRef"
+            ],
+            "properties": {
+                "detailRef": {
+                    "type": "string",
+                    "maxLength": 512
+                }
+            }
+        },
+        "dto.DisputeDetailResp": {
+            "type": "object",
+            "properties": {
+                "dispute": {
+                    "$ref": "#/definitions/dto.DisputeResp"
+                },
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.DisputeEventResp"
+                    }
+                }
+            }
+        },
+        "dto.DisputeEventResp": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string"
+                },
+                "actor": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "detailRef": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.DisputeListResp": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer"
+                },
+                "disputes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.DisputeResp"
+                    }
+                }
+            }
+        },
+        "dto.DisputeResp": {
+            "type": "object",
+            "properties": {
+                "claimant": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "evidenceRef": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "reasonCode": {
+                    "type": "string"
+                },
+                "resolvedAt": {
+                    "type": "string"
+                },
+                "respondent": {
+                    "type": "string"
+                },
+                "ruledBy": {
+                    "type": "string"
+                },
+                "ruling": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                },
+                "tradeId": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.OpenDisputeReq": {
+            "type": "object",
+            "required": [
+                "reasonCode",
+                "respondent"
+            ],
+            "properties": {
+                "evidenceRef": {
+                    "type": "string",
+                    "maxLength": 512
+                },
+                "reasonCode": {
+                    "type": "string",
+                    "enum": [
+                        "AUTHENTICITY",
+                        "CONDITION",
+                        "NOT_DELIVERED",
+                        "OTHER"
+                    ]
+                },
+                "respondent": {
+                    "description": "Respondent is the seller account UUID (the party the claim is against).",
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ResolveReq": {
+            "type": "object",
+            "required": [
+                "ruledBy",
+                "ruling"
+            ],
+            "properties": {
+                "ruledBy": {
+                    "type": "string"
+                },
+                "ruling": {
+                    "type": "string",
+                    "enum": [
+                        "REFUND_BUYER",
+                        "RELEASE_SELLER",
+                        "SPLIT"
+                    ]
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BasicAuth": {
+            "type": "basic"
+        }
+    },
+    "externalDocs": {
+        "description": "OpenAPI",
+        "url": "https://swagger.io/resources/open-api/"
+    }
+}

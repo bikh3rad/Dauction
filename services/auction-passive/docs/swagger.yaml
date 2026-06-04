@@ -1,0 +1,307 @@
+definitions:
+  dto.AuctionResp:
+    properties:
+      atype:
+        description: VICKREY | UNIQBID
+        type: string
+      clearedPriceCents:
+        type: integer
+      closesAt:
+        description: ISO-8601 UTC
+        type: string
+      id:
+        type: string
+      lotId:
+        type: string
+      participantCount:
+        type: integer
+      reserveCents:
+        type: integer
+      state:
+        type: string
+      winnerAccountId:
+        type: string
+    type: object
+  dto.BidResp:
+    properties:
+      auctionId:
+        type: string
+      id:
+        type: string
+      placedAt:
+        type: string
+      priceCents:
+        type: integer
+    type: object
+  dto.ErrorResponse:
+    properties:
+      details:
+        type: string
+      message:
+        type: string
+    type: object
+  dto.PlaceBidRequest:
+    properties:
+      priceCents:
+        type: integer
+      requestId:
+        maxLength: 128
+        type: string
+    required:
+    - priceCents
+    type: object
+  dto.StandingPriceResp:
+    properties:
+      isLowestUnique:
+        type: boolean
+      placedAt:
+        type: string
+      priceCents:
+        type: integer
+    type: object
+  dto.StandingResp:
+    properties:
+      atype:
+        type: string
+      auctionId:
+        type: string
+      closesAt:
+        type: string
+      prices:
+        items:
+          $ref: '#/definitions/dto.StandingPriceResp'
+        type: array
+      state:
+        type: string
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+info:
+  contact:
+    email: info@aban.io
+    name: API Support
+    url: http://aban.io/support
+  description: API documentation
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger
+  version: "1.0"
+paths:
+  /apis/admin/auctions/{id}/close:
+    post:
+      description: 'House closes an OPEN passive auction: OPEN -> CLOSING -> runs
+        the deterministic resolution (Vickrey 2nd-price / UniqBid lowest-unique) ->
+        RESOLVED (winner) or ABORTED (UniqBid no-unique). Emits auction.closed then
+        auction.won.'
+      parameters:
+      - description: Auction UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AuctionResp'
+        "400":
+          description: Not OPEN
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Auction not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Close & resolve an auction
+      tags:
+      - auction-passive-admin
+  /apis/auctions/{id}:
+    get:
+      description: 'Public passive-auction info: state, closes_at, participant count.
+        Never exposes other bidders'' prices (bids stay sealed until close).'
+      parameters:
+      - description: Auction UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.AuctionResp'
+        "400":
+          description: Bad UUID
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Auction info
+      tags:
+      - auction-passive
+  /apis/auctions/{id}/bid:
+    post:
+      consumes:
+      - application/json
+      description: Submit a sealed bid on a timed passive auction. Spends one bid
+        credit (debited synchronously via the bids service BEFORE the bid is recorded).
+        VICKREY allows one bid per bidder; UNIQBID allows many distinct prices. Out
+        of credits / closed auction -> RESOURCE_INVALID. Emits bid.placed.
+      parameters:
+      - description: Caller account UUID (gateway-injected)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      - description: Auction UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Bid
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.PlaceBidRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.BidResp'
+        "400":
+          description: Bad request / out of credits / closed
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Missing caller
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Auction not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Place a sealed bid
+      tags:
+      - auction-passive
+  /apis/auctions/{id}/standing:
+    get:
+      description: 'The caller''s own sealed view. VICKREY: your single sealed bid.
+        UNIQBID: each of your distinct prices, flagged with whether it is currently
+        the lowest unique price (server-computed). Never reveals other bidders'' prices.'
+      parameters:
+      - description: Caller account UUID (gateway-injected)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      - description: Auction UUID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.StandingResp'
+        "400":
+          description: Bad UUID
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Missing caller
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Auction not found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Your standing
+      tags:
+      - auction-passive
+  /healthz/liveness:
+    get:
+      consumes:
+      - application/json
+      description: Check the liveness of the service
+      operationId: healthz-liveness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+      summary: Healthz Liveness
+      tags:
+      - healthz
+  /healthz/panic:
+    get:
+      responses:
+        "500":
+          description: panic
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Panic for test
+      tags:
+      - healthz
+  /healthz/rediness:
+    get:
+      consumes:
+      - application/json
+      description: Check the readiness of the service
+      operationId: healthz-rediness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+      summary: Healthz Readiness
+      tags:
+      - healthz
+  /healthz/sleep/{time}:
+    get:
+      parameters:
+      - description: Time to sleep, e.g. 30s
+        in: path
+        name: time
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ok
+      summary: Long Run for test
+      tags:
+      - healthz
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

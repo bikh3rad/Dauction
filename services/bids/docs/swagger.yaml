@@ -1,0 +1,305 @@
+definitions:
+  dto.BuyBidsRequest:
+    properties:
+      idempotencyKey:
+        type: string
+      packageId:
+        type: string
+    required:
+    - packageId
+    type: object
+  dto.BuyBidsResp:
+    properties:
+      balanceCredits:
+        type: integer
+      creditsGranted:
+        type: integer
+      usdcChargedCents:
+        type: integer
+    type: object
+  dto.DebitRequest:
+    properties:
+      accountId:
+        type: string
+      amount:
+        type: integer
+      auctionId:
+        type: string
+      idempotencyKey:
+        type: string
+    required:
+    - accountId
+    - amount
+    - auctionId
+    - idempotencyKey
+    type: object
+  dto.DebitResp:
+    properties:
+      amountCredits:
+        type: integer
+      auctionId:
+        type: string
+      createdAt:
+        description: ISO-8601 UTC
+        type: string
+      id:
+        type: string
+      idempotencyKey:
+        type: string
+    type: object
+  dto.DebitResultResp:
+    properties:
+      amount:
+        type: integer
+      balanceCredits:
+        type: integer
+    type: object
+  dto.ErrorResponse:
+    properties:
+      code:
+        type: string
+      details:
+        type: string
+    type: object
+  dto.PackageResp:
+    properties:
+      bestValue:
+        type: boolean
+      credits:
+        description: whole credits granted
+        type: integer
+      id:
+        type: string
+      priceCents:
+        description: USDC cents
+        type: integer
+    type: object
+  dto.PurchaseResp:
+    properties:
+      createdAt:
+        description: ISO-8601 UTC
+        type: string
+      creditsGranted:
+        description: whole credits
+        type: integer
+      id:
+        type: string
+      packageId:
+        type: string
+      usdcChargedCents:
+        description: USDC cents
+        type: integer
+    type: object
+  dto.WalletResp:
+    properties:
+      accountId:
+        type: string
+      balanceCredits:
+        type: integer
+      debits:
+        items:
+          $ref: '#/definitions/dto.DebitResp'
+        type: array
+      purchases:
+        items:
+          $ref: '#/definitions/dto.PurchaseResp'
+        type: array
+      updatedAt:
+        description: ISO-8601 UTC
+        type: string
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+info:
+  contact:
+    email: info@aban.io
+    name: API Support
+    url: http://aban.io/support
+  description: API documentation
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger
+  version: "1.0"
+paths:
+  /apis/bids/buy:
+    post:
+      consumes:
+      - application/json
+      description: Records a credit-package purchase atomically (the USDC charge +
+        the credit grant). Emits bids.purchased. Idempotent on idempotencyKey. Unknown
+        package -> RESOURCE_INVALID.
+      parameters:
+      - description: Authenticated account UUID (gateway-injected)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      - description: Package id (+ optional idempotency key)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BuyBidsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.BuyBidsResp'
+        "400":
+          description: Unknown package / bad body
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthenticated
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Buy bid credits
+      tags:
+      - bids
+  /apis/bids/packages:
+    get:
+      description: Lists the purchasable bid-credit packages. PUBLIC. Each credit
+        = $1; price is USDC cents.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.PackageResp'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Credit packages
+      tags:
+      - bids
+  /apis/bids/wallet:
+    get:
+      description: Returns the authenticated account's bid-credit balance (whole credits,
+        $1 each) plus recent purchases and debits. Balance is read-through, never
+        recomputed. Subject from the gateway-injected X-Account-Id header.
+      parameters:
+      - description: Authenticated account UUID (gateway-injected)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.WalletResp'
+        "401":
+          description: Unauthenticated
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Bid-credit wallet
+      tags:
+      - bids
+  /apis/internal/bids/debit:
+    post:
+      consumes:
+      - application/json
+      description: 'Called by auction-passive BEFORE recording a bid. Spends `amount`
+        credits. Insufficient balance -> RESOURCE_INVALID ("out of credits"). Idempotent
+        on idempotencyKey: a replay returns the original debit (HTTP 200, same body),
+        never double-burns. Emits bids.debited.'
+      parameters:
+      - description: Account, amount, idempotency key, auction
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.DebitRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DebitResultResp'
+        "400":
+          description: Out of credits / bad body
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Debit a bid credit (internal)
+      tags:
+      - bids-internal
+  /healthz/liveness:
+    get:
+      consumes:
+      - application/json
+      description: Check the liveness of the service
+      operationId: healthz-liveness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+      summary: Healthz Liveness
+      tags:
+      - healthz
+  /healthz/panic:
+    get:
+      responses:
+        "500":
+          description: panic
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Panic for test
+      tags:
+      - healthz
+  /healthz/rediness:
+    get:
+      consumes:
+      - application/json
+      description: Check the readiness of the service
+      operationId: healthz-rediness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+      summary: Healthz Readiness
+      tags:
+      - healthz
+  /healthz/sleep/{time}:
+    get:
+      parameters:
+      - description: Time to sleep, e.g. 30s
+        in: path
+        name: time
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ok
+      summary: Long Run for test
+      tags:
+      - healthz
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

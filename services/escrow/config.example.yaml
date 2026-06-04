@@ -1,0 +1,52 @@
+name: "escrow"
+version: "v1.0.0"
+description: "Dauction escrow service — funds ledger + escrow state machine (the heart)"
+environment: "development"
+
+app:
+  title: "Dauction Escrow"
+  description: "Funds ledger + escrow state machine; sole writer of escrow rows; enforces funds conservation"
+  version: "v1.0.0"
+  environment: "development"
+
+logger:
+  slog:
+    level: "debug"
+    encoding: "json" # text or json
+
+server:
+  http:
+    addr: ":8080"
+
+# OTLP exporter (traces/metrics/logs). Points at the Jaeger all-in-one collector
+# in deploy/docker-compose.yml. Override endpoint with APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT.
+collector:
+  exporters:
+    otlp:
+      endpoint: "jaeger:4317"
+      insecure: true
+  traces:
+    enabled: true
+  metrics:
+    enabled: true
+  logs:
+    enabled: true
+
+service:
+  scheduler:
+    enabled: false
+    interval: "3s"
+
+datasource:
+  # Owned Postgres (db `escrow`). One DB per service — never reach into another's.
+  # Override with APP_DATASOURCE_POSTGRES_DSN.
+  postgres:
+    dsn: "postgres://dauction:dauction@pg-escrow:5432/escrow?sslmode=disable"
+  # Shared NATS/JetStream event bus. Override with APP_DATASOURCE_NATS_DSN.
+  # Subjects: emitted (escrow.*) + consumed (escrow.lock_requested, auction.hammer,
+  # auction.won, dispute.resolved). Durable consumer group `escrow`.
+  nats:
+    dsn: "nats://nats:4222"
+    streamName: "DAUCTION"
+    subjects: "escrow.locked,escrow.released,escrow.forfeited,escrow.refunded,escrow.lock_requested,auction.hammer,auction.won,dispute.resolved"
+    durable: "escrow"

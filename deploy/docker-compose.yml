@@ -106,35 +106,45 @@ services:
     container_name: dauction-pg-auction-dutch
     environment: { <<: *postgres-env, POSTGRES_DB: auction_dutch }
     ports: ["5537:5432"]
-    volumes: ["pg-auction-dutch:/var/lib/postgresql/data"]
+    volumes:
+      - pg-auction-dutch:/var/lib/postgresql/data
+      - ../services/auction-dutch/migrations:/docker-entrypoint-initdb.d:ro
 
   pg-auction-passive:
     <<: *postgres
     container_name: dauction-pg-auction-passive
     environment: { <<: *postgres-env, POSTGRES_DB: auction_passive }
     ports: ["5538:5432"]
-    volumes: ["pg-auction-passive:/var/lib/postgresql/data"]
+    volumes:
+      - pg-auction-passive:/var/lib/postgresql/data
+      - ../services/auction-passive/migrations:/docker-entrypoint-initdb.d:ro
 
   pg-bids:
     <<: *postgres
     container_name: dauction-pg-bids
     environment: { <<: *postgres-env, POSTGRES_DB: bids }
     ports: ["5539:5432"]
-    volumes: ["pg-bids:/var/lib/postgresql/data"]
+    volumes:
+      - pg-bids:/var/lib/postgresql/data
+      - ../services/bids/migrations:/docker-entrypoint-initdb.d:ro
 
   pg-escrow:
     <<: *postgres
     container_name: dauction-pg-escrow
     environment: { <<: *postgres-env, POSTGRES_DB: escrow }
     ports: ["5540:5432"]
-    volumes: ["pg-escrow:/var/lib/postgresql/data"]
+    volumes:
+      - pg-escrow:/var/lib/postgresql/data
+      - ../services/escrow/migrations:/docker-entrypoint-initdb.d:ro
 
   pg-dispute:
     <<: *postgres
     container_name: dauction-pg-dispute
     environment: { <<: *postgres-env, POSTGRES_DB: dispute }
     ports: ["5541:5432"]
-    volumes: ["pg-dispute:/var/lib/postgresql/data"]
+    volumes:
+      - pg-dispute:/var/lib/postgresql/data
+      - ../services/dispute/migrations:/docker-entrypoint-initdb.d:ro
 
   # ===== Dauction services (one container per bounded context) =====
   # Each image bakes its config.example.yaml in as /app/config.yaml (already pointing at
@@ -205,10 +215,76 @@ services:
       APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT: jaeger:4317
     ports: ["18085:8080"]
 
-  # ===== service container template (next build phases append here) =====
-  # bids / auction-dutch / auction-passive / escrow / dispute:
-  #   same shape as identity above (own pg + nats + jaeger).
-  # gateway + notifier own no DB: depends_on the services they route to / nats only.
+  bids:
+    build: ../services/bids
+    container_name: dauction-bids
+    restart: unless-stopped
+    depends_on:
+      pg-bids: { condition: service_healthy }
+      nats: { condition: service_healthy }
+    environment:
+      APP_DATASOURCE_POSTGRES_DSN: postgres://dauction:dauction@pg-bids:5432/bids?sslmode=disable
+      APP_DATASOURCE_NATS_DSN: nats://nats:4222
+      APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT: jaeger:4317
+    ports: ["18086:8080"]
+
+  auction-dutch:
+    build: ../services/auction-dutch
+    container_name: dauction-auction-dutch
+    restart: unless-stopped
+    depends_on:
+      pg-auction-dutch: { condition: service_healthy }
+      nats: { condition: service_healthy }
+    environment:
+      APP_DATASOURCE_POSTGRES_DSN: postgres://dauction:dauction@pg-auction-dutch:5432/auction_dutch?sslmode=disable
+      APP_DATASOURCE_NATS_DSN: nats://nats:4222
+      APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT: jaeger:4317
+    ports: ["18087:8080"]
+
+  auction-passive:
+    build: ../services/auction-passive
+    container_name: dauction-auction-passive
+    restart: unless-stopped
+    depends_on:
+      pg-auction-passive: { condition: service_healthy }
+      nats: { condition: service_healthy }
+      bids: { condition: service_started }
+    environment:
+      APP_DATASOURCE_POSTGRES_DSN: postgres://dauction:dauction@pg-auction-passive:5432/auction_passive?sslmode=disable
+      APP_DATASOURCE_NATS_DSN: nats://nats:4222
+      APP_BIDS_BASEURL: http://bids:8080
+      APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT: jaeger:4317
+    ports: ["18088:8080"]
+
+  escrow:
+    build: ../services/escrow
+    container_name: dauction-escrow
+    restart: unless-stopped
+    depends_on:
+      pg-escrow: { condition: service_healthy }
+      nats: { condition: service_healthy }
+    environment:
+      APP_DATASOURCE_POSTGRES_DSN: postgres://dauction:dauction@pg-escrow:5432/escrow?sslmode=disable
+      APP_DATASOURCE_NATS_DSN: nats://nats:4222
+      APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT: jaeger:4317
+    ports: ["18089:8080"]
+
+  dispute:
+    build: ../services/dispute
+    container_name: dauction-dispute
+    restart: unless-stopped
+    depends_on:
+      pg-dispute: { condition: service_healthy }
+      nats: { condition: service_healthy }
+    environment:
+      APP_DATASOURCE_POSTGRES_DSN: postgres://dauction:dauction@pg-dispute:5432/dispute?sslmode=disable
+      APP_DATASOURCE_NATS_DSN: nats://nats:4222
+      APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT: jaeger:4317
+    ports: ["18090:8080"]
+
+  # ===== final wave (gateway + notifier own no DB; appended after they land) =====
+  # gateway: edge router + tier/KYC guard; depends_on the services it fans into + nats.
+  # notifier: WS/SSE broadcaster; depends_on nats only.
 
 volumes:
   nats-data:

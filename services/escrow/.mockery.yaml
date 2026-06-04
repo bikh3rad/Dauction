@@ -1,0 +1,22 @@
+quiet: False
+# keeptree: True
+disable-version-string: True
+with-expecter: True
+# mockname: "{{.InterfaceName}}"
+# filename: "{{.MockName}}.go"
+outpkg: mocks
+packages:
+  application/internal/biz:
+    config:
+      dir: ./internal/mocks
+      all: true
+      recursive: true
+    interfaces:
+      # UsecaseEscrow references biz types (TradeView, LockRequest, HammerInput,
+      # WonInput, DisputeInput) in its signature. Its mock is consumed by the
+      # handler tests (package handler) and the consumer tests (package biz_test);
+      # keeping it in a sub-package avoids any biz -> mocks -> biz import cycle,
+      # mirroring catalog's UsecaseLot.
+      UsecaseEscrow:
+        config:
+          dir: ./internal/mocks/usecase

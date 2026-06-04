@@ -1,0 +1,378 @@
+definitions:
+  dto.BalanceResp:
+    properties:
+      balanceCents:
+        type: integer
+      participantId:
+        type: string
+    type: object
+  dto.ConfirmReq:
+    properties:
+      mode:
+        enum:
+        - CASH
+        - VAULT_CREDIT
+        type: string
+    required:
+    - mode
+    type: object
+  dto.ConservationResp:
+    properties:
+      balanced:
+        type: boolean
+      disbursedCents:
+        type: integer
+      inflowsCents:
+        type: integer
+    type: object
+  dto.ErrorResponse:
+    properties:
+      details:
+        type: string
+      message:
+        type: string
+    type: object
+  dto.FundReq:
+    properties:
+      amountCents:
+        type: integer
+    required:
+    - amountCents
+    type: object
+  dto.RefundReq:
+    properties:
+      participantId:
+        type: string
+    required:
+    - participantId
+    type: object
+  dto.TradeResp:
+    properties:
+      balances:
+        items:
+          $ref: '#/definitions/dto.BalanceResp'
+        type: array
+      buyerId:
+        type: string
+      conservation:
+        $ref: '#/definitions/dto.ConservationResp'
+      createdAt:
+        type: string
+      feeCents:
+        type: integer
+      fundingDeadline:
+        description: ISO-8601 UTC
+        type: string
+      id:
+        type: string
+      inspectorFeeCents:
+        type: integer
+      kind:
+        description: DUTCH | PASSIVE
+        type: string
+      lotId:
+        type: string
+      obligationCents:
+        type: integer
+      premiumCents:
+        type: integer
+      priceCents:
+        type: integer
+      releaseMode:
+        type: string
+      sellerId:
+        type: string
+      state:
+        description: UNLOCKED | DEPOSIT_LOCKED | ...
+        type: string
+      updatedAt:
+        type: string
+    type: object
+  dto.TradeStateResp:
+    properties:
+      id:
+        type: string
+      kind:
+        type: string
+      releaseMode:
+        type: string
+      state:
+        type: string
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+info:
+  contact:
+    email: info@aban.io
+    name: API Support
+    url: http://aban.io/support
+  description: API documentation
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger
+  version: "1.0"
+paths:
+  /apis/admin/escrow/{tradeId}/forfeit:
+    post:
+      description: 'House/admin action: a winner who missed the 24h funding window
+        forfeits their locked funds -> FORFEITED. Emits escrow.forfeited.'
+      parameters:
+      - description: Trade UUID
+        in: path
+        name: tradeId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TradeStateResp'
+        "400":
+          description: Nothing to forfeit / disputed
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Forfeit a trade (admin)
+      tags:
+      - escrow-admin
+  /apis/admin/escrow/{tradeId}/refund:
+    post:
+      consumes:
+      - application/json
+      description: 'House/admin action: returns a participant''s locked funds (loser
+        unfreeze or manual correction) -> REFUNDED. Suspended while DISPUTED.'
+      parameters:
+      - description: Trade UUID
+        in: path
+        name: tradeId
+        required: true
+        type: string
+      - description: Participant to refund
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RefundReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TradeStateResp'
+        "400":
+          description: Nothing to refund / disputed / bad id
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Refund a participant (admin)
+      tags:
+      - escrow-admin
+  /apis/escrow/{tradeId}:
+    get:
+      description: Returns the escrow trade head state, the derived per-participant
+        balances (USDC cents), and the funds-conservation summary (inflows vs disbursed).
+      parameters:
+      - description: Trade UUID (== auction id)
+        in: path
+        name: tradeId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TradeResp'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Get escrow trade
+      tags:
+      - escrow
+  /apis/escrow/{tradeId}/confirm:
+    post:
+      consumes:
+      - application/json
+      description: The buyer confirms delivery, releasing the held pot to the seller
+        (HELD -> RELEASED). mode CASH pays 100%; VAULT_CREDIT records a 110% Vault-Credit
+        instruction (vault credits on escrow.released). Blocked while DISPUTED.
+      parameters:
+      - description: Authenticated account UUID (gateway-injected)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      - description: Trade UUID
+        in: path
+        name: tradeId
+        required: true
+        type: string
+      - description: Release mode
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ConfirmReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TradeStateResp'
+        "400":
+          description: Not HELD / disputed / bad mode
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthenticated / not the buyer
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Confirm delivery (release)
+      tags:
+      - escrow
+  /apis/escrow/{tradeId}/fund:
+    post:
+      consumes:
+      - application/json
+      description: The winner funds their obligation (passive path, or Dutch post-hammer).
+        Within the funding deadline the trade moves to HELD; past the deadline it
+        FORFEITs. amountCents must equal the obligation exactly (mismatch -> RESOURCE_INVALID).
+        Double-fund is rejected.
+      parameters:
+      - description: Authenticated account UUID (gateway-injected)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      - description: Trade UUID
+        in: path
+        name: tradeId
+        required: true
+        type: string
+      - description: Amount to fund (must equal obligation)
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.FundReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.TradeStateResp'
+        "400":
+          description: Wrong amount / window expired / already funded
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthenticated / not the winner
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Fund obligation
+      tags:
+      - escrow
+  /healthz/liveness:
+    get:
+      consumes:
+      - application/json
+      description: Check the liveness of the service
+      operationId: healthz-liveness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+      summary: Healthz Liveness
+      tags:
+      - healthz
+  /healthz/panic:
+    get:
+      responses:
+        "500":
+          description: panic
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Panic for test
+      tags:
+      - healthz
+  /healthz/rediness:
+    get:
+      consumes:
+      - application/json
+      description: Check the readiness of the service
+      operationId: healthz-rediness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+      summary: Healthz Readiness
+      tags:
+      - healthz
+  /healthz/sleep/{time}:
+    get:
+      parameters:
+      - description: Time to sleep, e.g. 30s
+        in: path
+        name: time
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ok
+      summary: Long Run for test
+      tags:
+      - healthz
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

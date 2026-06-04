@@ -1,0 +1,53 @@
+name: "dispute"
+version: "v1.0.0"
+description: "Dauction dispute service — dispute court, rulings, immutable audit trail"
+environment: "development"
+
+app:
+  title: "Dauction Dispute"
+  description: "Dispute court: buyers raise post-delivery claims, the house rules, escrow executes the verdict"
+  version: "v1.0.0"
+  environment: "development"
+
+logger:
+  slog:
+    level: "debug"
+    encoding: "json" # text or json
+
+server:
+  http:
+    addr: ":8080"
+
+# OTLP exporter (traces/metrics/logs). Points at the Jaeger all-in-one collector
+# in deploy/docker-compose.yml. Override endpoint with APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT.
+collector:
+  exporters:
+    otlp:
+      endpoint: "jaeger:4317"
+      insecure: true
+  traces:
+    enabled: true
+  metrics:
+    enabled: true
+  logs:
+    enabled: true
+
+service:
+  scheduler:
+    enabled: false
+    interval: "3s"
+
+datasource:
+  # Owned Postgres (db `dispute`). One DB per service — never reach into another's.
+  # Override with APP_DATASOURCE_POSTGRES_DSN.
+  postgres:
+    dsn: "postgres://dauction:dauction@pg-dispute:5432/dispute?sslmode=disable"
+  # Shared NATS/JetStream event bus. Override with APP_DATASOURCE_NATS_DSN.
+  # dispute is publish-only: it emits dispute.opened (service-local; escrow
+  # consumes it to suspend release) and dispute.resolved (matches the frozen
+  # proto; escrow executes the ruling).
+  nats:
+    dsn: "nats://nats:4222"
+    streamName: "DAUCTION"
+    subjects: "dispute.opened,dispute.resolved"
+    durable: "dispute"

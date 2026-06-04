@@ -1,0 +1,560 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "API documentation",
+        "title": "Swagger",
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://aban.io/support",
+            "email": "info@aban.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
+        "version": "1.0"
+    },
+    "paths": {
+        "/apis/admin/escrow/{tradeId}/forfeit": {
+            "post": {
+                "description": "House/admin action: a winner who missed the 24h funding window forfeits their locked funds -\u003e FORFEITED. Emits escrow.forfeited.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "escrow-admin"
+                ],
+                "summary": "Forfeit a trade (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trade UUID",
+                        "name": "tradeId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.TradeStateResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Nothing to forfeit / disputed",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/apis/admin/escrow/{tradeId}/refund": {
+            "post": {
+                "description": "House/admin action: returns a participant's locked funds (loser unfreeze or manual correction) -\u003e REFUNDED. Suspended while DISPUTED.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "escrow-admin"
+                ],
+                "summary": "Refund a participant (admin)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trade UUID",
+                        "name": "tradeId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Participant to refund",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.RefundReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.TradeStateResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Nothing to refund / disputed / bad id",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/apis/escrow/{tradeId}": {
+            "get": {
+                "description": "Returns the escrow trade head state, the derived per-participant balances (USDC cents), and the funds-conservation summary (inflows vs disbursed).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "escrow"
+                ],
+                "summary": "Get escrow trade",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Trade UUID (== auction id)",
+                        "name": "tradeId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.TradeResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/apis/escrow/{tradeId}/confirm": {
+            "post": {
+                "description": "The buyer confirms delivery, releasing the held pot to the seller (HELD -\u003e RELEASED). mode CASH pays 100%; VAULT_CREDIT records a 110% Vault-Credit instruction (vault credits on escrow.released). Blocked while DISPUTED.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "escrow"
+                ],
+                "summary": "Confirm delivery (release)",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authenticated account UUID (gateway-injected)",
+                        "name": "X-Account-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Trade UUID",
+                        "name": "tradeId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Release mode",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ConfirmReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.TradeStateResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Not HELD / disputed / bad mode",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated / not the buyer",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/apis/escrow/{tradeId}/fund": {
+            "post": {
+                "description": "The winner funds their obligation (passive path, or Dutch post-hammer). Within the funding deadline the trade moves to HELD; past the deadline it FORFEITs. amountCents must equal the obligation exactly (mismatch -\u003e RESOURCE_INVALID). Double-fund is rejected.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "escrow"
+                ],
+                "summary": "Fund obligation",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Authenticated account UUID (gateway-injected)",
+                        "name": "X-Account-Id",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Trade UUID",
+                        "name": "tradeId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Amount to fund (must equal obligation)",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.FundReq"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.TradeStateResp"
+                        }
+                    },
+                    "400": {
+                        "description": "Wrong amount / window expired / already funded",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated / not the winner",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/healthz/liveness": {
+            "get": {
+                "description": "Check the liveness of the service",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "healthz"
+                ],
+                "summary": "Healthz Liveness",
+                "operationId": "healthz-liveness",
+                "responses": {
+                    "200": {
+                        "description": "ok"
+                    }
+                }
+            }
+        },
+        "/healthz/panic": {
+            "get": {
+                "tags": [
+                    "healthz"
+                ],
+                "summary": "Panic for test",
+                "responses": {
+                    "500": {
+                        "description": "panic",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/healthz/rediness": {
+            "get": {
+                "description": "Check the readiness of the service",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "healthz"
+                ],
+                "summary": "Healthz Readiness",
+                "operationId": "healthz-rediness",
+                "responses": {
+                    "200": {
+                        "description": "ok"
+                    }
+                }
+            }
+        },
+        "/healthz/sleep/{time}": {
+            "get": {
+                "tags": [
+                    "healthz"
+                ],
+                "summary": "Long Run for test",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Time to sleep, e.g. 30s",
+                        "name": "time",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "ok"
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "dto.BalanceResp": {
+            "type": "object",
+            "properties": {
+                "balanceCents": {
+                    "type": "integer"
+                },
+                "participantId": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.ConfirmReq": {
+            "type": "object",
+            "required": [
+                "mode"
+            ],
+            "properties": {
+                "mode": {
+                    "type": "string",
+                    "enum": [
+                        "CASH",
+                        "VAULT_CREDIT"
+                    ]
+                }
+            }
+        },
+        "dto.ConservationResp": {
+            "type": "object",
+            "properties": {
+                "balanced": {
+                    "type": "boolean"
+                },
+                "disbursedCents": {
+                    "type": "integer"
+                },
+                "inflowsCents": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "details": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.FundReq": {
+            "type": "object",
+            "required": [
+                "amountCents"
+            ],
+            "properties": {
+                "amountCents": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.RefundReq": {
+            "type": "object",
+            "required": [
+                "participantId"
+            ],
+            "properties": {
+                "participantId": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.TradeResp": {
+            "type": "object",
+            "properties": {
+                "balances": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.BalanceResp"
+                    }
+                },
+                "buyerId": {
+                    "type": "string"
+                },
+                "conservation": {
+                    "$ref": "#/definitions/dto.ConservationResp"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "feeCents": {
+                    "type": "integer"
+                },
+                "fundingDeadline": {
+                    "description": "ISO-8601 UTC",
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "inspectorFeeCents": {
+                    "type": "integer"
+                },
+                "kind": {
+                    "description": "DUTCH | PASSIVE",
+                    "type": "string"
+                },
+                "lotId": {
+                    "type": "string"
+                },
+                "obligationCents": {
+                    "type": "integer"
+                },
+                "premiumCents": {
+                    "type": "integer"
+                },
+                "priceCents": {
+                    "type": "integer"
+                },
+                "releaseMode": {
+                    "type": "string"
+                },
+                "sellerId": {
+                    "type": "string"
+                },
+                "state": {
+                    "description": "UNLOCKED | DEPOSIT_LOCKED | ...",
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.TradeStateResp": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "kind": {
+                    "type": "string"
+                },
+                "releaseMode": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BasicAuth": {
+            "type": "basic"
+        }
+    },
+    "externalDocs": {
+        "description": "OpenAPI",
+        "url": "https://swagger.io/resources/open-api/"
+    }
+}

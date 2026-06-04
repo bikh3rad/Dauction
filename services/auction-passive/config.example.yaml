@@ -1,0 +1,58 @@
+name: "auction-passive"
+version: "v1.0.0"
+description: "Dauction auction-passive service — Vickrey + UniqBid timed auctions"
+environment: "development"
+
+app:
+  title: "Dauction Auction-Passive"
+  description: "Timed passive auctions: Vickrey (sealed second-price) and UniqBid (lowest unique price)"
+  version: "v1.0.0"
+  environment: "development"
+
+logger:
+  slog:
+    level: "debug"
+    encoding: "json" # text or json
+
+server:
+  http:
+    addr: ":8080"
+
+# OTLP exporter (traces/metrics/logs). Points at the Jaeger all-in-one collector
+# in deploy/docker-compose.yml. Override endpoint with APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT.
+collector:
+  exporters:
+    otlp:
+      endpoint: "jaeger:4317"
+      insecure: true
+  traces:
+    enabled: true
+  metrics:
+    enabled: true
+  logs:
+    enabled: true
+
+service:
+  scheduler:
+    enabled: false
+    interval: "3s"
+
+datasource:
+  # Owned Postgres (db `auction_passive`). One DB per service — never reach into
+  # another's. Override with APP_DATASOURCE_POSTGRES_DSN.
+  postgres:
+    dsn: "postgres://dauction:dauction@pg-auction-passive:5432/auction_passive?sslmode=disable"
+  # Shared NATS/JetStream event bus. Override with APP_DATASOURCE_NATS_DSN.
+  # subjects lists the subjects this service emits AND consumes (the platform
+  # stream binds them; the consumer filters lot.scheduled + bids.debited).
+  nats:
+    dsn: "nats://nats:4222"
+    streamName: "DAUCTION"
+    subjects: "bid.placed,auction.closed,auction.won,lot.scheduled,bids.debited"
+    durable: "auction-passive"
+
+# Synchronous dependency: the bids service (CLAUDE.md §5). auction-passive calls
+# POST {baseUrl}/apis/internal/bids/debit BEFORE persisting a bid. Override with
+# APP_BIDS_BASEURL.
+bids:
+  baseUrl: "http://bids:8080"
