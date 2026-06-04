@@ -282,9 +282,40 @@ services:
       APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT: jaeger:4317
     ports: ["18090:8080"]
 
-  # ===== final wave (gateway + notifier own no DB; appended after they land) =====
-  # gateway: edge router + tier/KYC guard; depends_on the services it fans into + nats.
-  # notifier: WS/SSE broadcaster; depends_on nats only.
+  # notifier — realtime SSE fan-out; consumes domain events from NATS, owns no DB.
+  notifier:
+    build: ../services/notifier
+    container_name: dauction-notifier
+    restart: unless-stopped
+    depends_on:
+      nats: { condition: service_healthy }
+    environment:
+      APP_DATASOURCE_NATS_DSN: nats://nats:4222
+      APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT: jaeger:4317
+    ports: ["18091:8080"]
+
+  # gateway — the single public entrypoint: authN + tier/KYC guard + rate-limit,
+  # reverse-proxying every /apis/* route to the owning service. Stateless (no DB).
+  gateway:
+    build: ../services/gateway
+    container_name: dauction-gateway
+    restart: unless-stopped
+    depends_on:
+      identity: { condition: service_started }
+      invite: { condition: service_started }
+      kyc: { condition: service_started }
+      vault: { condition: service_started }
+      catalog: { condition: service_started }
+      bids: { condition: service_started }
+      auction-dutch: { condition: service_started }
+      auction-passive: { condition: service_started }
+      escrow: { condition: service_started }
+      dispute: { condition: service_started }
+      notifier: { condition: service_started }
+    environment:
+      APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT: jaeger:4317
+    # The public API. All other service ports above are for direct/debug access.
+    ports: ["18080:8080"]
 
 volumes:
   nats-data:

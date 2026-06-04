@@ -1,0 +1,21 @@
+quiet: False
+# keeptree: True
+disable-version-string: True
+with-expecter: True
+# mockname: "{{.InterfaceName}}"
+# filename: "{{.MockName}}.go"
+outpkg: mocks
+packages:
+  application/internal/biz:
+    config:
+      dir: ./internal/mocks
+      all: true
+      recursive: true
+    interfaces:
+      # UsecaseAccess references biz types (biz.RouteRequirement / biz.GuardResult)
+      # in its signature, so its mock lives in a sub-package: keeping it in
+      # ./internal/mocks would form an import cycle if an in-package biz test used
+      # it (biz -> mocks -> biz). The handler tests / biz_test consume it from here.
+      UsecaseAccess:
+        config:
+          dir: ./internal/mocks/usecase

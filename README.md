@@ -45,10 +45,43 @@ Dauction/
 
 ## Quick start
 
+Bring up the **entire backend** (every service + its own Postgres + NATS JetStream + Jaeger) with one
+command — Compose builds each service image and applies its migrations on first boot:
+
 ```sh
-make up        # pg-per-service + NATS(JetStream) + Jaeger   (Jaeger UI → http://localhost:16686)
+make up        # build + start all 12 services + pg-per-service + NATS + Jaeger
+make ps        # watch health
+make down      # stop (keeps volumes)
+```
+
+All traffic goes through the **gateway** at `http://localhost:18080`; every route is mounted under
+`/apis`. Each service is also individually reachable on its own host port, and exposes
+`/swagger/` (API docs), `/healthz/liveness`, `/healthz/rediness`, and `/metrics`.
+
+| Surface | URL |
+|---|---|
+| **Gateway (the public API)** | http://localhost:18080/apis/... |
+| identity | http://localhost:18081 |
+| invite | http://localhost:18082 |
+| kyc | http://localhost:18083 |
+| vault | http://localhost:18084 |
+| catalog | http://localhost:18085 |
+| bids | http://localhost:18086 |
+| auction-dutch | http://localhost:18087 |
+| auction-passive | http://localhost:18088 |
+| escrow | http://localhost:18089 |
+| dispute | http://localhost:18090 |
+| notifier (SSE) | http://localhost:18091 |
+| Jaeger UI (traces) | http://localhost:16686 |
+| NATS monitoring | http://localhost:18222 |
+
+Example (public, no auth): `curl http://localhost:18080/apis/gallery/weekly`.
+Authenticated routes use a dev `Authorization: Bearer <accountId>` scheme at the gateway, which
+injects the trusted `X-Account-Id` / tier / KYC headers downstream (see `services/gateway`).
+
+```sh
 make check     # i18n key-parity + proto lint + go vet across services
-make down      # tear down infra
+make test      # go test across every service
 ```
 
 `make help` lists every target.

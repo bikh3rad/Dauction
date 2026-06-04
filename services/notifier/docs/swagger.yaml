@@ -1,0 +1,123 @@
+definitions:
+  dto.ErrorResponse:
+    properties:
+      details:
+        type: string
+      message:
+        type: string
+    type: object
+externalDocs:
+  description: OpenAPI
+  url: https://swagger.io/resources/open-api/
+info:
+  contact:
+    email: info@aban.io
+    name: API Support
+    url: http://aban.io/support
+  description: API documentation
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger
+  version: "1.0"
+paths:
+  /apis/live/auctions/{id}:
+    get:
+      description: 'Server-Sent Events stream of server-computed view-state for an
+        auction: live Dutch price + next drop, passive countdown/standing, hammer/resolution,
+        and escrow state. A snapshot frame is sent on connect. Read-only — the socket
+        never accepts input.'
+      parameters:
+      - description: Auction ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: event stream
+      summary: Live auction feed (SSE)
+      tags:
+      - live
+  /apis/live/me:
+    get:
+      description: Server-Sent Events stream of the caller's personal view-state (escrow
+        trade state changes, personal toasts). Caller identity comes from the gateway-injected
+        X-Account-Id header. Read-only.
+      parameters:
+      - description: Caller account id (gateway-injected)
+        in: header
+        name: X-Account-Id
+        required: true
+        type: string
+      produces:
+      - text/event-stream
+      responses:
+        "200":
+          description: event stream
+        "401":
+          description: missing X-Account-Id
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Personal live feed (SSE)
+      tags:
+      - live
+  /healthz/liveness:
+    get:
+      consumes:
+      - application/json
+      description: Check the liveness of the service
+      operationId: healthz-liveness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+      summary: Healthz Liveness
+      tags:
+      - healthz
+  /healthz/panic:
+    get:
+      responses:
+        "500":
+          description: panic
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      summary: Panic for test
+      tags:
+      - healthz
+  /healthz/rediness:
+    get:
+      consumes:
+      - application/json
+      description: Check the readiness of the service
+      operationId: healthz-rediness
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: ok
+      summary: Healthz Readiness
+      tags:
+      - healthz
+  /healthz/sleep/{time}:
+    get:
+      parameters:
+      - description: Time to sleep, e.g. 30s
+        in: path
+        name: time
+        required: true
+        type: string
+      responses:
+        "200":
+          description: ok
+      summary: Long Run for test
+      tags:
+      - healthz
+securityDefinitions:
+  BasicAuth:
+    type: basic
+swagger: "2.0"

@@ -1,0 +1,59 @@
+name: "gateway"
+version: "v1.0.0"
+description: "Dauction API gateway"
+environment: "development"
+
+app:
+  title: "Dauction Gateway"
+  description: "Edge gateway: authN, tier/KYC guard, rate-limit, reverse-proxy of /apis/*"
+  version: "v1.0.0"
+  environment: "development"
+
+logger:
+  slog:
+    level: "debug"
+    encoding: "text" # text or json
+
+server:
+  http:
+    addr: ":8080"
+
+# OpenTelemetry collector (traces/metrics/logs over OTLP gRPC).
+collector:
+  exporters:
+    otlp:
+      endpoint: "jaeger:4317"
+      insecure: true
+  traces:
+    enabled: true
+  metrics:
+    enabled: true
+  logs:
+    enabled: true
+
+# Upstream service base URLs (container DNS : 8080). Override any with
+# APP_UPSTREAMS_<NAME>, e.g. APP_UPSTREAMS_IDENTITY=http://localhost:9001.
+upstreams:
+  identity: "http://identity:8080"
+  invite: "http://invite:8080"
+  kyc: "http://kyc:8080"
+  vault: "http://vault:8080"
+  catalog: "http://catalog:8080"
+  auction-dutch: "http://auction-dutch:8080"
+  auction-passive: "http://auction-passive:8080"
+  bids: "http://bids:8080"
+  escrow: "http://escrow:8080"
+  dispute: "http://dispute:8080"
+  notifier: "http://notifier:8080"
+
+# Identity access read-model used by the tier/KYC guard.
+# GET {baseurl}/apis/internal/accounts/{id}/access. Override APP_ACCESS_BASEURL.
+access:
+  baseurl: "http://identity:8080"
+  timeoutseconds: 2
+
+# Fixed-window rate limiter (per client IP / account). Override APP_RATELIMIT_*.
+ratelimit:
+  enabled: true
+  limit: 100
+  windowseconds: 10
