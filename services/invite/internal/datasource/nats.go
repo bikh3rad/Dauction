@@ -76,13 +76,18 @@ func NewNats(ctx context.Context, logger *slog.Logger, config *app.KConfig) (*Na
 }
 
 func (n *Nats) initJetStream(ctx context.Context, cfg *NatsConfig) error {
+	// The DAUCTION stream is SHARED by every service. All services create-or-update
+	// it with an IDENTICAL config (file storage, limits retention, the full
+	// platform subject list) so startup order never matters and every domain
+	// subject is always bound. Publishers target specific subjects; consumers bind
+	// durable filters on their own subset.
 	streamConfig := jetstream.StreamConfig{
 		Name:        cfg.StreamName,
-		Subjects:    strings.Split(cfg.Subjects, ","),
-		Description: "Stream for FCM Campaigns",
-		Storage:     jetstream.MemoryStorage,
+		Subjects:    splitSubjects(cfg.Subjects),
+		Description: "Dauction domain events",
+		Storage:     jetstream.FileStorage,
 		Replicas:    1,
-		Retention:   jetstream.InterestPolicy,
+		Retention:   jetstream.LimitsPolicy,
 	}
 
 	s, err := n.JetStream.CreateOrUpdateStream(ctx, streamConfig)
@@ -94,17 +99,22 @@ func (n *Nats) initJetStream(ctx context.Context, cfg *NatsConfig) error {
 
 	n.Stream = s
 
-	if _, err = s.CreateOrUpdateConsumer(ctx,
-		jetstream.ConsumerConfig{
-			Durable:       "campaigns",
-			FilterSubject: "ir.lenz.fcm-campaign.campaigns",
-			AckPolicy:     jetstream.AckExplicitPolicy,
-		},
-	); err != nil {
-		return err
-	}
-
 	n.logger.Info("NATS stream initialized successfully", "stream_name", cfg.StreamName)
 
 	return nil
+}
+
+// splitSubjects parses the comma-separated subjects config into a trimmed,
+// non-empty list (an empty entry is an invalid NATS subject).
+func splitSubjects(s string) []string {
+	parts := strings.Split(s, ",")
+	out := make([]string, 0, len(parts))
+
+	for _, p := range parts {
+		if t := strings.TrimSpace(p); t != "" {
+			out = append(out, t)
+		}
+	}
+
+	return out
 }

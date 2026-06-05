@@ -48,7 +48,7 @@ datasource:
     dsn: "nats://nats:4222"
     initJetstream: true
     streamName: "DAUCTION"
-    subject: "invite.redeemed,invite.>"
+    subject: "account.>,invite.>,kyc.>,object.>,credit.>,lot.>,attestation.>,auction.>,escrow.>,bid.>,bids.>,dispute.>"
   redis:
     Enabled: false
     Address: localhost:6379

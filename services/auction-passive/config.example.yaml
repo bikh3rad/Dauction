@@ -48,7 +48,7 @@ datasource:
   nats:
     dsn: "nats://nats:4222"
     streamName: "DAUCTION"
-    subjects: "bid.placed,auction.closed,auction.won,lot.scheduled,bids.debited"
+    subjects: "account.>,invite.>,kyc.>,object.>,credit.>,lot.>,attestation.>,auction.>,escrow.>,bid.>,bids.>,dispute.>"
     durable: "auction-passive"
 
 # Synchronous dependency: the bids service (CLAUDE.md §5). auction-passive calls

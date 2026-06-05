@@ -48,5 +48,5 @@ datasource:
   nats:
     dsn: "nats://nats:4222"
     streamName: "DAUCTION"
-    subjects: "attestation.recorded,lot.certified,lot.scheduled,object.listed"
+    subjects: "account.>,invite.>,kyc.>,object.>,credit.>,lot.>,attestation.>,auction.>,escrow.>,bid.>,bids.>,dispute.>"
     durable: "catalog"

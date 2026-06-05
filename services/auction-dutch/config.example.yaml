@@ -48,5 +48,5 @@ datasource:
   nats:
     dsn: "nats://nats:4222"
     streamName: "DAUCTION"
-    subjects: "auction.opened,auction.hammer,auction.completed,escrow.lock_requested,lot.scheduled,escrow.locked"
+    subjects: "account.>,invite.>,kyc.>,object.>,credit.>,lot.>,attestation.>,auction.>,escrow.>,bid.>,bids.>,dispute.>"
     durable: "auction-dutch"
