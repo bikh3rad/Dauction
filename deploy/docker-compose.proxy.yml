@@ -1,0 +1,56 @@
+# Dauction — PROXY OVERRIDE for offline hosts (no direct internet, only a
+# local HTTP/HTTPS proxy, e.g. 127.0.0.1:10880).
+#
+# This file ONLY overrides each service's `build:` to add:
+#   * network: host   -> so the build container can reach a proxy bound to the
+#                        HOST's loopback (127.0.0.1). Without this, 127.0.0.1
+#                        inside the build is the build container itself, not the
+#                        host, and the proxy is unreachable.
+#   * HTTP(S)_PROXY    -> Docker's predefined proxy ARGs, auto-injected into
+#                        every RUN, so `go mod download` routes via the proxy
+#                        WITHOUT touching any Dockerfile.
+#
+# The base file (docker-compose.yml) is unchanged and still works standalone on
+# internet-connected hosts. Use this override ONLY on the offline host:
+#
+#   cd deploy
+#   docker compose -f docker-compose.yml -f docker-compose.proxy.yml build
+#   docker compose -f docker-compose.yml -f docker-compose.proxy.yml up -d
+#
+# Override the proxy address per-shell if it differs:
+#   BUILD_HTTP_PROXY=http://127.0.0.1:3128 docker compose -f ... -f ... build
+
+name: dauction
+
+x-build-proxy: &build-proxy
+  network: host
+  args:
+    HTTP_PROXY: ${BUILD_HTTP_PROXY:-http://127.0.0.1:10880}
+    HTTPS_PROXY: ${BUILD_HTTPS_PROXY:-http://127.0.0.1:10880}
+    NO_PROXY: ${BUILD_NO_PROXY:-localhost,127.0.0.1}
+
+services:
+  identity:
+    build: { <<: *build-proxy }
+  invite:
+    build: { <<: *build-proxy }
+  kyc:
+    build: { <<: *build-proxy }
+  vault:
+    build: { <<: *build-proxy }
+  catalog:
+    build: { <<: *build-proxy }
+  bids:
+    build: { <<: *build-proxy }
+  auction-dutch:
+    build: { <<: *build-proxy }
+  auction-passive:
+    build: { <<: *build-proxy }
+  escrow:
+    build: { <<: *build-proxy }
+  dispute:
+    build: { <<: *build-proxy }
+  notifier:
+    build: { <<: *build-proxy }
+  gateway:
+    build: { <<: *build-proxy }

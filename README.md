@@ -79,6 +79,23 @@ Example (public, no auth): `curl http://localhost:18080/apis/gallery/weekly`.
 Authenticated routes use a dev `Authorization: Bearer <accountId>` scheme at the gateway, which
 injects the trusted `X-Account-Id` / tier / KYC headers downstream (see `services/gateway`).
 
+### Offline / proxy-only hosts
+
+On a host with no direct internet (only a local HTTP/HTTPS proxy, e.g. `127.0.0.1:10880`), the
+`go mod download` step times out. Use the proxy override file — it adds `network: host` (so the
+build can reach a proxy bound to the host loopback) and Docker's predefined `HTTP(S)_PROXY` build
+args (so Go routes through it, no Dockerfile change):
+
+```sh
+cd deploy
+cp .env.proxy.example .env     # sets COMPOSE_FILE + BUILD_*_PROXY (edit the proxy URL if needed)
+docker compose up -d --build   # now builds via docker-compose.yml + docker-compose.proxy.yml
+```
+
+The base `docker-compose.yml` is unchanged and still builds direct on internet hosts (don't create
+`deploy/.env` there). To run the `claude` CLI on the same offline host, export the standard proxy
+vars first: `export HTTPS_PROXY=http://127.0.0.1:10880 HTTP_PROXY=http://127.0.0.1:10880 NO_PROXY=localhost,127.0.0.1`.
+
 ```sh
 make check     # i18n key-parity + proto lint + go vet across services
 make test      # go test across every service

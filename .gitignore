@@ -39,6 +39,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+!.env.proxy.example
 config.local.yaml
 *.local.yaml
 
