@@ -54,3 +54,5 @@ services:
     build: { <<: *build-proxy }
   gateway:
     build: { <<: *build-proxy }
+  web:
+    build: { <<: *build-proxy }

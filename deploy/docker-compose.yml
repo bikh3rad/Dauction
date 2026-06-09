@@ -317,6 +317,21 @@ services:
     # The public API. All other service ports above are for direct/debug access.
     ports: ["18080:8080"]
 
+  # web — React SPA built to static assets, served by nginx. nginx proxies
+  # /apis/* to the gateway on this network (same-origin), so the browser only
+  # ever hits this one origin. This is the human entrypoint: open it in a browser.
+  web:
+    build: ../web
+    container_name: dauction-web
+    restart: unless-stopped
+    depends_on:
+      gateway: { condition: service_started }
+    environment:
+      # `vite preview` proxies /apis to the gateway on this network.
+      VITE_GATEWAY_PROXY: http://gateway:8080
+    # Open the site here: http://127.0.0.1:18079/
+    ports: ["18079:8080"]
+
 volumes:
   nats-data:
   pg-identity:

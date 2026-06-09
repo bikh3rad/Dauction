@@ -24,6 +24,14 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    preview: { port: 4173, host: true },
+    preview: {
+      port: 4173,
+      host: true,
+      // Same proxy as dev, so the containerized `vite preview` forwards /apis
+      // to the gateway (VITE_GATEWAY_PROXY=http://gateway:8080 in compose).
+      proxy: {
+        "/apis": { target: gateway, changeOrigin: true, ws: true },
+      },
+    },
   };
 });
