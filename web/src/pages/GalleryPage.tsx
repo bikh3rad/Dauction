@@ -95,7 +95,7 @@ export function GalleryPage() {
       ) : shown.length === 0 ? (
         <EmptyState label={t("gal_upcoming")} />
       ) : (
-        <div style={{ padding: "8px 16px 24px", display: "grid", gridTemplateColumns: mag ? "1fr" : "1fr 1fr", gap: mag ? 18 : 12 }}>
+        <div className={mag ? "resp-grid mag" : "resp-grid"} style={{ padding: "8px 16px 24px", display: "grid", gridTemplateColumns: mag ? "1fr" : "1fr 1fr", gap: mag ? 18 : 12 }}>
           {shown.map((l: Lot) =>
             mag ? (
               <LotCardMagazine key={l.id} lot={l} watching={watchersOf(l.id)} />

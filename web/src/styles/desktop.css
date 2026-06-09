@@ -67,26 +67,41 @@
   position: relative;
 }
 
-/* a centered phone-width card that hosts a reused mobile screen */
+/* A centered, fluid content region that fills the desktop width. The frame
+   reuses the mobile screens, but it is no longer a fixed phone box — its
+   width adapts to the route: browse screens go wide (so grids fan out across
+   the screen), forms and detail flows stay in a readable column. The screen's
+   own .screen-body handles scrolling, so the region itself does not scroll. */
 .desk-center {
   height: 100%;
-  overflow: auto;
+  overflow: hidden;
   display: flex;
   justify-content: center;
-  padding: 30px 20px;
+  padding: 0;
 }
 .desk-center .frame {
-  width: 460px;
-  max-width: 100%;
-  height: 760px;
-  align-self: flex-start;
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--gold-line);
-  border-radius: var(--r-3);
   overflow: hidden;
-  background: var(--bg-void);
-  box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55);
+  background: transparent;
+}
+/* wide browse screens (gallery, vault) use the full width */
+.desk-center.wide .frame { max-width: 1280px; }
+/* forms + detail flows read better in a contained column */
+.desk-center.readable .frame {
+  max-width: 660px;
+  border-inline: 1px solid var(--gold-line);
+}
+
+/* On desktop the gallery/vault grids fan out responsively, overriding the
+   mobile 1-/2-column inline layout (hence !important over the inline style). */
+.desk-stage .resp-grid {
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
+}
+.desk-stage .resp-grid.mag {
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)) !important;
 }
 
 /* shared key/value table tweak used by desktop lot details */

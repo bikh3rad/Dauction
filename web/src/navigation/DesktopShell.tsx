@@ -21,6 +21,10 @@ export function DesktopShell() {
   const isActive = (tab: (typeof TABS)[number]) =>
     tab.match.some((m) => (m === "/" ? pathname === "/" : pathname.startsWith(m)));
 
+  // Browse screens (gallery, vault) fan out full-width; forms and detail
+  // flows read better in a contained column.
+  const wide = pathname === "/" || pathname.startsWith("/vault");
+
   return (
     <div className="desk-stage">
       <header className="desk-nav">
@@ -41,7 +45,7 @@ export function DesktopShell() {
         </div>
       </header>
       <main className="desk-main">
-        <div className="desk-center">
+        <div className={`desk-center ${wide ? "wide" : "readable"}`}>
           <div className="frame">
             <AppRouter showNav={false} />
           </div>
