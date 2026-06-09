@@ -1,9 +1,17 @@
 import { AppRouter } from "@/navigation/AppRouter";
+import { DesktopShell } from "@/navigation/DesktopShell";
+import { useIsDesktop } from "@/hooks/useMediaQuery";
 
-// The whole experience lives in a phone-shaped app shell: full-bleed on phones,
-// a centered app-width column on larger screens — keeping the mobile-native
-// interaction model everywhere.
+// Two native shells over one set of screens: a phone-shaped column on small
+// viewports, and a full-bleed top-nav layout on desktop that reuses the same
+// screens inside a centered frame. The breakpoint lives in useMediaQuery.
 export function App() {
+  const isDesktop = useIsDesktop();
+
+  if (isDesktop) {
+    return <DesktopShell />;
+  }
+
   return (
     <div className="app-stage">
       <div className="app-shell">

@@ -7,6 +7,7 @@ import { I18nProvider } from "@/i18n/I18nProvider";
 import { SessionProvider } from "@/hooks/useSession";
 import "@/styles/theme.css";
 import "@/styles/app.css";
+import "@/styles/desktop.css";
 
 // Single QueryClient. Retries are minimal because withFallback already handles
 // backend-unavailable by serving mocks; we don't want to hammer a down service.

@@ -21,9 +21,10 @@ const variants = {
   exit: { opacity: 0, x: -12 },
 };
 
-export function AppRouter() {
+export function AppRouter({ showNav = true }: { showNav?: boolean } = {}) {
   const location = useLocation();
-  const withNav = showBottomNav(location.pathname);
+  // On desktop the top nav drives navigation, so the bottom nav is suppressed.
+  const withNav = showNav && showBottomNav(location.pathname);
 
   return (
     <>
