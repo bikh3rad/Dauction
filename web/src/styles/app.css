@@ -1,0 +1,144 @@
+/* ============================================================
+   DAUCTION — mobile-native app shell
+   The app fills the viewport on phones; on wider screens it is
+   centered in an app-width column with a subtle vault backdrop,
+   keeping the mobile-native interaction model everywhere.
+   ============================================================ */
+
+#root { min-height:100dvh; }
+
+.app-stage {
+  min-height:100dvh;
+  display:flex;
+  align-items:stretch;
+  justify-content:center;
+  background:var(--bg-void);
+}
+@media (min-width:560px) {
+  .app-stage {
+    background:radial-gradient(130% 90% at 50% -10%, #1a0c12, #0a0608 60%);
+    padding:0;
+  }
+}
+
+/* the phone-shaped column that holds the whole app */
+.app-shell {
+  position:relative;
+  width:100%;
+  max-width:480px;
+  min-height:100dvh;
+  height:100dvh;
+  display:flex;
+  flex-direction:column;
+  background:var(--bg-void);
+  overflow:hidden;
+}
+@media (min-width:560px) {
+  .app-shell {
+    height:min(900px, 100dvh);
+    min-height:0;
+    margin:auto;
+    border-radius:28px;
+    border:1px solid var(--gold-line);
+    box-shadow:0 50px 120px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,162,75,0.08);
+  }
+}
+
+/* the live region where screens mount + animate */
+.app-viewport {
+  position:relative;
+  flex:1;
+  min-height:0;
+  overflow:hidden;
+}
+
+/* a single screen — fixed header, scrolling body, optional footer */
+.screen {
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  background:var(--bg-void);
+  color:var(--fg);
+}
+.screen-body {
+  flex:1;
+  min-height:0;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  position:relative;
+}
+
+/* respect notches / safe areas on real devices */
+.safe-top { padding-top:env(safe-area-inset-top, 0px); }
+.safe-bottom { padding-bottom:env(safe-area-inset-bottom, 0px); }
+
+/* icon button */
+.iconbtn {
+  width:38px; height:38px; border-radius:var(--r-1);
+  border:1px solid var(--line); background:var(--bg-1); color:var(--fg);
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* bottom navigation */
+.bottom-nav {
+  flex-shrink:0; z-index:30;
+  background:rgba(12,8,9,0.92);
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  border-top:1px solid var(--gold-line);
+  padding:10px 8px calc(14px + env(safe-area-inset-bottom, 0px));
+  display:grid; grid-template-columns:repeat(4,1fr);
+}
+.bottom-nav button {
+  background:none; border:none; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  color:var(--fg-faint);
+  -webkit-tap-highlight-color:transparent;
+}
+.bottom-nav button.on { color:var(--gold); }
+.bottom-nav .nav-label { font-size:9.5px; font-family:var(--sans); }
+
+/* bottom sheet scrim + panel */
+.sheet-scrim {
+  position:absolute; inset:0; z-index:70;
+  background:rgba(8,5,6,0.65);
+  backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+  display:flex; align-items:flex-end;
+}
+.sheet-panel {
+  width:100%; background:var(--bg-1);
+  border-top:1px solid var(--gold-line);
+  border-radius:16px 16px 0 0;
+  padding:22px 20px calc(34px + env(safe-area-inset-bottom, 0px));
+  max-height:92%; overflow-y:auto;
+}
+.sheet-grip { width:40px; height:4px; background:var(--line-strong); border-radius:2px; margin:0 auto 18px; }
+
+/* toast */
+.toast {
+  position:absolute; left:16px; right:16px; z-index:80;
+  padding:12px 16px; border-radius:var(--r-2);
+  font-weight:600; font-size:13;
+  display:flex; gap:8px; align-items:center;
+}
+
+/* loading / skeleton shimmer */
+.skel {
+  background:linear-gradient(100deg, var(--bg-1) 30%, var(--bg-2) 50%, var(--bg-1) 70%);
+  background-size:200% 100%;
+  animation:shimmer 1.3s linear infinite;
+  border-radius:var(--r-2);
+}
+@keyframes shimmer { from{ background-position:200% 0; } to{ background-position:-200% 0; } }
+
+/* offline / mock banner */
+.mock-banner {
+  display:flex; align-items:center; gap:8px; justify-content:center;
+  font-family:var(--mono); font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--st-warn); background:var(--st-warn-bg);
+  padding:5px 10px; border-bottom:1px solid var(--gold-line);
+}
+
+.spin { animation:spin 0.9s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }

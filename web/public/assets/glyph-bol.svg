@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 96" fill="none">
+  <g stroke="currentColor" stroke-width="1.5" fill="none">
+    
+    <path d="M 8 8 H 56 L 72 24 V 88 H 8 Z"></path>
+    <path d="M 56 8 V 24 H 72"></path>
+    
+    <line x1="14" y1="36" x2="66" y2="36"></line>
+    <line x1="14" y1="44" x2="58" y2="44"></line>
+    <line x1="14" y1="52" x2="66" y2="52"></line>
+    <line x1="14" y1="60" x2="50" y2="60"></line>
+    <line x1="14" y1="68" x2="66" y2="68"></line>
+    <line x1="14" y1="76" x2="40" y2="76"></line>
+  </g>
+  <text x="14" y="28" font-family="IBM Plex Mono, monospace" font-weight="600" font-size="8" letter-spacing="1.5" fill="currentColor">B/L</text>
+</svg>
