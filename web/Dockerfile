@@ -18,6 +18,12 @@ COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund || npm install --no-audit --no-fund
 
 COPY . .
+# VITE_USE_MOCK is baked at build time (Vite inlines import.meta.env). When
+# "true", the SPA serves the full in-memory sample catalog (8 lots + imagery,
+# passive auctions, vaults, admin) regardless of the backend — the demo build.
+# Set to "false" to talk to the live gateway. Default is provided by compose.
+ARG VITE_USE_MOCK
+ENV VITE_USE_MOCK=${VITE_USE_MOCK}
 # Full build = `tsc -b && vite build` (verified green). Produces /src/dist.
 RUN npm run build
 

@@ -41,12 +41,18 @@ export const certQueue: AdminCertReview[] = [
   { lotId: "lot-07", object: "Nautilus 5711/1A", maison: "Patek Philippe", valueCents: c(620000), status: "CERTIFIED" },
 ];
 
+// Mirrors the canonical catalog (mock/db.ts lot-07…lot-14): six live/scheduled
+// Dutch lots plus the two timed passive auctions, in a mix of states so the
+// open / schedule / disable controls all have something to act on.
 export const auctions: AdminAuction[] = [
-  { id: "lot-07", lotId: "lot-07", title: "Nautilus 5711/1A — Tiffany Blue", maison: "Patek Philippe", atype: "DUTCH", state: "OPEN", priceCents: c(1085600), participants: 41, closesAt: undefined },
-  { id: "lot-08", lotId: "lot-08", title: "Birkin 25 Himalaya", maison: "Hermès", atype: "DUTCH", state: "SCHEDULED", priceCents: c(520000), participants: 0 },
-  { id: "lot-09", lotId: "lot-09", title: "RM 11-03 Flyback", maison: "Richard Mille", atype: "VICKREY", state: "OPEN", priceCents: c(198000), participants: 12, closesAt: "2026-06-15T18:00:00Z" },
-  { id: "lot-11", lotId: "lot-11", title: "Flowers (1970) — Screenprint", maison: "Andy Warhol", atype: "UNIQBID", state: "CLOSING", priceCents: c(96000), participants: 27, closesAt: "2026-06-11T12:00:00Z" },
-  { id: "lot-12", lotId: "lot-12", title: "Love Bracelet — Pavé", maison: "Cartier", atype: "DUTCH", state: "DRAFT", priceCents: c(28900), participants: 0 },
+  { id: "lot-07", lotId: "lot-07", title: "Nautilus 5711/1A — Tiffany Blue Dial", maison: "Patek Philippe", atype: "DUTCH", state: "OPEN", priceCents: c(1085600), participants: 14, closesAt: undefined },
+  { id: "lot-08", lotId: "lot-08", title: "Birkin 25 Himalaya — Niloticus", maison: "Hermès", atype: "DUTCH", state: "SCHEDULED", priceCents: c(520000), participants: 9 },
+  { id: "lot-09", lotId: "lot-09", title: "RM 11-03 Flyback Chronograph", maison: "Richard Mille", atype: "DUTCH", state: "SCHEDULED", priceCents: c(395000), participants: 7 },
+  { id: "lot-10", lotId: "lot-10", title: "Pumpkin (Yellow) — ed. 47/120", maison: "Yayoi Kusama", atype: "DUTCH", state: "SCHEDULED", priceCents: c(185000), participants: 5 },
+  { id: "lot-11", lotId: "lot-11", title: "Air Jordan 1 High — 1 of 8,500", maison: "Nike × Dior", atype: "DUTCH", state: "SCHEDULED", priceCents: c(27000), participants: 11 },
+  { id: "lot-12", lotId: "lot-12", title: "No. 1 Imperial Majesty — Baccarat", maison: "Clive Christian", atype: "DUTCH", state: "DRAFT", priceCents: c(96000), participants: 4 },
+  { id: "lot-13", lotId: "lot-13", title: "Crimson Atrium — Oil on Linen", maison: "Estate Commission", atype: "VICKREY", state: "OPEN", priceCents: c(54000), participants: 41, closesAt: "2026-06-15T18:00:00Z" },
+  { id: "lot-14", lotId: "lot-14", title: "Kelly Sellier 25 — Rouge Casaque", maison: "Hermès", atype: "UNIQBID", state: "CLOSING", priceCents: c(38000), participants: 184, closesAt: "2026-06-12T12:00:00Z" },
 ];
 
 export const memberVault: AdminVaultObject[] = [

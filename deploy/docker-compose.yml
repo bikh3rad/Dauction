@@ -321,7 +321,12 @@ services:
   # /apis/* to the gateway on this network (same-origin), so the browser only
   # ever hits this one origin. This is the human entrypoint: open it in a browser.
   web:
-    build: ../web
+    build:
+      context: ../web
+      args:
+        # Demo default: serve the full in-memory sample catalog (prototype data).
+        # For a live build instead:  WEB_USE_MOCK=false docker compose build web
+        VITE_USE_MOCK: ${WEB_USE_MOCK:-true}
     container_name: dauction-web
     restart: unless-stopped
     depends_on:
