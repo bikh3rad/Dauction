@@ -13,6 +13,7 @@ import { MembershipPage } from "@/pages/MembershipPage";
 import { AccountPage } from "@/pages/AccountPage";
 import { InvitePage } from "@/pages/InvitePage";
 import { KycPage } from "@/pages/KycPage";
+import { AdminPage } from "@/pages/admin/AdminPage";
 
 // App-like page transition: subtle slide + fade, swapped on path change.
 const variants = {
@@ -52,6 +53,7 @@ export function AppRouter({ showNav = true }: { showNav?: boolean } = {}) {
               <Route path="/account" element={<AccountPage />} />
               <Route path="/invite" element={<InvitePage />} />
               <Route path="/kyc" element={<KycPage />} />
+              <Route path="/admin" element={<AdminPage />} />
               <Route path="*" element={<GalleryPage />} />
             </Routes>
           </motion.div>

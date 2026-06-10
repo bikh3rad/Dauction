@@ -42,6 +42,8 @@ export function AccountPage() {
 
         <button className="btn btn-ghost" style={{ width: "100%", marginTop: 16 }} onClick={() => nav("/bidstore")}><Icon name="coins" size={16} /> {t("buy_bids")}</button>
 
+        <button className="btn btn-ghost" style={{ width: "100%", marginTop: 12 }} onClick={() => nav("/admin")}><Icon name="crown" size={16} /> {t("adm_title")}</button>
+
         {isGuest && (
           <button className="btn btn-burg" style={{ width: "100%", marginTop: 12 }} onClick={() => nav("/invite")}>
             <Icon name="crown" size={16} /> {t("enter_invite")}
