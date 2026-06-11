@@ -177,6 +177,82 @@ func (r *vaultRepo) TransitionTx(
 	return o, nil
 }
 
+// ListWithDetailsTx implements biz.RepositoryVault: in one transaction it
+// conditionally transitions the object (state = from), writes its category +
+// primary language, replaces its translations + media rows, and writes the
+// object.listed outbox row. Not in `from` -> ErrResourceInvalid.
+func (r *vaultRepo) ListWithDetailsTx(
+	ctx context.Context,
+	objectID uuid.UUID,
+	from, to entity.ObjectState,
+	details entity.ListingDetails,
+	outbox entity.OutboxEvent,
+) (entity.VaultObject, error) {
+	ctx, span := r.tracer.Start(ctx, "vault.ListWithDetailsTx")
+	defer span.End()
+
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return entity.VaultObject{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	const updateQuery = `
+		UPDATE vault_object
+		SET state = $1, category_code = $2, primary_lang = $3, updated_at = NOW()
+		WHERE id = $4 AND state = $5
+		RETURNING ` + objectColumns
+
+	var o entity.VaultObject
+	err = tx.QueryRowContext(ctx, updateQuery,
+		to, details.CategoryCode, details.PrimaryLang, objectID, from).Scan(
+		&o.ID, &o.OwnerAccountID, &o.Title, &o.Description,
+		&o.AppraisedValueCents, &o.State, &o.CreatedAt, &o.UpdatedAt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return entity.VaultObject{}, biz.ErrResourceInvalid
+	}
+	if err != nil {
+		return entity.VaultObject{}, err
+	}
+
+	// Replace translations (idempotent relist): clear then insert the 4 langs.
+	if _, err := tx.ExecContext(ctx, `DELETE FROM vault_object_translation WHERE object_id = $1`, objectID); err != nil {
+		return entity.VaultObject{}, err
+	}
+	for _, t := range details.Translations {
+		if _, err := tx.ExecContext(ctx,
+			`INSERT INTO vault_object_translation (object_id, lang, title, description)
+			 VALUES ($1, $2, $3, $4)`,
+			objectID, t.Lang, t.Title, t.Description); err != nil {
+			return entity.VaultObject{}, err
+		}
+	}
+
+	// Replace media; position is the array index (0 = cover). The DB CHECK
+	// (position 0..6) + UNIQUE(object_id, position) enforce the ≤7 invariant.
+	if _, err := tx.ExecContext(ctx, `DELETE FROM vault_object_media WHERE object_id = $1`, objectID); err != nil {
+		return entity.VaultObject{}, err
+	}
+	for i, key := range details.ImageRefs {
+		if _, err := tx.ExecContext(ctx,
+			`INSERT INTO vault_object_media (object_id, position, storage_key)
+			 VALUES ($1, $2, $3)`,
+			objectID, i, key); err != nil {
+			return entity.VaultObject{}, err
+		}
+	}
+
+	if err := insertOutbox(ctx, tx, outbox); err != nil {
+		return entity.VaultObject{}, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return entity.VaultObject{}, err
+	}
+
+	return o, nil
+}
+
 // BuybackTx implements biz.RepositoryVault: IN_VAULT -> BOUGHT_BACK, optional
 // ledger row + credit.changed outbox (built from the post-write balance), all in
 // one transaction.

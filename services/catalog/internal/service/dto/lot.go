@@ -29,6 +29,12 @@ type LotResp struct {
 	ISOWeek             string `json:"isoWeek"`   // e.g. "2026-W23"
 	CreatedAt           string `json:"createdAt"` // ISO-8601 UTC
 	ScheduledAt         string `json:"scheduledAt,omitempty"`
+	// Inspector seal (§3.5) — surfaced on the gallery + auction detail.
+	CategoryCode   string `json:"categoryCode,omitempty"`
+	Certified      bool   `json:"certified"`
+	InspectorID    string `json:"inspectorId,omitempty"`
+	Authenticity   string `json:"authenticity,omitempty"`
+	ConditionGrade string `json:"conditionGrade,omitempty"`
 }
 
 // AttestationResp is the inspector-seal read model on a lot.
@@ -67,6 +73,34 @@ type AttestRequest struct {
 // ScheduleRequest is the body of POST /apis/admin/lots/{id}/schedule.
 type ScheduleRequest struct {
 	ScheduledAt string `json:"scheduledAt" validate:"omitempty"` // ISO-8601 UTC; defaults to now
+}
+
+// InspectRequest is the body of POST /apis/inspector/lots/{id}/inspect (§3.5).
+// The inspector id is the gateway-injected caller, not part of the body.
+type InspectRequest struct {
+	Verdict        string `json:"verdict"        validate:"required,oneof=APPROVED REJECTED"`
+	Authenticity   string `json:"authenticity"   validate:"required,oneof=GENUINE COUNTERFEIT INCONCLUSIVE"`
+	ConditionGrade string `json:"conditionGrade" validate:"omitempty,oneof=MINT EXCELLENT GOOD FAIR POOR"`
+	Notes          string `json:"notes"          validate:"omitempty,max=1024"`
+}
+
+// Validate mirrors the validate tags (no validator dependency in this module).
+func (r InspectRequest) Validate() (entity.InspectionVerdict, error) {
+	verdict := entity.InspectionVerdict(r.Verdict)
+	if !verdict.Valid() {
+		return "", fmt.Errorf("verdict must be APPROVED or REJECTED, got %q", r.Verdict)
+	}
+	if !entity.ValidAuthenticity(r.Authenticity) {
+		return "", fmt.Errorf("authenticity must be GENUINE|COUNTERFEIT|INCONCLUSIVE, got %q", r.Authenticity)
+	}
+	if !entity.ValidConditionGrade(r.ConditionGrade) {
+		return "", fmt.Errorf("invalid condition grade %q", r.ConditionGrade)
+	}
+	if len(r.Notes) > 1024 {
+		return "", fmt.Errorf("notes too long")
+	}
+
+	return verdict, nil
 }
 
 // Validate checks the attest request against its validate tags (no validator
@@ -124,6 +158,14 @@ func ToLotResp(l entity.Lot) LotResp {
 
 	if l.ScheduledAt != nil {
 		resp.ScheduledAt = isoTime(*l.ScheduledAt)
+	}
+
+	resp.CategoryCode = l.CategoryCode
+	resp.Certified = l.Certified
+	resp.Authenticity = l.Authenticity
+	resp.ConditionGrade = l.ConditionGrade
+	if l.InspectorID != nil {
+		resp.InspectorID = l.InspectorID.String()
 	}
 
 	return resp

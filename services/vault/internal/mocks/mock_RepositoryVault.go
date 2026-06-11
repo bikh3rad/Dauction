@@ -4,8 +4,9 @@ package mocks
 
 import (
 	biz "application/internal/biz"
-	entity "application/internal/entity"
 	context "context"
+
+	entity "application/internal/entity"
 
 	mock "github.com/stretchr/testify/mock"
 
@@ -23,273 +24,6 @@ type MockRepositoryVault_Expecter struct {
 
 func (_m *MockRepositoryVault) EXPECT() *MockRepositoryVault_Expecter {
 	return &MockRepositoryVault_Expecter{mock: &_m.Mock}
-}
-
-// GetObject provides a mock function with given fields: ctx, objectID
-func (_m *MockRepositoryVault) GetObject(ctx context.Context, objectID uuid.UUID) (entity.VaultObject, error) {
-	ret := _m.Called(ctx, objectID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetObject")
-	}
-
-	var r0 entity.VaultObject
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (entity.VaultObject, error)); ok {
-		return rf(ctx, objectID)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) entity.VaultObject); ok {
-		r0 = rf(ctx, objectID)
-	} else {
-		r0 = ret.Get(0).(entity.VaultObject)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = rf(ctx, objectID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-type MockRepositoryVault_GetObject_Call struct {
-	*mock.Call
-}
-
-func (_e *MockRepositoryVault_Expecter) GetObject(ctx interface{}, objectID interface{}) *MockRepositoryVault_GetObject_Call {
-	return &MockRepositoryVault_GetObject_Call{Call: _e.mock.On("GetObject", ctx, objectID)}
-}
-
-func (_c *MockRepositoryVault_GetObject_Call) Run(run func(ctx context.Context, objectID uuid.UUID)) *MockRepositoryVault_GetObject_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
-	})
-	return _c
-}
-
-func (_c *MockRepositoryVault_GetObject_Call) Return(_a0 entity.VaultObject, _a1 error) *MockRepositoryVault_GetObject_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockRepositoryVault_GetObject_Call) RunAndReturn(run func(context.Context, uuid.UUID) (entity.VaultObject, error)) *MockRepositoryVault_GetObject_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ListObjects provides a mock function with given fields: ctx, owner
-func (_m *MockRepositoryVault) ListObjects(ctx context.Context, owner uuid.UUID) ([]entity.VaultObject, error) {
-	ret := _m.Called(ctx, owner)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListObjects")
-	}
-
-	var r0 []entity.VaultObject
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]entity.VaultObject, error)); ok {
-		return rf(ctx, owner)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) []entity.VaultObject); ok {
-		r0 = rf(ctx, owner)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]entity.VaultObject)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = rf(ctx, owner)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-type MockRepositoryVault_ListObjects_Call struct {
-	*mock.Call
-}
-
-func (_e *MockRepositoryVault_Expecter) ListObjects(ctx interface{}, owner interface{}) *MockRepositoryVault_ListObjects_Call {
-	return &MockRepositoryVault_ListObjects_Call{Call: _e.mock.On("ListObjects", ctx, owner)}
-}
-
-func (_c *MockRepositoryVault_ListObjects_Call) Run(run func(ctx context.Context, owner uuid.UUID)) *MockRepositoryVault_ListObjects_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
-	})
-	return _c
-}
-
-func (_c *MockRepositoryVault_ListObjects_Call) Return(_a0 []entity.VaultObject, _a1 error) *MockRepositoryVault_ListObjects_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockRepositoryVault_ListObjects_Call) RunAndReturn(run func(context.Context, uuid.UUID) ([]entity.VaultObject, error)) *MockRepositoryVault_ListObjects_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// InsertObject provides a mock function with given fields: ctx, obj
-func (_m *MockRepositoryVault) InsertObject(ctx context.Context, obj entity.VaultObject) (entity.VaultObject, error) {
-	ret := _m.Called(ctx, obj)
-
-	if len(ret) == 0 {
-		panic("no return value specified for InsertObject")
-	}
-
-	var r0 entity.VaultObject
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, entity.VaultObject) (entity.VaultObject, error)); ok {
-		return rf(ctx, obj)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, entity.VaultObject) entity.VaultObject); ok {
-		r0 = rf(ctx, obj)
-	} else {
-		r0 = ret.Get(0).(entity.VaultObject)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, entity.VaultObject) error); ok {
-		r1 = rf(ctx, obj)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-type MockRepositoryVault_InsertObject_Call struct {
-	*mock.Call
-}
-
-func (_e *MockRepositoryVault_Expecter) InsertObject(ctx interface{}, obj interface{}) *MockRepositoryVault_InsertObject_Call {
-	return &MockRepositoryVault_InsertObject_Call{Call: _e.mock.On("InsertObject", ctx, obj)}
-}
-
-func (_c *MockRepositoryVault_InsertObject_Call) Run(run func(ctx context.Context, obj entity.VaultObject)) *MockRepositoryVault_InsertObject_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(entity.VaultObject))
-	})
-	return _c
-}
-
-func (_c *MockRepositoryVault_InsertObject_Call) Return(_a0 entity.VaultObject, _a1 error) *MockRepositoryVault_InsertObject_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockRepositoryVault_InsertObject_Call) RunAndReturn(run func(context.Context, entity.VaultObject) (entity.VaultObject, error)) *MockRepositoryVault_InsertObject_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CreditBalance provides a mock function with given fields: ctx, account
-func (_m *MockRepositoryVault) CreditBalance(ctx context.Context, account uuid.UUID) (int64, error) {
-	ret := _m.Called(ctx, account)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreditBalance")
-	}
-
-	var r0 int64
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (int64, error)); ok {
-		return rf(ctx, account)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) int64); ok {
-		r0 = rf(ctx, account)
-	} else {
-		r0 = ret.Get(0).(int64)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = rf(ctx, account)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-type MockRepositoryVault_CreditBalance_Call struct {
-	*mock.Call
-}
-
-func (_e *MockRepositoryVault_Expecter) CreditBalance(ctx interface{}, account interface{}) *MockRepositoryVault_CreditBalance_Call {
-	return &MockRepositoryVault_CreditBalance_Call{Call: _e.mock.On("CreditBalance", ctx, account)}
-}
-
-func (_c *MockRepositoryVault_CreditBalance_Call) Run(run func(ctx context.Context, account uuid.UUID)) *MockRepositoryVault_CreditBalance_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
-	})
-	return _c
-}
-
-func (_c *MockRepositoryVault_CreditBalance_Call) Return(_a0 int64, _a1 error) *MockRepositoryVault_CreditBalance_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockRepositoryVault_CreditBalance_Call) RunAndReturn(run func(context.Context, uuid.UUID) (int64, error)) *MockRepositoryVault_CreditBalance_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// TransitionTx provides a mock function with given fields: ctx, objectID, from, to, outbox
-func (_m *MockRepositoryVault) TransitionTx(ctx context.Context, objectID uuid.UUID, from entity.ObjectState, to entity.ObjectState, outbox entity.OutboxEvent) (entity.VaultObject, error) {
-	ret := _m.Called(ctx, objectID, from, to, outbox)
-
-	if len(ret) == 0 {
-		panic("no return value specified for TransitionTx")
-	}
-
-	var r0 entity.VaultObject
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entity.ObjectState, entity.ObjectState, entity.OutboxEvent) (entity.VaultObject, error)); ok {
-		return rf(ctx, objectID, from, to, outbox)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entity.ObjectState, entity.ObjectState, entity.OutboxEvent) entity.VaultObject); ok {
-		r0 = rf(ctx, objectID, from, to, outbox)
-	} else {
-		r0 = ret.Get(0).(entity.VaultObject)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, entity.ObjectState, entity.ObjectState, entity.OutboxEvent) error); ok {
-		r1 = rf(ctx, objectID, from, to, outbox)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-type MockRepositoryVault_TransitionTx_Call struct {
-	*mock.Call
-}
-
-func (_e *MockRepositoryVault_Expecter) TransitionTx(ctx interface{}, objectID interface{}, from interface{}, to interface{}, outbox interface{}) *MockRepositoryVault_TransitionTx_Call {
-	return &MockRepositoryVault_TransitionTx_Call{Call: _e.mock.On("TransitionTx", ctx, objectID, from, to, outbox)}
-}
-
-func (_c *MockRepositoryVault_TransitionTx_Call) Run(run func(ctx context.Context, objectID uuid.UUID, from entity.ObjectState, to entity.ObjectState, outbox entity.OutboxEvent)) *MockRepositoryVault_TransitionTx_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(entity.ObjectState), args[3].(entity.ObjectState), args[4].(entity.OutboxEvent))
-	})
-	return _c
-}
-
-func (_c *MockRepositoryVault_TransitionTx_Call) Return(_a0 entity.VaultObject, _a1 error) *MockRepositoryVault_TransitionTx_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockRepositoryVault_TransitionTx_Call) RunAndReturn(run func(context.Context, uuid.UUID, entity.ObjectState, entity.ObjectState, entity.OutboxEvent) (entity.VaultObject, error)) *MockRepositoryVault_TransitionTx_Call {
-	_c.Call.Return(run)
-	return _c
 }
 
 // BuybackTx provides a mock function with given fields: ctx, objectID, entry, buildOutbox
@@ -327,25 +61,23 @@ func (_m *MockRepositoryVault) BuybackTx(ctx context.Context, objectID uuid.UUID
 	return r0, r1, r2
 }
 
+// MockRepositoryVault_BuybackTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BuybackTx'
 type MockRepositoryVault_BuybackTx_Call struct {
 	*mock.Call
 }
 
+// BuybackTx is a helper method to define mock.On call
+//   - ctx context.Context
+//   - objectID uuid.UUID
+//   - entry *entity.VaultCreditEntry
+//   - buildOutbox biz.OutboxBuilder
 func (_e *MockRepositoryVault_Expecter) BuybackTx(ctx interface{}, objectID interface{}, entry interface{}, buildOutbox interface{}) *MockRepositoryVault_BuybackTx_Call {
 	return &MockRepositoryVault_BuybackTx_Call{Call: _e.mock.On("BuybackTx", ctx, objectID, entry, buildOutbox)}
 }
 
 func (_c *MockRepositoryVault_BuybackTx_Call) Run(run func(ctx context.Context, objectID uuid.UUID, entry *entity.VaultCreditEntry, buildOutbox biz.OutboxBuilder)) *MockRepositoryVault_BuybackTx_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg2 *entity.VaultCreditEntry
-		if args[2] != nil {
-			arg2 = args[2].(*entity.VaultCreditEntry)
-		}
-		var arg3 biz.OutboxBuilder
-		if args[3] != nil {
-			arg3 = args[3].(biz.OutboxBuilder)
-		}
-		run(args[0].(context.Context), args[1].(uuid.UUID), arg2, arg3)
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(*entity.VaultCreditEntry), args[3].(biz.OutboxBuilder))
 	})
 	return _c
 }
@@ -356,6 +88,297 @@ func (_c *MockRepositoryVault_BuybackTx_Call) Return(_a0 entity.VaultObject, _a1
 }
 
 func (_c *MockRepositoryVault_BuybackTx_Call) RunAndReturn(run func(context.Context, uuid.UUID, *entity.VaultCreditEntry, biz.OutboxBuilder) (entity.VaultObject, int64, error)) *MockRepositoryVault_BuybackTx_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreditBalance provides a mock function with given fields: ctx, account
+func (_m *MockRepositoryVault) CreditBalance(ctx context.Context, account uuid.UUID) (int64, error) {
+	ret := _m.Called(ctx, account)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreditBalance")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (int64, error)); ok {
+		return rf(ctx, account)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) int64); ok {
+		r0 = rf(ctx, account)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, account)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRepositoryVault_CreditBalance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreditBalance'
+type MockRepositoryVault_CreditBalance_Call struct {
+	*mock.Call
+}
+
+// CreditBalance is a helper method to define mock.On call
+//   - ctx context.Context
+//   - account uuid.UUID
+func (_e *MockRepositoryVault_Expecter) CreditBalance(ctx interface{}, account interface{}) *MockRepositoryVault_CreditBalance_Call {
+	return &MockRepositoryVault_CreditBalance_Call{Call: _e.mock.On("CreditBalance", ctx, account)}
+}
+
+func (_c *MockRepositoryVault_CreditBalance_Call) Run(run func(ctx context.Context, account uuid.UUID)) *MockRepositoryVault_CreditBalance_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryVault_CreditBalance_Call) Return(_a0 int64, _a1 error) *MockRepositoryVault_CreditBalance_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRepositoryVault_CreditBalance_Call) RunAndReturn(run func(context.Context, uuid.UUID) (int64, error)) *MockRepositoryVault_CreditBalance_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetObject provides a mock function with given fields: ctx, objectID
+func (_m *MockRepositoryVault) GetObject(ctx context.Context, objectID uuid.UUID) (entity.VaultObject, error) {
+	ret := _m.Called(ctx, objectID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetObject")
+	}
+
+	var r0 entity.VaultObject
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (entity.VaultObject, error)); ok {
+		return rf(ctx, objectID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) entity.VaultObject); ok {
+		r0 = rf(ctx, objectID)
+	} else {
+		r0 = ret.Get(0).(entity.VaultObject)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, objectID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRepositoryVault_GetObject_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetObject'
+type MockRepositoryVault_GetObject_Call struct {
+	*mock.Call
+}
+
+// GetObject is a helper method to define mock.On call
+//   - ctx context.Context
+//   - objectID uuid.UUID
+func (_e *MockRepositoryVault_Expecter) GetObject(ctx interface{}, objectID interface{}) *MockRepositoryVault_GetObject_Call {
+	return &MockRepositoryVault_GetObject_Call{Call: _e.mock.On("GetObject", ctx, objectID)}
+}
+
+func (_c *MockRepositoryVault_GetObject_Call) Run(run func(ctx context.Context, objectID uuid.UUID)) *MockRepositoryVault_GetObject_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryVault_GetObject_Call) Return(_a0 entity.VaultObject, _a1 error) *MockRepositoryVault_GetObject_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRepositoryVault_GetObject_Call) RunAndReturn(run func(context.Context, uuid.UUID) (entity.VaultObject, error)) *MockRepositoryVault_GetObject_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// InsertObject provides a mock function with given fields: ctx, obj
+func (_m *MockRepositoryVault) InsertObject(ctx context.Context, obj entity.VaultObject) (entity.VaultObject, error) {
+	ret := _m.Called(ctx, obj)
+
+	if len(ret) == 0 {
+		panic("no return value specified for InsertObject")
+	}
+
+	var r0 entity.VaultObject
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, entity.VaultObject) (entity.VaultObject, error)); ok {
+		return rf(ctx, obj)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, entity.VaultObject) entity.VaultObject); ok {
+		r0 = rf(ctx, obj)
+	} else {
+		r0 = ret.Get(0).(entity.VaultObject)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, entity.VaultObject) error); ok {
+		r1 = rf(ctx, obj)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRepositoryVault_InsertObject_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InsertObject'
+type MockRepositoryVault_InsertObject_Call struct {
+	*mock.Call
+}
+
+// InsertObject is a helper method to define mock.On call
+//   - ctx context.Context
+//   - obj entity.VaultObject
+func (_e *MockRepositoryVault_Expecter) InsertObject(ctx interface{}, obj interface{}) *MockRepositoryVault_InsertObject_Call {
+	return &MockRepositoryVault_InsertObject_Call{Call: _e.mock.On("InsertObject", ctx, obj)}
+}
+
+func (_c *MockRepositoryVault_InsertObject_Call) Run(run func(ctx context.Context, obj entity.VaultObject)) *MockRepositoryVault_InsertObject_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(entity.VaultObject))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryVault_InsertObject_Call) Return(_a0 entity.VaultObject, _a1 error) *MockRepositoryVault_InsertObject_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRepositoryVault_InsertObject_Call) RunAndReturn(run func(context.Context, entity.VaultObject) (entity.VaultObject, error)) *MockRepositoryVault_InsertObject_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListObjects provides a mock function with given fields: ctx, owner
+func (_m *MockRepositoryVault) ListObjects(ctx context.Context, owner uuid.UUID) ([]entity.VaultObject, error) {
+	ret := _m.Called(ctx, owner)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListObjects")
+	}
+
+	var r0 []entity.VaultObject
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]entity.VaultObject, error)); ok {
+		return rf(ctx, owner)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) []entity.VaultObject); ok {
+		r0 = rf(ctx, owner)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entity.VaultObject)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, owner)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRepositoryVault_ListObjects_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListObjects'
+type MockRepositoryVault_ListObjects_Call struct {
+	*mock.Call
+}
+
+// ListObjects is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner uuid.UUID
+func (_e *MockRepositoryVault_Expecter) ListObjects(ctx interface{}, owner interface{}) *MockRepositoryVault_ListObjects_Call {
+	return &MockRepositoryVault_ListObjects_Call{Call: _e.mock.On("ListObjects", ctx, owner)}
+}
+
+func (_c *MockRepositoryVault_ListObjects_Call) Run(run func(ctx context.Context, owner uuid.UUID)) *MockRepositoryVault_ListObjects_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryVault_ListObjects_Call) Return(_a0 []entity.VaultObject, _a1 error) *MockRepositoryVault_ListObjects_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRepositoryVault_ListObjects_Call) RunAndReturn(run func(context.Context, uuid.UUID) ([]entity.VaultObject, error)) *MockRepositoryVault_ListObjects_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListWithDetailsTx provides a mock function with given fields: ctx, objectID, from, to, details, outbox
+func (_m *MockRepositoryVault) ListWithDetailsTx(ctx context.Context, objectID uuid.UUID, from entity.ObjectState, to entity.ObjectState, details entity.ListingDetails, outbox entity.OutboxEvent) (entity.VaultObject, error) {
+	ret := _m.Called(ctx, objectID, from, to, details, outbox)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListWithDetailsTx")
+	}
+
+	var r0 entity.VaultObject
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entity.ObjectState, entity.ObjectState, entity.ListingDetails, entity.OutboxEvent) (entity.VaultObject, error)); ok {
+		return rf(ctx, objectID, from, to, details, outbox)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entity.ObjectState, entity.ObjectState, entity.ListingDetails, entity.OutboxEvent) entity.VaultObject); ok {
+		r0 = rf(ctx, objectID, from, to, details, outbox)
+	} else {
+		r0 = ret.Get(0).(entity.VaultObject)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, entity.ObjectState, entity.ObjectState, entity.ListingDetails, entity.OutboxEvent) error); ok {
+		r1 = rf(ctx, objectID, from, to, details, outbox)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRepositoryVault_ListWithDetailsTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListWithDetailsTx'
+type MockRepositoryVault_ListWithDetailsTx_Call struct {
+	*mock.Call
+}
+
+// ListWithDetailsTx is a helper method to define mock.On call
+//   - ctx context.Context
+//   - objectID uuid.UUID
+//   - from entity.ObjectState
+//   - to entity.ObjectState
+//   - details entity.ListingDetails
+//   - outbox entity.OutboxEvent
+func (_e *MockRepositoryVault_Expecter) ListWithDetailsTx(ctx interface{}, objectID interface{}, from interface{}, to interface{}, details interface{}, outbox interface{}) *MockRepositoryVault_ListWithDetailsTx_Call {
+	return &MockRepositoryVault_ListWithDetailsTx_Call{Call: _e.mock.On("ListWithDetailsTx", ctx, objectID, from, to, details, outbox)}
+}
+
+func (_c *MockRepositoryVault_ListWithDetailsTx_Call) Run(run func(ctx context.Context, objectID uuid.UUID, from entity.ObjectState, to entity.ObjectState, details entity.ListingDetails, outbox entity.OutboxEvent)) *MockRepositoryVault_ListWithDetailsTx_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(entity.ObjectState), args[3].(entity.ObjectState), args[4].(entity.ListingDetails), args[5].(entity.OutboxEvent))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryVault_ListWithDetailsTx_Call) Return(_a0 entity.VaultObject, _a1 error) *MockRepositoryVault_ListWithDetailsTx_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRepositoryVault_ListWithDetailsTx_Call) RunAndReturn(run func(context.Context, uuid.UUID, entity.ObjectState, entity.ObjectState, entity.ListingDetails, entity.OutboxEvent) (entity.VaultObject, error)) *MockRepositoryVault_ListWithDetailsTx_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -388,25 +411,24 @@ func (_m *MockRepositoryVault) SettleSoldTx(ctx context.Context, objectID uuid.U
 	return r0, r1
 }
 
+// MockRepositoryVault_SettleSoldTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SettleSoldTx'
 type MockRepositoryVault_SettleSoldTx_Call struct {
 	*mock.Call
 }
 
+// SettleSoldTx is a helper method to define mock.On call
+//   - ctx context.Context
+//   - objectID uuid.UUID
+//   - inboxKey string
+//   - entry *entity.VaultCreditEntry
+//   - buildOutbox biz.OutboxBuilder
 func (_e *MockRepositoryVault_Expecter) SettleSoldTx(ctx interface{}, objectID interface{}, inboxKey interface{}, entry interface{}, buildOutbox interface{}) *MockRepositoryVault_SettleSoldTx_Call {
 	return &MockRepositoryVault_SettleSoldTx_Call{Call: _e.mock.On("SettleSoldTx", ctx, objectID, inboxKey, entry, buildOutbox)}
 }
 
 func (_c *MockRepositoryVault_SettleSoldTx_Call) Run(run func(ctx context.Context, objectID uuid.UUID, inboxKey string, entry *entity.VaultCreditEntry, buildOutbox biz.OutboxBuilder)) *MockRepositoryVault_SettleSoldTx_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg3 *entity.VaultCreditEntry
-		if args[3] != nil {
-			arg3 = args[3].(*entity.VaultCreditEntry)
-		}
-		var arg4 biz.OutboxBuilder
-		if args[4] != nil {
-			arg4 = args[4].(biz.OutboxBuilder)
-		}
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(string), arg3, arg4)
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(string), args[3].(*entity.VaultCreditEntry), args[4].(biz.OutboxBuilder))
 	})
 	return _c
 }
@@ -421,27 +443,27 @@ func (_c *MockRepositoryVault_SettleSoldTx_Call) RunAndReturn(run func(context.C
 	return _c
 }
 
-// MarkConsumed provides a mock function with given fields: ctx, inboxKey
-func (_m *MockRepositoryVault) MarkConsumed(ctx context.Context, inboxKey string) (bool, error) {
-	ret := _m.Called(ctx, inboxKey)
+// TransitionTx provides a mock function with given fields: ctx, objectID, from, to, outbox
+func (_m *MockRepositoryVault) TransitionTx(ctx context.Context, objectID uuid.UUID, from entity.ObjectState, to entity.ObjectState, outbox entity.OutboxEvent) (entity.VaultObject, error) {
+	ret := _m.Called(ctx, objectID, from, to, outbox)
 
 	if len(ret) == 0 {
-		panic("no return value specified for MarkConsumed")
+		panic("no return value specified for TransitionTx")
 	}
 
-	var r0 bool
+	var r0 entity.VaultObject
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (bool, error)); ok {
-		return rf(ctx, inboxKey)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entity.ObjectState, entity.ObjectState, entity.OutboxEvent) (entity.VaultObject, error)); ok {
+		return rf(ctx, objectID, from, to, outbox)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) bool); ok {
-		r0 = rf(ctx, inboxKey)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entity.ObjectState, entity.ObjectState, entity.OutboxEvent) entity.VaultObject); ok {
+		r0 = rf(ctx, objectID, from, to, outbox)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Get(0).(entity.VaultObject)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, inboxKey)
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, entity.ObjectState, entity.ObjectState, entity.OutboxEvent) error); ok {
+		r1 = rf(ctx, objectID, from, to, outbox)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -449,27 +471,34 @@ func (_m *MockRepositoryVault) MarkConsumed(ctx context.Context, inboxKey string
 	return r0, r1
 }
 
-type MockRepositoryVault_MarkConsumed_Call struct {
+// MockRepositoryVault_TransitionTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TransitionTx'
+type MockRepositoryVault_TransitionTx_Call struct {
 	*mock.Call
 }
 
-func (_e *MockRepositoryVault_Expecter) MarkConsumed(ctx interface{}, inboxKey interface{}) *MockRepositoryVault_MarkConsumed_Call {
-	return &MockRepositoryVault_MarkConsumed_Call{Call: _e.mock.On("MarkConsumed", ctx, inboxKey)}
+// TransitionTx is a helper method to define mock.On call
+//   - ctx context.Context
+//   - objectID uuid.UUID
+//   - from entity.ObjectState
+//   - to entity.ObjectState
+//   - outbox entity.OutboxEvent
+func (_e *MockRepositoryVault_Expecter) TransitionTx(ctx interface{}, objectID interface{}, from interface{}, to interface{}, outbox interface{}) *MockRepositoryVault_TransitionTx_Call {
+	return &MockRepositoryVault_TransitionTx_Call{Call: _e.mock.On("TransitionTx", ctx, objectID, from, to, outbox)}
 }
 
-func (_c *MockRepositoryVault_MarkConsumed_Call) Run(run func(ctx context.Context, inboxKey string)) *MockRepositoryVault_MarkConsumed_Call {
+func (_c *MockRepositoryVault_TransitionTx_Call) Run(run func(ctx context.Context, objectID uuid.UUID, from entity.ObjectState, to entity.ObjectState, outbox entity.OutboxEvent)) *MockRepositoryVault_TransitionTx_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(entity.ObjectState), args[3].(entity.ObjectState), args[4].(entity.OutboxEvent))
 	})
 	return _c
 }
 
-func (_c *MockRepositoryVault_MarkConsumed_Call) Return(_a0 bool, _a1 error) *MockRepositoryVault_MarkConsumed_Call {
+func (_c *MockRepositoryVault_TransitionTx_Call) Return(_a0 entity.VaultObject, _a1 error) *MockRepositoryVault_TransitionTx_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockRepositoryVault_MarkConsumed_Call) RunAndReturn(run func(context.Context, string) (bool, error)) *MockRepositoryVault_MarkConsumed_Call {
+func (_c *MockRepositoryVault_TransitionTx_Call) RunAndReturn(run func(context.Context, uuid.UUID, entity.ObjectState, entity.ObjectState, entity.OutboxEvent) (entity.VaultObject, error)) *MockRepositoryVault_TransitionTx_Call {
 	_c.Call.Return(run)
 	return _c
 }

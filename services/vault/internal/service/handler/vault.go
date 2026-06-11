@@ -165,6 +165,10 @@ func (h *vaultHandler) list(w http.ResponseWriter, r *http.Request) {
 	obj, err := h.uc.List(ctx, owner, objectID, biz.ListRequest{
 		Mode:         entity.AuctionMode(req.Atype),
 		DurationDays: req.DurationDays,
+		CategoryCode: req.CategoryID,
+		PrimaryLang:  req.PrimaryLang,
+		Translations: req.ToEntityTranslations(),
+		ImageRefs:    req.ImageRefs,
 	})
 	if err != nil {
 		logger.WarnContext(ctx, "list object failed", "error", err)

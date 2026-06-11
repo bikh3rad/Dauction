@@ -36,7 +36,9 @@ func NewLot(logger *slog.Logger, db *datasource.PostgresDB) *lot {
 
 const lotColumns = `id, object_id, seller_account_id, title, description, atype,
 	duration_days, reserve_cents, appraised_value_cents, state, iso_week,
-	created_at, scheduled_at`
+	created_at, scheduled_at,
+	COALESCE(category_code, ''), COALESCE(certified, FALSE), inspector_account_id,
+	COALESCE(authenticity, ''), COALESCE(condition_grade, '')`
 
 // scanLot scans a single lot row in lotColumns order.
 func scanLot(row interface{ Scan(...any) error }) (entity.Lot, error) {
@@ -45,12 +47,14 @@ func scanLot(row interface{ Scan(...any) error }) (entity.Lot, error) {
 		mode, state string
 		duration    sql.NullInt32
 		scheduledAt sql.NullTime
+		inspector   uuid.NullUUID
 	)
 
 	if err := row.Scan(
 		&l.ID, &l.ObjectID, &l.SellerAccountID, &l.Title, &l.Description, &mode,
 		&duration, &l.ReserveCents, &l.AppraisedValueCents, &state, &l.ISOWeek,
 		&l.CreatedAt, &scheduledAt,
+		&l.CategoryCode, &l.Certified, &inspector, &l.Authenticity, &l.ConditionGrade,
 	); err != nil {
 		return entity.Lot{}, err
 	}
@@ -66,6 +70,11 @@ func scanLot(row interface{ Scan(...any) error }) (entity.Lot, error) {
 	if scheduledAt.Valid {
 		t := scheduledAt.Time
 		l.ScheduledAt = &t
+	}
+
+	if inspector.Valid {
+		id := inspector.UUID
+		l.InspectorID = &id
 	}
 
 	return l, nil
@@ -392,6 +401,77 @@ func (r *lot) ScheduleTx(
 
 	if err := insertOutbox(ctx, tx, outbox); err != nil {
 		return entity.Lot{}, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return entity.Lot{}, err
+	}
+
+	return l, nil
+}
+
+// InspectTx records an Inspector's sealing verdict in one transaction: insert the
+// inspection row (one per lot), seal the lot's columns, transition DRAFT ->
+// CERTIFIED (approve) or DRAFT -> REJECTED (reject), and write the outbox events.
+// The conditional lot UPDATE is gated on the row still being DRAFT, so a 0-row
+// update -> ErrResourceInvalid (already inspected / not awaiting inspection).
+func (r *lot) InspectTx(
+	ctx context.Context,
+	insp entity.Inspection,
+	approve bool,
+	outboxes []entity.OutboxEvent,
+) (entity.Lot, error) {
+	ctx, span := r.tracer.Start(ctx, "lot.InspectTx")
+	defer span.End()
+
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return entity.Lot{}, err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	// One verdict per lot. A conflict means the lot was already inspected.
+	const inspectQuery = `
+		INSERT INTO inspection (id, lot_id, inspector_id, verdict, authenticity, condition_grade, notes, sealed_at)
+		VALUES ($1, $2, $3, $4, $5, NULLIF($6, ''), $7, $8)
+		ON CONFLICT (lot_id) DO NOTHING`
+
+	res, err := tx.ExecContext(ctx, inspectQuery,
+		insp.ID, insp.LotID, insp.InspectorID, insp.Verdict,
+		insp.Authenticity, insp.ConditionGrade, insp.Notes, insp.SealedAt)
+	if err != nil {
+		return entity.Lot{}, err
+	}
+	if affected, _ := res.RowsAffected(); affected == 0 {
+		return entity.Lot{}, fmt.Errorf("%w: lot already inspected", biz.ErrResourceInvalid)
+	}
+
+	newState := entity.LotRejected
+	if approve {
+		newState = entity.LotCertified
+	}
+
+	const updateQuery = `
+		UPDATE lot SET
+			state = $1, certified = $2, inspector_account_id = $3,
+			authenticity = $4, condition_grade = NULLIF($5, '')
+		WHERE id = $6 AND state = $7
+		RETURNING ` + lotColumns
+
+	l, err := scanLot(tx.QueryRowContext(ctx, updateQuery,
+		newState, approve, insp.InspectorID, insp.Authenticity, insp.ConditionGrade,
+		insp.LotID, entity.LotDraft))
+	if errors.Is(err, sql.ErrNoRows) {
+		return entity.Lot{}, fmt.Errorf("%w: lot not awaiting inspection (not DRAFT)", biz.ErrResourceInvalid)
+	}
+	if err != nil {
+		return entity.Lot{}, err
+	}
+
+	for _, o := range outboxes {
+		if err := insertOutbox(ctx, tx, o); err != nil {
+			return entity.Lot{}, err
+		}
 	}
 
 	if err := tx.Commit(); err != nil {

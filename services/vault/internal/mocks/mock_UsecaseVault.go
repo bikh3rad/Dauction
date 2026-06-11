@@ -4,8 +4,9 @@ package mocks
 
 import (
 	biz "application/internal/biz"
-	entity "application/internal/entity"
 	context "context"
+
+	entity "application/internal/entity"
 
 	mock "github.com/stretchr/testify/mock"
 
@@ -23,59 +24,6 @@ type MockUsecaseVault_Expecter struct {
 
 func (_m *MockUsecaseVault) EXPECT() *MockUsecaseVault_Expecter {
 	return &MockUsecaseVault_Expecter{mock: &_m.Mock}
-}
-
-// View provides a mock function with given fields: ctx, owner
-func (_m *MockUsecaseVault) View(ctx context.Context, owner uuid.UUID) (biz.VaultView, error) {
-	ret := _m.Called(ctx, owner)
-
-	if len(ret) == 0 {
-		panic("no return value specified for View")
-	}
-
-	var r0 biz.VaultView
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (biz.VaultView, error)); ok {
-		return rf(ctx, owner)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) biz.VaultView); ok {
-		r0 = rf(ctx, owner)
-	} else {
-		r0 = ret.Get(0).(biz.VaultView)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = rf(ctx, owner)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-type MockUsecaseVault_View_Call struct {
-	*mock.Call
-}
-
-func (_e *MockUsecaseVault_Expecter) View(ctx interface{}, owner interface{}) *MockUsecaseVault_View_Call {
-	return &MockUsecaseVault_View_Call{Call: _e.mock.On("View", ctx, owner)}
-}
-
-func (_c *MockUsecaseVault_View_Call) Run(run func(ctx context.Context, owner uuid.UUID)) *MockUsecaseVault_View_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
-	})
-	return _c
-}
-
-func (_c *MockUsecaseVault_View_Call) Return(_a0 biz.VaultView, _a1 error) *MockUsecaseVault_View_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockUsecaseVault_View_Call) RunAndReturn(run func(context.Context, uuid.UUID) (biz.VaultView, error)) *MockUsecaseVault_View_Call {
-	_c.Call.Return(run)
-	return _c
 }
 
 // AddObject provides a mock function with given fields: ctx, owner, title, description, appraisedValueCents
@@ -106,10 +54,17 @@ func (_m *MockUsecaseVault) AddObject(ctx context.Context, owner uuid.UUID, titl
 	return r0, r1
 }
 
+// MockUsecaseVault_AddObject_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddObject'
 type MockUsecaseVault_AddObject_Call struct {
 	*mock.Call
 }
 
+// AddObject is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner uuid.UUID
+//   - title string
+//   - description string
+//   - appraisedValueCents int64
 func (_e *MockUsecaseVault_Expecter) AddObject(ctx interface{}, owner interface{}, title interface{}, description interface{}, appraisedValueCents interface{}) *MockUsecaseVault_AddObject_Call {
 	return &MockUsecaseVault_AddObject_Call{Call: _e.mock.On("AddObject", ctx, owner, title, description, appraisedValueCents)}
 }
@@ -127,59 +82,6 @@ func (_c *MockUsecaseVault_AddObject_Call) Return(_a0 entity.VaultObject, _a1 er
 }
 
 func (_c *MockUsecaseVault_AddObject_Call) RunAndReturn(run func(context.Context, uuid.UUID, string, string, int64) (entity.VaultObject, error)) *MockUsecaseVault_AddObject_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// List provides a mock function with given fields: ctx, owner, objectID, req
-func (_m *MockUsecaseVault) List(ctx context.Context, owner uuid.UUID, objectID uuid.UUID, req biz.ListRequest) (entity.VaultObject, error) {
-	ret := _m.Called(ctx, owner, objectID, req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for List")
-	}
-
-	var r0 entity.VaultObject
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID, biz.ListRequest) (entity.VaultObject, error)); ok {
-		return rf(ctx, owner, objectID, req)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID, biz.ListRequest) entity.VaultObject); ok {
-		r0 = rf(ctx, owner, objectID, req)
-	} else {
-		r0 = ret.Get(0).(entity.VaultObject)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, uuid.UUID, biz.ListRequest) error); ok {
-		r1 = rf(ctx, owner, objectID, req)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-type MockUsecaseVault_List_Call struct {
-	*mock.Call
-}
-
-func (_e *MockUsecaseVault_Expecter) List(ctx interface{}, owner interface{}, objectID interface{}, req interface{}) *MockUsecaseVault_List_Call {
-	return &MockUsecaseVault_List_Call{Call: _e.mock.On("List", ctx, owner, objectID, req)}
-}
-
-func (_c *MockUsecaseVault_List_Call) Run(run func(ctx context.Context, owner uuid.UUID, objectID uuid.UUID, req biz.ListRequest)) *MockUsecaseVault_List_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(uuid.UUID), args[3].(biz.ListRequest))
-	})
-	return _c
-}
-
-func (_c *MockUsecaseVault_List_Call) Return(_a0 entity.VaultObject, _a1 error) *MockUsecaseVault_List_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockUsecaseVault_List_Call) RunAndReturn(run func(context.Context, uuid.UUID, uuid.UUID, biz.ListRequest) (entity.VaultObject, error)) *MockUsecaseVault_List_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -212,10 +114,16 @@ func (_m *MockUsecaseVault) Buyback(ctx context.Context, owner uuid.UUID, object
 	return r0, r1
 }
 
+// MockUsecaseVault_Buyback_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Buyback'
 type MockUsecaseVault_Buyback_Call struct {
 	*mock.Call
 }
 
+// Buyback is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner uuid.UUID
+//   - objectID uuid.UUID
+//   - mode entity.BuybackMode
 func (_e *MockUsecaseVault_Expecter) Buyback(ctx interface{}, owner interface{}, objectID interface{}, mode interface{}) *MockUsecaseVault_Buyback_Call {
 	return &MockUsecaseVault_Buyback_Call{Call: _e.mock.On("Buyback", ctx, owner, objectID, mode)}
 }
@@ -233,6 +141,65 @@ func (_c *MockUsecaseVault_Buyback_Call) Return(_a0 biz.BuybackResult, _a1 error
 }
 
 func (_c *MockUsecaseVault_Buyback_Call) RunAndReturn(run func(context.Context, uuid.UUID, uuid.UUID, entity.BuybackMode) (biz.BuybackResult, error)) *MockUsecaseVault_Buyback_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// List provides a mock function with given fields: ctx, owner, objectID, req
+func (_m *MockUsecaseVault) List(ctx context.Context, owner uuid.UUID, objectID uuid.UUID, req biz.ListRequest) (entity.VaultObject, error) {
+	ret := _m.Called(ctx, owner, objectID, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for List")
+	}
+
+	var r0 entity.VaultObject
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID, biz.ListRequest) (entity.VaultObject, error)); ok {
+		return rf(ctx, owner, objectID, req)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID, biz.ListRequest) entity.VaultObject); ok {
+		r0 = rf(ctx, owner, objectID, req)
+	} else {
+		r0 = ret.Get(0).(entity.VaultObject)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, uuid.UUID, biz.ListRequest) error); ok {
+		r1 = rf(ctx, owner, objectID, req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUsecaseVault_List_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'List'
+type MockUsecaseVault_List_Call struct {
+	*mock.Call
+}
+
+// List is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner uuid.UUID
+//   - objectID uuid.UUID
+//   - req biz.ListRequest
+func (_e *MockUsecaseVault_Expecter) List(ctx interface{}, owner interface{}, objectID interface{}, req interface{}) *MockUsecaseVault_List_Call {
+	return &MockUsecaseVault_List_Call{Call: _e.mock.On("List", ctx, owner, objectID, req)}
+}
+
+func (_c *MockUsecaseVault_List_Call) Run(run func(ctx context.Context, owner uuid.UUID, objectID uuid.UUID, req biz.ListRequest)) *MockUsecaseVault_List_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(uuid.UUID), args[3].(biz.ListRequest))
+	})
+	return _c
+}
+
+func (_c *MockUsecaseVault_List_Call) Return(_a0 entity.VaultObject, _a1 error) *MockUsecaseVault_List_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUsecaseVault_List_Call) RunAndReturn(run func(context.Context, uuid.UUID, uuid.UUID, biz.ListRequest) (entity.VaultObject, error)) *MockUsecaseVault_List_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -255,10 +222,14 @@ func (_m *MockUsecaseVault) SettleAuctionCompleted(ctx context.Context, in biz.A
 	return r0
 }
 
+// MockUsecaseVault_SettleAuctionCompleted_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SettleAuctionCompleted'
 type MockUsecaseVault_SettleAuctionCompleted_Call struct {
 	*mock.Call
 }
 
+// SettleAuctionCompleted is a helper method to define mock.On call
+//   - ctx context.Context
+//   - in biz.AuctionCompletedInput
 func (_e *MockUsecaseVault_Expecter) SettleAuctionCompleted(ctx interface{}, in interface{}) *MockUsecaseVault_SettleAuctionCompleted_Call {
 	return &MockUsecaseVault_SettleAuctionCompleted_Call{Call: _e.mock.On("SettleAuctionCompleted", ctx, in)}
 }
@@ -276,6 +247,63 @@ func (_c *MockUsecaseVault_SettleAuctionCompleted_Call) Return(_a0 error) *MockU
 }
 
 func (_c *MockUsecaseVault_SettleAuctionCompleted_Call) RunAndReturn(run func(context.Context, biz.AuctionCompletedInput) error) *MockUsecaseVault_SettleAuctionCompleted_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// View provides a mock function with given fields: ctx, owner
+func (_m *MockUsecaseVault) View(ctx context.Context, owner uuid.UUID) (biz.VaultView, error) {
+	ret := _m.Called(ctx, owner)
+
+	if len(ret) == 0 {
+		panic("no return value specified for View")
+	}
+
+	var r0 biz.VaultView
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (biz.VaultView, error)); ok {
+		return rf(ctx, owner)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) biz.VaultView); ok {
+		r0 = rf(ctx, owner)
+	} else {
+		r0 = ret.Get(0).(biz.VaultView)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, owner)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUsecaseVault_View_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'View'
+type MockUsecaseVault_View_Call struct {
+	*mock.Call
+}
+
+// View is a helper method to define mock.On call
+//   - ctx context.Context
+//   - owner uuid.UUID
+func (_e *MockUsecaseVault_Expecter) View(ctx interface{}, owner interface{}) *MockUsecaseVault_View_Call {
+	return &MockUsecaseVault_View_Call{Call: _e.mock.On("View", ctx, owner)}
+}
+
+func (_c *MockUsecaseVault_View_Call) Run(run func(ctx context.Context, owner uuid.UUID)) *MockUsecaseVault_View_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *MockUsecaseVault_View_Call) Return(_a0 biz.VaultView, _a1 error) *MockUsecaseVault_View_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUsecaseVault_View_Call) RunAndReturn(run func(context.Context, uuid.UUID) (biz.VaultView, error)) *MockUsecaseVault_View_Call {
 	_c.Call.Return(run)
 	return _c
 }

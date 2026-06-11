@@ -48,12 +48,16 @@ type objectListed struct {
 	Appraised *money `json:"appraised,omitempty"`
 }
 
-// attestationRecorded mirrors dauction.events.v1.AttestationRecorded.
+// attestationRecorded mirrors dauction.events.v1.AttestationRecorded. The
+// authenticity/condition_grade fields are populated by the Inspector seal flow
+// (§3.5) and omitted by the legacy admin attest path.
 type attestationRecorded struct {
-	AttestationID string `json:"attestation_id"`
-	LotID         string `json:"lot_id"`
-	Inspector     string `json:"inspector"`
-	Pass          bool   `json:"pass"`
+	AttestationID  string `json:"attestation_id"`
+	LotID          string `json:"lot_id"`
+	Inspector      string `json:"inspector"`
+	Pass           bool   `json:"pass"`
+	Authenticity   string `json:"authenticity,omitempty"`
+	ConditionGrade string `json:"condition_grade,omitempty"`
 }
 
 // lotCertified mirrors dauction.events.v1.LotCertified.
@@ -93,6 +97,19 @@ func newAttestationRecordedOutbox(
 		LotID:         lotID.String(),
 		Inspector:     inspectorID.String(),
 		Pass:          pass,
+	})
+}
+
+// newInspectionRecordedOutbox builds the attestation.recorded outbox for an
+// Inspector seal, carrying the authenticity + condition grade (§3.5).
+func newInspectionRecordedOutbox(insp entity.Inspection, pass bool, idempotencyKey string) (entity.OutboxEvent, error) {
+	return newOutbox(SubjectAttestationRecorded, idempotencyKey, attestationRecorded{
+		AttestationID:  insp.ID.String(),
+		LotID:          insp.LotID.String(),
+		Inspector:      insp.InspectorID.String(),
+		Pass:           pass,
+		Authenticity:   insp.Authenticity,
+		ConditionGrade: insp.ConditionGrade,
 	})
 }
 

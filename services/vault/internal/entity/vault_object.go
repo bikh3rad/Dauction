@@ -16,6 +16,9 @@ type ObjectState string
 const (
 	// ObjectInVault is the resting state of an owned object.
 	ObjectInVault ObjectState = "IN_VAULT"
+	// ObjectPendingInspection means the object has been listed and is awaiting an
+	// Inspector's authenticity/condition seal before it can go public (§3.5).
+	ObjectPendingInspection ObjectState = "PENDING_INSPECTION"
 	// ObjectAppraising means the object has been listed to auction and is
 	// awaiting certification/appraisal before scheduling.
 	ObjectAppraising ObjectState = "APPRAISING"
@@ -30,11 +33,31 @@ const (
 // Valid reports whether s is a known object state.
 func (s ObjectState) Valid() bool {
 	switch s {
-	case ObjectInVault, ObjectAppraising, ObjectInAuction, ObjectSold, ObjectBoughtBack:
+	case ObjectInVault, ObjectPendingInspection, ObjectAppraising, ObjectInAuction, ObjectSold, ObjectBoughtBack:
 		return true
 	default:
 		return false
 	}
+}
+
+// SupportedLangs are the exactly-four languages every listing must carry
+// (CLAUDE.md §0 rule 7). The client localizes from these.
+var SupportedLangs = []string{"en", "fa", "ar", "tr"}
+
+// ObjectTranslation is owner-authored localized content for one language.
+type ObjectTranslation struct {
+	Lang        string
+	Title       string
+	Description string
+}
+
+// ListingDetails is the categorization + localized content + media captured when
+// an object is listed for auction (§3 categories, §4 media, §5 i18n).
+type ListingDetails struct {
+	CategoryCode string
+	PrimaryLang  string
+	Translations []ObjectTranslation // exactly the 4 SupportedLangs (back-filled)
+	ImageRefs    []string            // ≤7; [0] is the cover
 }
 
 // VaultObject is a single item in a member's private collection. The appraised

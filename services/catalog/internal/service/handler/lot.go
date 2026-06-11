@@ -42,6 +42,11 @@ func (h *lotHandler) RegisterHandler(_ context.Context) error {
 	h.mux.HandleFunc("POST /apis/admin/lots/{id}/attest", h.attest)
 	h.mux.HandleFunc("POST /apis/admin/lots/{id}/certify", h.certify)
 	h.mux.HandleFunc("POST /apis/admin/lots/{id}/schedule", h.schedule)
+	// categories (public)
+	h.mux.HandleFunc("GET /apis/categories", h.categories)
+	// inspector workflow (INSPECTOR role; the auction-eligibility gate, §3.5)
+	h.mux.HandleFunc("GET /apis/inspector/queue", h.inspectorQueue)
+	h.mux.HandleFunc("POST /apis/inspector/lots/{id}/inspect", h.inspect)
 
 	return nil
 }

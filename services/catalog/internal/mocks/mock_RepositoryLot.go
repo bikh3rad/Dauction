@@ -4,11 +4,13 @@ package mocks
 
 import (
 	biz "application/internal/biz"
-	entity "application/internal/entity"
 	context "context"
-	time "time"
+
+	entity "application/internal/entity"
 
 	mock "github.com/stretchr/testify/mock"
+
+	time "time"
 
 	uuid "github.com/google/uuid"
 )
@@ -26,29 +28,29 @@ func (_m *MockRepositoryLot) EXPECT() *MockRepositoryLot_Expecter {
 	return &MockRepositoryLot_Expecter{mock: &_m.Mock}
 }
 
-// GetWeekly provides a mock function with given fields: ctx, week
-func (_m *MockRepositoryLot) GetWeekly(ctx context.Context, week string) ([]entity.Lot, error) {
-	ret := _m.Called(ctx, week)
+// AttestationsByLot provides a mock function with given fields: ctx, lotID
+func (_m *MockRepositoryLot) AttestationsByLot(ctx context.Context, lotID uuid.UUID) ([]entity.Attestation, error) {
+	ret := _m.Called(ctx, lotID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetWeekly")
+		panic("no return value specified for AttestationsByLot")
 	}
 
-	var r0 []entity.Lot
+	var r0 []entity.Attestation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]entity.Lot, error)); ok {
-		return rf(ctx, week)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]entity.Attestation, error)); ok {
+		return rf(ctx, lotID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []entity.Lot); ok {
-		r0 = rf(ctx, week)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) []entity.Attestation); ok {
+		r0 = rf(ctx, lotID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]entity.Lot)
+			r0 = ret.Get(0).([]entity.Attestation)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, week)
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, lotID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -56,27 +58,137 @@ func (_m *MockRepositoryLot) GetWeekly(ctx context.Context, week string) ([]enti
 	return r0, r1
 }
 
-type MockRepositoryLot_GetWeekly_Call struct {
+// MockRepositoryLot_AttestationsByLot_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AttestationsByLot'
+type MockRepositoryLot_AttestationsByLot_Call struct {
 	*mock.Call
 }
 
-func (_e *MockRepositoryLot_Expecter) GetWeekly(ctx interface{}, week interface{}) *MockRepositoryLot_GetWeekly_Call {
-	return &MockRepositoryLot_GetWeekly_Call{Call: _e.mock.On("GetWeekly", ctx, week)}
+// AttestationsByLot is a helper method to define mock.On call
+//   - ctx context.Context
+//   - lotID uuid.UUID
+func (_e *MockRepositoryLot_Expecter) AttestationsByLot(ctx interface{}, lotID interface{}) *MockRepositoryLot_AttestationsByLot_Call {
+	return &MockRepositoryLot_AttestationsByLot_Call{Call: _e.mock.On("AttestationsByLot", ctx, lotID)}
 }
 
-func (_c *MockRepositoryLot_GetWeekly_Call) Run(run func(ctx context.Context, week string)) *MockRepositoryLot_GetWeekly_Call {
+func (_c *MockRepositoryLot_AttestationsByLot_Call) Run(run func(ctx context.Context, lotID uuid.UUID)) *MockRepositoryLot_AttestationsByLot_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(uuid.UUID))
 	})
 	return _c
 }
 
-func (_c *MockRepositoryLot_GetWeekly_Call) Return(_a0 []entity.Lot, _a1 error) *MockRepositoryLot_GetWeekly_Call {
+func (_c *MockRepositoryLot_AttestationsByLot_Call) Return(_a0 []entity.Attestation, _a1 error) *MockRepositoryLot_AttestationsByLot_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockRepositoryLot_GetWeekly_Call) RunAndReturn(run func(context.Context, string) ([]entity.Lot, error)) *MockRepositoryLot_GetWeekly_Call {
+func (_c *MockRepositoryLot_AttestationsByLot_Call) RunAndReturn(run func(context.Context, uuid.UUID) ([]entity.Attestation, error)) *MockRepositoryLot_AttestationsByLot_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CertifyTx provides a mock function with given fields: ctx, lotID, outbox
+func (_m *MockRepositoryLot) CertifyTx(ctx context.Context, lotID uuid.UUID, outbox entity.OutboxEvent) (entity.Lot, error) {
+	ret := _m.Called(ctx, lotID, outbox)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CertifyTx")
+	}
+
+	var r0 entity.Lot
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entity.OutboxEvent) (entity.Lot, error)); ok {
+		return rf(ctx, lotID, outbox)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entity.OutboxEvent) entity.Lot); ok {
+		r0 = rf(ctx, lotID, outbox)
+	} else {
+		r0 = ret.Get(0).(entity.Lot)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, entity.OutboxEvent) error); ok {
+		r1 = rf(ctx, lotID, outbox)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRepositoryLot_CertifyTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CertifyTx'
+type MockRepositoryLot_CertifyTx_Call struct {
+	*mock.Call
+}
+
+// CertifyTx is a helper method to define mock.On call
+//   - ctx context.Context
+//   - lotID uuid.UUID
+//   - outbox entity.OutboxEvent
+func (_e *MockRepositoryLot_Expecter) CertifyTx(ctx interface{}, lotID interface{}, outbox interface{}) *MockRepositoryLot_CertifyTx_Call {
+	return &MockRepositoryLot_CertifyTx_Call{Call: _e.mock.On("CertifyTx", ctx, lotID, outbox)}
+}
+
+func (_c *MockRepositoryLot_CertifyTx_Call) Run(run func(ctx context.Context, lotID uuid.UUID, outbox entity.OutboxEvent)) *MockRepositoryLot_CertifyTx_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(entity.OutboxEvent))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryLot_CertifyTx_Call) Return(_a0 entity.Lot, _a1 error) *MockRepositoryLot_CertifyTx_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRepositoryLot_CertifyTx_Call) RunAndReturn(run func(context.Context, uuid.UUID, entity.OutboxEvent) (entity.Lot, error)) *MockRepositoryLot_CertifyTx_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateLotTx provides a mock function with given fields: ctx, lot, inboxKey
+func (_m *MockRepositoryLot) CreateLotTx(ctx context.Context, lot entity.Lot, inboxKey string) error {
+	ret := _m.Called(ctx, lot, inboxKey)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateLotTx")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, entity.Lot, string) error); ok {
+		r0 = rf(ctx, lot, inboxKey)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockRepositoryLot_CreateLotTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateLotTx'
+type MockRepositoryLot_CreateLotTx_Call struct {
+	*mock.Call
+}
+
+// CreateLotTx is a helper method to define mock.On call
+//   - ctx context.Context
+//   - lot entity.Lot
+//   - inboxKey string
+func (_e *MockRepositoryLot_Expecter) CreateLotTx(ctx interface{}, lot interface{}, inboxKey interface{}) *MockRepositoryLot_CreateLotTx_Call {
+	return &MockRepositoryLot_CreateLotTx_Call{Call: _e.mock.On("CreateLotTx", ctx, lot, inboxKey)}
+}
+
+func (_c *MockRepositoryLot_CreateLotTx_Call) Run(run func(ctx context.Context, lot entity.Lot, inboxKey string)) *MockRepositoryLot_CreateLotTx_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(entity.Lot), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryLot_CreateLotTx_Call) Return(_a0 error) *MockRepositoryLot_CreateLotTx_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockRepositoryLot_CreateLotTx_Call) RunAndReturn(run func(context.Context, entity.Lot, string) error) *MockRepositoryLot_CreateLotTx_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -109,10 +221,14 @@ func (_m *MockRepositoryLot) Get(ctx context.Context, id uuid.UUID) (entity.Lot,
 	return r0, r1
 }
 
+// MockRepositoryLot_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
 type MockRepositoryLot_Get_Call struct {
 	*mock.Call
 }
 
+// Get is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
 func (_e *MockRepositoryLot_Expecter) Get(ctx interface{}, id interface{}) *MockRepositoryLot_Get_Call {
 	return &MockRepositoryLot_Get_Call{Call: _e.mock.On("Get", ctx, id)}
 }
@@ -130,6 +246,181 @@ func (_c *MockRepositoryLot_Get_Call) Return(_a0 entity.Lot, _a1 error) *MockRep
 }
 
 func (_c *MockRepositoryLot_Get_Call) RunAndReturn(run func(context.Context, uuid.UUID) (entity.Lot, error)) *MockRepositoryLot_Get_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetWeekly provides a mock function with given fields: ctx, week
+func (_m *MockRepositoryLot) GetWeekly(ctx context.Context, week string) ([]entity.Lot, error) {
+	ret := _m.Called(ctx, week)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetWeekly")
+	}
+
+	var r0 []entity.Lot
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]entity.Lot, error)); ok {
+		return rf(ctx, week)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []entity.Lot); ok {
+		r0 = rf(ctx, week)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entity.Lot)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, week)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRepositoryLot_GetWeekly_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetWeekly'
+type MockRepositoryLot_GetWeekly_Call struct {
+	*mock.Call
+}
+
+// GetWeekly is a helper method to define mock.On call
+//   - ctx context.Context
+//   - week string
+func (_e *MockRepositoryLot_Expecter) GetWeekly(ctx interface{}, week interface{}) *MockRepositoryLot_GetWeekly_Call {
+	return &MockRepositoryLot_GetWeekly_Call{Call: _e.mock.On("GetWeekly", ctx, week)}
+}
+
+func (_c *MockRepositoryLot_GetWeekly_Call) Run(run func(ctx context.Context, week string)) *MockRepositoryLot_GetWeekly_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryLot_GetWeekly_Call) Return(_a0 []entity.Lot, _a1 error) *MockRepositoryLot_GetWeekly_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRepositoryLot_GetWeekly_Call) RunAndReturn(run func(context.Context, string) ([]entity.Lot, error)) *MockRepositoryLot_GetWeekly_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// HasPassAttestation provides a mock function with given fields: ctx, lotID
+func (_m *MockRepositoryLot) HasPassAttestation(ctx context.Context, lotID uuid.UUID) (bool, error) {
+	ret := _m.Called(ctx, lotID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HasPassAttestation")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (bool, error)); ok {
+		return rf(ctx, lotID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) bool); ok {
+		r0 = rf(ctx, lotID)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, lotID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRepositoryLot_HasPassAttestation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasPassAttestation'
+type MockRepositoryLot_HasPassAttestation_Call struct {
+	*mock.Call
+}
+
+// HasPassAttestation is a helper method to define mock.On call
+//   - ctx context.Context
+//   - lotID uuid.UUID
+func (_e *MockRepositoryLot_Expecter) HasPassAttestation(ctx interface{}, lotID interface{}) *MockRepositoryLot_HasPassAttestation_Call {
+	return &MockRepositoryLot_HasPassAttestation_Call{Call: _e.mock.On("HasPassAttestation", ctx, lotID)}
+}
+
+func (_c *MockRepositoryLot_HasPassAttestation_Call) Run(run func(ctx context.Context, lotID uuid.UUID)) *MockRepositoryLot_HasPassAttestation_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryLot_HasPassAttestation_Call) Return(_a0 bool, _a1 error) *MockRepositoryLot_HasPassAttestation_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRepositoryLot_HasPassAttestation_Call) RunAndReturn(run func(context.Context, uuid.UUID) (bool, error)) *MockRepositoryLot_HasPassAttestation_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// InspectTx provides a mock function with given fields: ctx, insp, approve, outboxes
+func (_m *MockRepositoryLot) InspectTx(ctx context.Context, insp entity.Inspection, approve bool, outboxes []entity.OutboxEvent) (entity.Lot, error) {
+	ret := _m.Called(ctx, insp, approve, outboxes)
+
+	if len(ret) == 0 {
+		panic("no return value specified for InspectTx")
+	}
+
+	var r0 entity.Lot
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, entity.Inspection, bool, []entity.OutboxEvent) (entity.Lot, error)); ok {
+		return rf(ctx, insp, approve, outboxes)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, entity.Inspection, bool, []entity.OutboxEvent) entity.Lot); ok {
+		r0 = rf(ctx, insp, approve, outboxes)
+	} else {
+		r0 = ret.Get(0).(entity.Lot)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, entity.Inspection, bool, []entity.OutboxEvent) error); ok {
+		r1 = rf(ctx, insp, approve, outboxes)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRepositoryLot_InspectTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InspectTx'
+type MockRepositoryLot_InspectTx_Call struct {
+	*mock.Call
+}
+
+// InspectTx is a helper method to define mock.On call
+//   - ctx context.Context
+//   - insp entity.Inspection
+//   - approve bool
+//   - outboxes []entity.OutboxEvent
+func (_e *MockRepositoryLot_Expecter) InspectTx(ctx interface{}, insp interface{}, approve interface{}, outboxes interface{}) *MockRepositoryLot_InspectTx_Call {
+	return &MockRepositoryLot_InspectTx_Call{Call: _e.mock.On("InspectTx", ctx, insp, approve, outboxes)}
+}
+
+func (_c *MockRepositoryLot_InspectTx_Call) Run(run func(ctx context.Context, insp entity.Inspection, approve bool, outboxes []entity.OutboxEvent)) *MockRepositoryLot_InspectTx_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(entity.Inspection), args[2].(bool), args[3].([]entity.OutboxEvent))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryLot_InspectTx_Call) Return(_a0 entity.Lot, _a1 error) *MockRepositoryLot_InspectTx_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRepositoryLot_InspectTx_Call) RunAndReturn(run func(context.Context, entity.Inspection, bool, []entity.OutboxEvent) (entity.Lot, error)) *MockRepositoryLot_InspectTx_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -164,10 +455,14 @@ func (_m *MockRepositoryLot) List(ctx context.Context, filter biz.LotListFilter)
 	return r0, r1
 }
 
+// MockRepositoryLot_List_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'List'
 type MockRepositoryLot_List_Call struct {
 	*mock.Call
 }
 
+// List is a helper method to define mock.On call
+//   - ctx context.Context
+//   - filter biz.LotListFilter
 func (_e *MockRepositoryLot_Expecter) List(ctx interface{}, filter interface{}) *MockRepositoryLot_List_Call {
 	return &MockRepositoryLot_List_Call{Call: _e.mock.On("List", ctx, filter)}
 }
@@ -185,157 +480,6 @@ func (_c *MockRepositoryLot_List_Call) Return(_a0 []entity.Lot, _a1 error) *Mock
 }
 
 func (_c *MockRepositoryLot_List_Call) RunAndReturn(run func(context.Context, biz.LotListFilter) ([]entity.Lot, error)) *MockRepositoryLot_List_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// AttestationsByLot provides a mock function with given fields: ctx, lotID
-func (_m *MockRepositoryLot) AttestationsByLot(ctx context.Context, lotID uuid.UUID) ([]entity.Attestation, error) {
-	ret := _m.Called(ctx, lotID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AttestationsByLot")
-	}
-
-	var r0 []entity.Attestation
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]entity.Attestation, error)); ok {
-		return rf(ctx, lotID)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) []entity.Attestation); ok {
-		r0 = rf(ctx, lotID)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]entity.Attestation)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = rf(ctx, lotID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-type MockRepositoryLot_AttestationsByLot_Call struct {
-	*mock.Call
-}
-
-func (_e *MockRepositoryLot_Expecter) AttestationsByLot(ctx interface{}, lotID interface{}) *MockRepositoryLot_AttestationsByLot_Call {
-	return &MockRepositoryLot_AttestationsByLot_Call{Call: _e.mock.On("AttestationsByLot", ctx, lotID)}
-}
-
-func (_c *MockRepositoryLot_AttestationsByLot_Call) Run(run func(ctx context.Context, lotID uuid.UUID)) *MockRepositoryLot_AttestationsByLot_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
-	})
-	return _c
-}
-
-func (_c *MockRepositoryLot_AttestationsByLot_Call) Return(_a0 []entity.Attestation, _a1 error) *MockRepositoryLot_AttestationsByLot_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockRepositoryLot_AttestationsByLot_Call) RunAndReturn(run func(context.Context, uuid.UUID) ([]entity.Attestation, error)) *MockRepositoryLot_AttestationsByLot_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// HasPassAttestation provides a mock function with given fields: ctx, lotID
-func (_m *MockRepositoryLot) HasPassAttestation(ctx context.Context, lotID uuid.UUID) (bool, error) {
-	ret := _m.Called(ctx, lotID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for HasPassAttestation")
-	}
-
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (bool, error)); ok {
-		return rf(ctx, lotID)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) bool); ok {
-		r0 = rf(ctx, lotID)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = rf(ctx, lotID)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-type MockRepositoryLot_HasPassAttestation_Call struct {
-	*mock.Call
-}
-
-func (_e *MockRepositoryLot_Expecter) HasPassAttestation(ctx interface{}, lotID interface{}) *MockRepositoryLot_HasPassAttestation_Call {
-	return &MockRepositoryLot_HasPassAttestation_Call{Call: _e.mock.On("HasPassAttestation", ctx, lotID)}
-}
-
-func (_c *MockRepositoryLot_HasPassAttestation_Call) Run(run func(ctx context.Context, lotID uuid.UUID)) *MockRepositoryLot_HasPassAttestation_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
-	})
-	return _c
-}
-
-func (_c *MockRepositoryLot_HasPassAttestation_Call) Return(_a0 bool, _a1 error) *MockRepositoryLot_HasPassAttestation_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockRepositoryLot_HasPassAttestation_Call) RunAndReturn(run func(context.Context, uuid.UUID) (bool, error)) *MockRepositoryLot_HasPassAttestation_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CreateLotTx provides a mock function with given fields: ctx, lot, inboxKey
-func (_m *MockRepositoryLot) CreateLotTx(ctx context.Context, lot entity.Lot, inboxKey string) error {
-	ret := _m.Called(ctx, lot, inboxKey)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateLotTx")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, entity.Lot, string) error); ok {
-		r0 = rf(ctx, lot, inboxKey)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-type MockRepositoryLot_CreateLotTx_Call struct {
-	*mock.Call
-}
-
-func (_e *MockRepositoryLot_Expecter) CreateLotTx(ctx interface{}, lot interface{}, inboxKey interface{}) *MockRepositoryLot_CreateLotTx_Call {
-	return &MockRepositoryLot_CreateLotTx_Call{Call: _e.mock.On("CreateLotTx", ctx, lot, inboxKey)}
-}
-
-func (_c *MockRepositoryLot_CreateLotTx_Call) Run(run func(ctx context.Context, lot entity.Lot, inboxKey string)) *MockRepositoryLot_CreateLotTx_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(entity.Lot), args[2].(string))
-	})
-	return _c
-}
-
-func (_c *MockRepositoryLot_CreateLotTx_Call) Return(_a0 error) *MockRepositoryLot_CreateLotTx_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockRepositoryLot_CreateLotTx_Call) RunAndReturn(run func(context.Context, entity.Lot, string) error) *MockRepositoryLot_CreateLotTx_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -358,10 +502,16 @@ func (_m *MockRepositoryLot) RecordAttestationTx(ctx context.Context, att entity
 	return r0
 }
 
+// MockRepositoryLot_RecordAttestationTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RecordAttestationTx'
 type MockRepositoryLot_RecordAttestationTx_Call struct {
 	*mock.Call
 }
 
+// RecordAttestationTx is a helper method to define mock.On call
+//   - ctx context.Context
+//   - att entity.Attestation
+//   - rejectLot bool
+//   - outbox entity.OutboxEvent
 func (_e *MockRepositoryLot_Expecter) RecordAttestationTx(ctx interface{}, att interface{}, rejectLot interface{}, outbox interface{}) *MockRepositoryLot_RecordAttestationTx_Call {
 	return &MockRepositoryLot_RecordAttestationTx_Call{Call: _e.mock.On("RecordAttestationTx", ctx, att, rejectLot, outbox)}
 }
@@ -379,59 +529,6 @@ func (_c *MockRepositoryLot_RecordAttestationTx_Call) Return(_a0 error) *MockRep
 }
 
 func (_c *MockRepositoryLot_RecordAttestationTx_Call) RunAndReturn(run func(context.Context, entity.Attestation, bool, entity.OutboxEvent) error) *MockRepositoryLot_RecordAttestationTx_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CertifyTx provides a mock function with given fields: ctx, lotID, outbox
-func (_m *MockRepositoryLot) CertifyTx(ctx context.Context, lotID uuid.UUID, outbox entity.OutboxEvent) (entity.Lot, error) {
-	ret := _m.Called(ctx, lotID, outbox)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CertifyTx")
-	}
-
-	var r0 entity.Lot
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entity.OutboxEvent) (entity.Lot, error)); ok {
-		return rf(ctx, lotID, outbox)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entity.OutboxEvent) entity.Lot); ok {
-		r0 = rf(ctx, lotID, outbox)
-	} else {
-		r0 = ret.Get(0).(entity.Lot)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, entity.OutboxEvent) error); ok {
-		r1 = rf(ctx, lotID, outbox)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-type MockRepositoryLot_CertifyTx_Call struct {
-	*mock.Call
-}
-
-func (_e *MockRepositoryLot_Expecter) CertifyTx(ctx interface{}, lotID interface{}, outbox interface{}) *MockRepositoryLot_CertifyTx_Call {
-	return &MockRepositoryLot_CertifyTx_Call{Call: _e.mock.On("CertifyTx", ctx, lotID, outbox)}
-}
-
-func (_c *MockRepositoryLot_CertifyTx_Call) Run(run func(ctx context.Context, lotID uuid.UUID, outbox entity.OutboxEvent)) *MockRepositoryLot_CertifyTx_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(entity.OutboxEvent))
-	})
-	return _c
-}
-
-func (_c *MockRepositoryLot_CertifyTx_Call) Return(_a0 entity.Lot, _a1 error) *MockRepositoryLot_CertifyTx_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockRepositoryLot_CertifyTx_Call) RunAndReturn(run func(context.Context, uuid.UUID, entity.OutboxEvent) (entity.Lot, error)) *MockRepositoryLot_CertifyTx_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -464,10 +561,17 @@ func (_m *MockRepositoryLot) ScheduleTx(ctx context.Context, lotID uuid.UUID, sc
 	return r0, r1
 }
 
+// MockRepositoryLot_ScheduleTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ScheduleTx'
 type MockRepositoryLot_ScheduleTx_Call struct {
 	*mock.Call
 }
 
+// ScheduleTx is a helper method to define mock.On call
+//   - ctx context.Context
+//   - lotID uuid.UUID
+//   - scheduledAt time.Time
+//   - weekCap int
+//   - outbox entity.OutboxEvent
 func (_e *MockRepositoryLot_Expecter) ScheduleTx(ctx interface{}, lotID interface{}, scheduledAt interface{}, weekCap interface{}, outbox interface{}) *MockRepositoryLot_ScheduleTx_Call {
 	return &MockRepositoryLot_ScheduleTx_Call{Call: _e.mock.On("ScheduleTx", ctx, lotID, scheduledAt, weekCap, outbox)}
 }

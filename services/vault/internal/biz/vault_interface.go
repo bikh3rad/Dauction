@@ -16,10 +16,16 @@ type VaultView struct {
 
 // ListRequest is the validated input for listing an object to auction. Mode is
 // the engine; DurationDays is required for timed (VICKREY/UNIQBID) and forbidden
-// for DUTCH (CLAUDE.md §6) — the use case enforces this matrix.
+// for DUTCH (CLAUDE.md §6) — the use case enforces this matrix. CategoryCode,
+// Translations (4 langs, back-filled from PrimaryLang) and ImageRefs (≤7) capture
+// the listing content (§3/§4/§5).
 type ListRequest struct {
 	Mode         entity.AuctionMode
 	DurationDays int // 0 when DUTCH; 2/5/7 when timed
+	CategoryCode string
+	PrimaryLang  string
+	Translations []entity.ObjectTranslation
+	ImageRefs    []string
 }
 
 // UsecaseVault is the vault use case consumed by handlers and event consumers.
@@ -78,6 +84,12 @@ type RepositoryVault interface {
 	// UPDATE) and writes the outbox row in one transaction. If the row is not in
 	// `from`, returns ErrResourceInvalid. Returns the updated object.
 	TransitionTx(ctx context.Context, objectID uuid.UUID, from, to entity.ObjectState, outbox entity.OutboxEvent) (entity.VaultObject, error)
+
+	// ListWithDetailsTx atomically transitions an object from `from` to `to`,
+	// writes its category + replaces its translations + media, and writes the
+	// object.listed outbox row — all in one transaction. Not in `from` ->
+	// ErrResourceInvalid. Returns the updated object.
+	ListWithDetailsTx(ctx context.Context, objectID uuid.UUID, from, to entity.ObjectState, details entity.ListingDetails, outbox entity.OutboxEvent) (entity.VaultObject, error)
 
 	// BuybackTx atomically moves objectID IN_VAULT -> BOUGHT_BACK. When entry is
 	// non-nil it is appended to the vault-credit ledger and buildOutbox(balance)

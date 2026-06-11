@@ -79,4 +79,55 @@ type Lot struct {
 	ISOWeek             string      `json:"isoWeek"` // e.g. "2026-W23"
 	CreatedAt           time.Time   `json:"createdAt"`
 	ScheduledAt         *time.Time  `json:"scheduledAt"`
+
+	// Inspector seal (§3.5). Populated once an Inspector seals the lot.
+	CategoryCode   string     `json:"categoryCode"`
+	Certified      bool       `json:"certified"`
+	InspectorID    *uuid.UUID `json:"inspectorId,omitempty"`
+	Authenticity   string     `json:"authenticity,omitempty"`   // GENUINE | COUNTERFEIT | INCONCLUSIVE
+	ConditionGrade string     `json:"conditionGrade,omitempty"` // MINT | EXCELLENT | GOOD | FAIR | POOR
+}
+
+// InspectionVerdict is the Inspector's sealing decision (§3.5).
+type InspectionVerdict string
+
+const (
+	VerdictApproved InspectionVerdict = "APPROVED"
+	VerdictRejected InspectionVerdict = "REJECTED"
+)
+
+// Valid reports whether v is a known verdict.
+func (v InspectionVerdict) Valid() bool { return v == VerdictApproved || v == VerdictRejected }
+
+// ValidAuthenticity reports whether a is a known authenticity finding.
+func ValidAuthenticity(a string) bool {
+	switch a {
+	case "GENUINE", "COUNTERFEIT", "INCONCLUSIVE":
+		return true
+	default:
+		return false
+	}
+}
+
+// ValidConditionGrade reports whether g is a known condition grade (empty allowed).
+func ValidConditionGrade(g string) bool {
+	switch g {
+	case "", "MINT", "EXCELLENT", "GOOD", "FAIR", "POOR":
+		return true
+	default:
+		return false
+	}
+}
+
+// Inspection is an Inspector's sealing verdict on a lot — the certification gate
+// record (§3.5). One per lot.
+type Inspection struct {
+	ID             uuid.UUID
+	LotID          uuid.UUID
+	InspectorID    uuid.UUID
+	Verdict        InspectionVerdict
+	Authenticity   string
+	ConditionGrade string
+	Notes          string
+	SealedAt       time.Time
 }

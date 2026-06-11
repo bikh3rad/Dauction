@@ -47,6 +47,18 @@ type objectListed struct {
 	Mode     string `json:"mode"`
 	Duration string `json:"duration,omitempty"`
 	Floor    money  `json:"floor"`
+	// Listing content carried downstream so catalog seeds the lot without DB->DB.
+	Category     string             `json:"category,omitempty"`
+	PrimaryLang  string             `json:"primary_lang,omitempty"`
+	Translations []eventTranslation `json:"translations,omitempty"`
+	ImageRefs    []string           `json:"image_refs,omitempty"`
+}
+
+// eventTranslation is one language's owner-authored content on the event payload.
+type eventTranslation struct {
+	Lang        string `json:"lang"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
 }
 
 // creditChanged mirrors dauction.events.v1.CreditChanged. Delta/Balance are
@@ -95,14 +107,24 @@ func newObjectListedOutbox(
 	mode entity.AuctionMode,
 	durationDays int,
 	floorCents int64,
+	details entity.ListingDetails,
 	idempotencyKey string,
 ) (entity.OutboxEvent, error) {
+	translations := make([]eventTranslation, 0, len(details.Translations))
+	for _, t := range details.Translations {
+		translations = append(translations, eventTranslation{Lang: t.Lang, Title: t.Title, Description: t.Description})
+	}
+
 	payload, err := json.Marshal(objectListed{
-		ObjectID: objectID.String(),
-		OwnerID:  ownerID.String(),
-		Mode:     string(mode),
-		Duration: timedDurationName(durationDays),
-		Floor:    money{Cents: floorCents},
+		ObjectID:     objectID.String(),
+		OwnerID:      ownerID.String(),
+		Mode:         string(mode),
+		Duration:     timedDurationName(durationDays),
+		Floor:        money{Cents: floorCents},
+		Category:     details.CategoryCode,
+		PrimaryLang:  details.PrimaryLang,
+		Translations: translations,
+		ImageRefs:    details.ImageRefs,
 	})
 	if err != nil {
 		return entity.OutboxEvent{}, err

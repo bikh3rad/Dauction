@@ -251,6 +251,75 @@ func (uc *lot) CreateFromObjectListed(ctx context.Context, in ObjectListedInput,
 	return nil
 }
 
+// InspectionQueue returns DRAFT lots awaiting an Inspector seal (§3.5).
+func (uc *lot) InspectionQueue(ctx context.Context) ([]entity.Lot, error) {
+	return uc.repo.List(ctx, LotListFilter{State: entity.LotDraft})
+}
+
+// Inspect records an Inspector's sealing verdict on a DRAFT lot. APPROVED
+// certifies the lot (DRAFT->CERTIFIED) and emits attestation.recorded +
+// lot.certified; REJECTED blocks it (DRAFT->REJECTED) and emits attestation.recorded
+// (pass=false). This is the auction-eligibility gate (§3.5): without an APPROVED
+// seal a lot can never be certified/scheduled, so it never reaches the gallery.
+func (uc *lot) Inspect(ctx context.Context, lotID uuid.UUID, in InspectInput) (entity.Lot, error) {
+	logger := uc.logger.With("method", "Inspect", "lot", lotID)
+
+	if !in.Verdict.Valid() {
+		return entity.Lot{}, fmt.Errorf("%w: unknown verdict %q", ErrResourceInvalid, in.Verdict)
+	}
+	if !entity.ValidAuthenticity(in.Authenticity) {
+		return entity.Lot{}, fmt.Errorf("%w: unknown authenticity %q", ErrResourceInvalid, in.Authenticity)
+	}
+	if !entity.ValidConditionGrade(in.ConditionGrade) {
+		return entity.Lot{}, fmt.Errorf("%w: unknown condition grade %q", ErrResourceInvalid, in.ConditionGrade)
+	}
+
+	approve := in.Verdict == entity.VerdictApproved
+	// A genuine seal is required to approve; a non-GENUINE finding cannot certify.
+	if approve && in.Authenticity != "GENUINE" {
+		return entity.Lot{}, fmt.Errorf("%w: cannot approve a non-GENUINE item", ErrResourceInvalid)
+	}
+	if approve && in.ConditionGrade == "" {
+		return entity.Lot{}, fmt.Errorf("%w: APPROVED requires a condition grade", ErrResourceInvalid)
+	}
+
+	insp := entity.Inspection{
+		ID:             uuid.New(),
+		LotID:          lotID,
+		InspectorID:    in.InspectorID,
+		Verdict:        in.Verdict,
+		Authenticity:   in.Authenticity,
+		ConditionGrade: in.ConditionGrade,
+		Notes:          in.Notes,
+		SealedAt:       time.Now().UTC(),
+	}
+
+	// Always emit attestation.recorded (the seal). On APPROVED also emit
+	// lot.certified so downstream scheduling/gallery can proceed.
+	attestOutbox, err := newInspectionRecordedOutbox(insp, approve, fmt.Sprintf("catalog:inspection:%s", insp.ID))
+	if err != nil {
+		return entity.Lot{}, err
+	}
+	outboxes := []entity.OutboxEvent{attestOutbox}
+
+	if approve {
+		certifiedOutbox, err := newLotCertifiedOutbox(lotID, insp.ID, fmt.Sprintf("catalog:certify:%s", lotID))
+		if err != nil {
+			return entity.Lot{}, err
+		}
+		outboxes = append(outboxes, certifiedOutbox)
+	}
+
+	updated, err := uc.repo.InspectTx(ctx, insp, approve, outboxes)
+	if err != nil {
+		return entity.Lot{}, err
+	}
+
+	logger.InfoContext(ctx, "lot inspected", "verdict", in.Verdict, "authenticity", in.Authenticity)
+
+	return updated, nil
+}
+
 // latestPassAttestation returns a PASS attestation for the lot, or
 // ErrResourceInvalid (the certification gate) when none exists.
 func (uc *lot) latestPassAttestation(ctx context.Context, lotID uuid.UUID) (entity.Attestation, error) {

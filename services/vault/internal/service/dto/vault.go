@@ -28,12 +28,39 @@ type CreateObjectReq struct {
 	AppraisedValueCents int64  `json:"appraisedValueCents" validate:"required,gt=0"`
 }
 
+// TranslationReq is one language's owner-authored title/description.
+type TranslationReq struct {
+	Lang        string `json:"lang"        validate:"required,oneof=en fa ar tr"`
+	Title       string `json:"title"       validate:"max=200"`
+	Description string `json:"description" validate:"max=2000"`
+}
+
 // ListObjectReq is the POST /apis/vault/objects/{id}/list request body.
 // DurationDays is required for VICKREY/UNIQBID and forbidden for DUTCH (enforced
-// in biz, surfaced as RESOURCE_INVALID).
+// in biz, surfaced as RESOURCE_INVALID). categoryId, translations[] (4 langs,
+// back-filled from the primary) and imageRefs (≤7) capture the listing content.
 type ListObjectReq struct {
-	Atype        string `json:"atype"                  validate:"required,oneof=DUTCH VICKREY UNIQBID"`
-	DurationDays int    `json:"durationDays,omitempty" validate:"omitempty,oneof=2 5 7"`
+	Atype        string           `json:"atype"                  validate:"required,oneof=DUTCH VICKREY UNIQBID"`
+	DurationDays int              `json:"durationDays,omitempty" validate:"omitempty,oneof=2 5 7"`
+	CategoryID   string           `json:"categoryId"             validate:"required"`
+	PrimaryLang  string           `json:"primaryLang"            validate:"required,oneof=en fa ar tr"`
+	Translations []TranslationReq `json:"translations"           validate:"required,dive"`
+	ImageRefs    []string         `json:"imageRefs"              validate:"max=7,dive,required"`
+}
+
+// ToEntityTranslations maps the request translations to entity values. Returns
+// nil (not an empty slice) when there are none, so the biz request stays comparable.
+func (r ListObjectReq) ToEntityTranslations() []entity.ObjectTranslation {
+	if len(r.Translations) == 0 {
+		return nil
+	}
+
+	out := make([]entity.ObjectTranslation, 0, len(r.Translations))
+	for _, t := range r.Translations {
+		out = append(out, entity.ObjectTranslation{Lang: t.Lang, Title: t.Title, Description: t.Description})
+	}
+
+	return out
 }
 
 // BuybackReq is the POST /apis/vault/objects/{id}/buyback request body.

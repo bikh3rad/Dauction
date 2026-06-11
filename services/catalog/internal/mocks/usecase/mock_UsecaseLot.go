@@ -4,11 +4,13 @@ package mocks
 
 import (
 	biz "application/internal/biz"
-	entity "application/internal/entity"
 	context "context"
-	time "time"
+
+	entity "application/internal/entity"
 
 	mock "github.com/stretchr/testify/mock"
+
+	time "time"
 
 	uuid "github.com/google/uuid"
 )
@@ -24,178 +26,6 @@ type MockUsecaseLot_Expecter struct {
 
 func (_m *MockUsecaseLot) EXPECT() *MockUsecaseLot_Expecter {
 	return &MockUsecaseLot_Expecter{mock: &_m.Mock}
-}
-
-// GetWeekly provides a mock function with given fields: ctx, week
-func (_m *MockUsecaseLot) GetWeekly(ctx context.Context, week string) ([]entity.Lot, error) {
-	ret := _m.Called(ctx, week)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetWeekly")
-	}
-
-	var r0 []entity.Lot
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]entity.Lot, error)); ok {
-		return rf(ctx, week)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []entity.Lot); ok {
-		r0 = rf(ctx, week)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]entity.Lot)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, week)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-type MockUsecaseLot_GetWeekly_Call struct {
-	*mock.Call
-}
-
-func (_e *MockUsecaseLot_Expecter) GetWeekly(ctx interface{}, week interface{}) *MockUsecaseLot_GetWeekly_Call {
-	return &MockUsecaseLot_GetWeekly_Call{Call: _e.mock.On("GetWeekly", ctx, week)}
-}
-
-func (_c *MockUsecaseLot_GetWeekly_Call) Run(run func(ctx context.Context, week string)) *MockUsecaseLot_GetWeekly_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
-	})
-	return _c
-}
-
-func (_c *MockUsecaseLot_GetWeekly_Call) Return(_a0 []entity.Lot, _a1 error) *MockUsecaseLot_GetWeekly_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockUsecaseLot_GetWeekly_Call) RunAndReturn(run func(context.Context, string) ([]entity.Lot, error)) *MockUsecaseLot_GetWeekly_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Get provides a mock function with given fields: ctx, id
-func (_m *MockUsecaseLot) Get(ctx context.Context, id uuid.UUID) (entity.Lot, []entity.Attestation, error) {
-	ret := _m.Called(ctx, id)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Get")
-	}
-
-	var r0 entity.Lot
-	var r1 []entity.Attestation
-	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (entity.Lot, []entity.Attestation, error)); ok {
-		return rf(ctx, id)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) entity.Lot); ok {
-		r0 = rf(ctx, id)
-	} else {
-		r0 = ret.Get(0).(entity.Lot)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) []entity.Attestation); ok {
-		r1 = rf(ctx, id)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).([]entity.Attestation)
-		}
-	}
-
-	if rf, ok := ret.Get(2).(func(context.Context, uuid.UUID) error); ok {
-		r2 = rf(ctx, id)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
-}
-
-type MockUsecaseLot_Get_Call struct {
-	*mock.Call
-}
-
-func (_e *MockUsecaseLot_Expecter) Get(ctx interface{}, id interface{}) *MockUsecaseLot_Get_Call {
-	return &MockUsecaseLot_Get_Call{Call: _e.mock.On("Get", ctx, id)}
-}
-
-func (_c *MockUsecaseLot_Get_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockUsecaseLot_Get_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(uuid.UUID))
-	})
-	return _c
-}
-
-func (_c *MockUsecaseLot_Get_Call) Return(_a0 entity.Lot, _a1 []entity.Attestation, _a2 error) *MockUsecaseLot_Get_Call {
-	_c.Call.Return(_a0, _a1, _a2)
-	return _c
-}
-
-func (_c *MockUsecaseLot_Get_Call) RunAndReturn(run func(context.Context, uuid.UUID) (entity.Lot, []entity.Attestation, error)) *MockUsecaseLot_Get_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// List provides a mock function with given fields: ctx, filter
-func (_m *MockUsecaseLot) List(ctx context.Context, filter biz.LotListFilter) ([]entity.Lot, error) {
-	ret := _m.Called(ctx, filter)
-
-	if len(ret) == 0 {
-		panic("no return value specified for List")
-	}
-
-	var r0 []entity.Lot
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, biz.LotListFilter) ([]entity.Lot, error)); ok {
-		return rf(ctx, filter)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, biz.LotListFilter) []entity.Lot); ok {
-		r0 = rf(ctx, filter)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]entity.Lot)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, biz.LotListFilter) error); ok {
-		r1 = rf(ctx, filter)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-type MockUsecaseLot_List_Call struct {
-	*mock.Call
-}
-
-func (_e *MockUsecaseLot_Expecter) List(ctx interface{}, filter interface{}) *MockUsecaseLot_List_Call {
-	return &MockUsecaseLot_List_Call{Call: _e.mock.On("List", ctx, filter)}
-}
-
-func (_c *MockUsecaseLot_List_Call) Run(run func(ctx context.Context, filter biz.LotListFilter)) *MockUsecaseLot_List_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(biz.LotListFilter))
-	})
-	return _c
-}
-
-func (_c *MockUsecaseLot_List_Call) Return(_a0 []entity.Lot, _a1 error) *MockUsecaseLot_List_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockUsecaseLot_List_Call) RunAndReturn(run func(context.Context, biz.LotListFilter) ([]entity.Lot, error)) *MockUsecaseLot_List_Call {
-	_c.Call.Return(run)
-	return _c
 }
 
 // Attest provides a mock function with given fields: ctx, lotID, in
@@ -226,10 +56,15 @@ func (_m *MockUsecaseLot) Attest(ctx context.Context, lotID uuid.UUID, in biz.At
 	return r0, r1
 }
 
+// MockUsecaseLot_Attest_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Attest'
 type MockUsecaseLot_Attest_Call struct {
 	*mock.Call
 }
 
+// Attest is a helper method to define mock.On call
+//   - ctx context.Context
+//   - lotID uuid.UUID
+//   - in biz.AttestInput
 func (_e *MockUsecaseLot_Expecter) Attest(ctx interface{}, lotID interface{}, in interface{}) *MockUsecaseLot_Attest_Call {
 	return &MockUsecaseLot_Attest_Call{Call: _e.mock.On("Attest", ctx, lotID, in)}
 }
@@ -279,10 +114,14 @@ func (_m *MockUsecaseLot) Certify(ctx context.Context, lotID uuid.UUID) (entity.
 	return r0, r1
 }
 
+// MockUsecaseLot_Certify_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Certify'
 type MockUsecaseLot_Certify_Call struct {
 	*mock.Call
 }
 
+// Certify is a helper method to define mock.On call
+//   - ctx context.Context
+//   - lotID uuid.UUID
 func (_e *MockUsecaseLot_Expecter) Certify(ctx interface{}, lotID interface{}) *MockUsecaseLot_Certify_Call {
 	return &MockUsecaseLot_Certify_Call{Call: _e.mock.On("Certify", ctx, lotID)}
 }
@@ -300,6 +139,354 @@ func (_c *MockUsecaseLot_Certify_Call) Return(_a0 entity.Lot, _a1 error) *MockUs
 }
 
 func (_c *MockUsecaseLot_Certify_Call) RunAndReturn(run func(context.Context, uuid.UUID) (entity.Lot, error)) *MockUsecaseLot_Certify_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateFromObjectListed provides a mock function with given fields: ctx, in, idempotencyKey
+func (_m *MockUsecaseLot) CreateFromObjectListed(ctx context.Context, in biz.ObjectListedInput, idempotencyKey string) error {
+	ret := _m.Called(ctx, in, idempotencyKey)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateFromObjectListed")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, biz.ObjectListedInput, string) error); ok {
+		r0 = rf(ctx, in, idempotencyKey)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockUsecaseLot_CreateFromObjectListed_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateFromObjectListed'
+type MockUsecaseLot_CreateFromObjectListed_Call struct {
+	*mock.Call
+}
+
+// CreateFromObjectListed is a helper method to define mock.On call
+//   - ctx context.Context
+//   - in biz.ObjectListedInput
+//   - idempotencyKey string
+func (_e *MockUsecaseLot_Expecter) CreateFromObjectListed(ctx interface{}, in interface{}, idempotencyKey interface{}) *MockUsecaseLot_CreateFromObjectListed_Call {
+	return &MockUsecaseLot_CreateFromObjectListed_Call{Call: _e.mock.On("CreateFromObjectListed", ctx, in, idempotencyKey)}
+}
+
+func (_c *MockUsecaseLot_CreateFromObjectListed_Call) Run(run func(ctx context.Context, in biz.ObjectListedInput, idempotencyKey string)) *MockUsecaseLot_CreateFromObjectListed_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(biz.ObjectListedInput), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *MockUsecaseLot_CreateFromObjectListed_Call) Return(_a0 error) *MockUsecaseLot_CreateFromObjectListed_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockUsecaseLot_CreateFromObjectListed_Call) RunAndReturn(run func(context.Context, biz.ObjectListedInput, string) error) *MockUsecaseLot_CreateFromObjectListed_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Get provides a mock function with given fields: ctx, id
+func (_m *MockUsecaseLot) Get(ctx context.Context, id uuid.UUID) (entity.Lot, []entity.Attestation, error) {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Get")
+	}
+
+	var r0 entity.Lot
+	var r1 []entity.Attestation
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (entity.Lot, []entity.Attestation, error)); ok {
+		return rf(ctx, id)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) entity.Lot); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Get(0).(entity.Lot)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) []entity.Attestation); ok {
+		r1 = rf(ctx, id)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).([]entity.Attestation)
+		}
+	}
+
+	if rf, ok := ret.Get(2).(func(context.Context, uuid.UUID) error); ok {
+		r2 = rf(ctx, id)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
+// MockUsecaseLot_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
+type MockUsecaseLot_Get_Call struct {
+	*mock.Call
+}
+
+// Get is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+func (_e *MockUsecaseLot_Expecter) Get(ctx interface{}, id interface{}) *MockUsecaseLot_Get_Call {
+	return &MockUsecaseLot_Get_Call{Call: _e.mock.On("Get", ctx, id)}
+}
+
+func (_c *MockUsecaseLot_Get_Call) Run(run func(ctx context.Context, id uuid.UUID)) *MockUsecaseLot_Get_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *MockUsecaseLot_Get_Call) Return(_a0 entity.Lot, _a1 []entity.Attestation, _a2 error) *MockUsecaseLot_Get_Call {
+	_c.Call.Return(_a0, _a1, _a2)
+	return _c
+}
+
+func (_c *MockUsecaseLot_Get_Call) RunAndReturn(run func(context.Context, uuid.UUID) (entity.Lot, []entity.Attestation, error)) *MockUsecaseLot_Get_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetWeekly provides a mock function with given fields: ctx, week
+func (_m *MockUsecaseLot) GetWeekly(ctx context.Context, week string) ([]entity.Lot, error) {
+	ret := _m.Called(ctx, week)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetWeekly")
+	}
+
+	var r0 []entity.Lot
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]entity.Lot, error)); ok {
+		return rf(ctx, week)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []entity.Lot); ok {
+		r0 = rf(ctx, week)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entity.Lot)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, week)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUsecaseLot_GetWeekly_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetWeekly'
+type MockUsecaseLot_GetWeekly_Call struct {
+	*mock.Call
+}
+
+// GetWeekly is a helper method to define mock.On call
+//   - ctx context.Context
+//   - week string
+func (_e *MockUsecaseLot_Expecter) GetWeekly(ctx interface{}, week interface{}) *MockUsecaseLot_GetWeekly_Call {
+	return &MockUsecaseLot_GetWeekly_Call{Call: _e.mock.On("GetWeekly", ctx, week)}
+}
+
+func (_c *MockUsecaseLot_GetWeekly_Call) Run(run func(ctx context.Context, week string)) *MockUsecaseLot_GetWeekly_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockUsecaseLot_GetWeekly_Call) Return(_a0 []entity.Lot, _a1 error) *MockUsecaseLot_GetWeekly_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUsecaseLot_GetWeekly_Call) RunAndReturn(run func(context.Context, string) ([]entity.Lot, error)) *MockUsecaseLot_GetWeekly_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Inspect provides a mock function with given fields: ctx, lotID, in
+func (_m *MockUsecaseLot) Inspect(ctx context.Context, lotID uuid.UUID, in biz.InspectInput) (entity.Lot, error) {
+	ret := _m.Called(ctx, lotID, in)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Inspect")
+	}
+
+	var r0 entity.Lot
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, biz.InspectInput) (entity.Lot, error)); ok {
+		return rf(ctx, lotID, in)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, biz.InspectInput) entity.Lot); ok {
+		r0 = rf(ctx, lotID, in)
+	} else {
+		r0 = ret.Get(0).(entity.Lot)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, biz.InspectInput) error); ok {
+		r1 = rf(ctx, lotID, in)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUsecaseLot_Inspect_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Inspect'
+type MockUsecaseLot_Inspect_Call struct {
+	*mock.Call
+}
+
+// Inspect is a helper method to define mock.On call
+//   - ctx context.Context
+//   - lotID uuid.UUID
+//   - in biz.InspectInput
+func (_e *MockUsecaseLot_Expecter) Inspect(ctx interface{}, lotID interface{}, in interface{}) *MockUsecaseLot_Inspect_Call {
+	return &MockUsecaseLot_Inspect_Call{Call: _e.mock.On("Inspect", ctx, lotID, in)}
+}
+
+func (_c *MockUsecaseLot_Inspect_Call) Run(run func(ctx context.Context, lotID uuid.UUID, in biz.InspectInput)) *MockUsecaseLot_Inspect_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(biz.InspectInput))
+	})
+	return _c
+}
+
+func (_c *MockUsecaseLot_Inspect_Call) Return(_a0 entity.Lot, _a1 error) *MockUsecaseLot_Inspect_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUsecaseLot_Inspect_Call) RunAndReturn(run func(context.Context, uuid.UUID, biz.InspectInput) (entity.Lot, error)) *MockUsecaseLot_Inspect_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// InspectionQueue provides a mock function with given fields: ctx
+func (_m *MockUsecaseLot) InspectionQueue(ctx context.Context) ([]entity.Lot, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for InspectionQueue")
+	}
+
+	var r0 []entity.Lot
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]entity.Lot, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []entity.Lot); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entity.Lot)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUsecaseLot_InspectionQueue_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'InspectionQueue'
+type MockUsecaseLot_InspectionQueue_Call struct {
+	*mock.Call
+}
+
+// InspectionQueue is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockUsecaseLot_Expecter) InspectionQueue(ctx interface{}) *MockUsecaseLot_InspectionQueue_Call {
+	return &MockUsecaseLot_InspectionQueue_Call{Call: _e.mock.On("InspectionQueue", ctx)}
+}
+
+func (_c *MockUsecaseLot_InspectionQueue_Call) Run(run func(ctx context.Context)) *MockUsecaseLot_InspectionQueue_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockUsecaseLot_InspectionQueue_Call) Return(_a0 []entity.Lot, _a1 error) *MockUsecaseLot_InspectionQueue_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUsecaseLot_InspectionQueue_Call) RunAndReturn(run func(context.Context) ([]entity.Lot, error)) *MockUsecaseLot_InspectionQueue_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// List provides a mock function with given fields: ctx, filter
+func (_m *MockUsecaseLot) List(ctx context.Context, filter biz.LotListFilter) ([]entity.Lot, error) {
+	ret := _m.Called(ctx, filter)
+
+	if len(ret) == 0 {
+		panic("no return value specified for List")
+	}
+
+	var r0 []entity.Lot
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, biz.LotListFilter) ([]entity.Lot, error)); ok {
+		return rf(ctx, filter)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, biz.LotListFilter) []entity.Lot); ok {
+		r0 = rf(ctx, filter)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entity.Lot)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, biz.LotListFilter) error); ok {
+		r1 = rf(ctx, filter)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUsecaseLot_List_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'List'
+type MockUsecaseLot_List_Call struct {
+	*mock.Call
+}
+
+// List is a helper method to define mock.On call
+//   - ctx context.Context
+//   - filter biz.LotListFilter
+func (_e *MockUsecaseLot_Expecter) List(ctx interface{}, filter interface{}) *MockUsecaseLot_List_Call {
+	return &MockUsecaseLot_List_Call{Call: _e.mock.On("List", ctx, filter)}
+}
+
+func (_c *MockUsecaseLot_List_Call) Run(run func(ctx context.Context, filter biz.LotListFilter)) *MockUsecaseLot_List_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(biz.LotListFilter))
+	})
+	return _c
+}
+
+func (_c *MockUsecaseLot_List_Call) Return(_a0 []entity.Lot, _a1 error) *MockUsecaseLot_List_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUsecaseLot_List_Call) RunAndReturn(run func(context.Context, biz.LotListFilter) ([]entity.Lot, error)) *MockUsecaseLot_List_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -332,10 +519,15 @@ func (_m *MockUsecaseLot) Schedule(ctx context.Context, lotID uuid.UUID, schedul
 	return r0, r1
 }
 
+// MockUsecaseLot_Schedule_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Schedule'
 type MockUsecaseLot_Schedule_Call struct {
 	*mock.Call
 }
 
+// Schedule is a helper method to define mock.On call
+//   - ctx context.Context
+//   - lotID uuid.UUID
+//   - scheduledAt time.Time
 func (_e *MockUsecaseLot_Expecter) Schedule(ctx interface{}, lotID interface{}, scheduledAt interface{}) *MockUsecaseLot_Schedule_Call {
 	return &MockUsecaseLot_Schedule_Call{Call: _e.mock.On("Schedule", ctx, lotID, scheduledAt)}
 }
@@ -353,49 +545,6 @@ func (_c *MockUsecaseLot_Schedule_Call) Return(_a0 entity.Lot, _a1 error) *MockU
 }
 
 func (_c *MockUsecaseLot_Schedule_Call) RunAndReturn(run func(context.Context, uuid.UUID, time.Time) (entity.Lot, error)) *MockUsecaseLot_Schedule_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CreateFromObjectListed provides a mock function with given fields: ctx, in, idempotencyKey
-func (_m *MockUsecaseLot) CreateFromObjectListed(ctx context.Context, in biz.ObjectListedInput, idempotencyKey string) error {
-	ret := _m.Called(ctx, in, idempotencyKey)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateFromObjectListed")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, biz.ObjectListedInput, string) error); ok {
-		r0 = rf(ctx, in, idempotencyKey)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-type MockUsecaseLot_CreateFromObjectListed_Call struct {
-	*mock.Call
-}
-
-func (_e *MockUsecaseLot_Expecter) CreateFromObjectListed(ctx interface{}, in interface{}, idempotencyKey interface{}) *MockUsecaseLot_CreateFromObjectListed_Call {
-	return &MockUsecaseLot_CreateFromObjectListed_Call{Call: _e.mock.On("CreateFromObjectListed", ctx, in, idempotencyKey)}
-}
-
-func (_c *MockUsecaseLot_CreateFromObjectListed_Call) Run(run func(ctx context.Context, in biz.ObjectListedInput, idempotencyKey string)) *MockUsecaseLot_CreateFromObjectListed_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(biz.ObjectListedInput), args[2].(string))
-	})
-	return _c
-}
-
-func (_c *MockUsecaseLot_CreateFromObjectListed_Call) Return(_a0 error) *MockUsecaseLot_CreateFromObjectListed_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockUsecaseLot_CreateFromObjectListed_Call) RunAndReturn(run func(context.Context, biz.ObjectListedInput, string) error) *MockUsecaseLot_CreateFromObjectListed_Call {
 	_c.Call.Return(run)
 	return _c
 }

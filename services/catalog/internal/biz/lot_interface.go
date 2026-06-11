@@ -49,6 +49,22 @@ type UsecaseLot interface {
 	// CreateFromObjectListed creates a DRAFT lot from a vault object.listed event.
 	// Idempotent on idempotencyKey via the inbox; a duplicate is a no-op success.
 	CreateFromObjectListed(ctx context.Context, in ObjectListedInput, idempotencyKey string) error
+
+	// InspectionQueue returns DRAFT lots awaiting an Inspector seal (§3.5).
+	InspectionQueue(ctx context.Context) ([]entity.Lot, error)
+	// Inspect records an Inspector's sealing verdict on a DRAFT lot: APPROVED
+	// certifies it (DRAFT->CERTIFIED, emits attestation.recorded + lot.certified),
+	// REJECTED blocks it (DRAFT->REJECTED). The eligibility gate (§3.5).
+	Inspect(ctx context.Context, lotID uuid.UUID, in InspectInput) (entity.Lot, error)
+}
+
+// InspectInput is an Inspector's sealing verdict on a lot.
+type InspectInput struct {
+	InspectorID    uuid.UUID
+	Verdict        entity.InspectionVerdict
+	Authenticity   string
+	ConditionGrade string
+	Notes          string
 }
 
 // ObjectListedInput is the catalog-internal projection of a vault object.listed
@@ -98,4 +114,9 @@ type RepositoryLot interface {
 	// (b) fewer than cap lots already SCHEDULED for that week. Returns
 	// ErrResourceInvalid when the conditional update affected no rows.
 	ScheduleTx(ctx context.Context, lotID uuid.UUID, scheduledAt time.Time, weekCap int, outbox entity.OutboxEvent) (entity.Lot, error)
+
+	// InspectTx records an Inspector seal: inserts the inspection row, seals the
+	// lot's columns, transitions DRAFT->CERTIFIED (approve) or DRAFT->REJECTED, and
+	// writes the outbox events — all in one tx. 0-row update -> ErrResourceInvalid.
+	InspectTx(ctx context.Context, insp entity.Inspection, approve bool, outboxes []entity.OutboxEvent) (entity.Lot, error)
 }

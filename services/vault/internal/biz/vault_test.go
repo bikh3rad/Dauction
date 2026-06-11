@@ -60,15 +60,26 @@ func TestVault_List_DurationMatrix(t *testing.T) {
 				repo.EXPECT().GetObject(mock.Anything, objectID).
 					Return(entity.VaultObject{ID: objectID, OwnerAccountID: owner, State: entity.ObjectInVault, AppraisedValueCents: 1000}, nil)
 				repo.EXPECT().
-					TransitionTx(mock.Anything, objectID, entity.ObjectInVault, entity.ObjectAppraising,
+					ListWithDetailsTx(mock.Anything, objectID, entity.ObjectInVault, entity.ObjectPendingInspection,
+						mock.MatchedBy(func(d entity.ListingDetails) bool {
+							// Details are normalized: category set + all 4 langs present.
+							return d.CategoryCode == "WATCHES" && len(d.Translations) == len(entity.SupportedLangs)
+						}),
 						mock.MatchedBy(func(o entity.OutboxEvent) bool {
 							return o.Subject == biz.SubjectObjectListed && o.IdempotencyKey != ""
 						})).
-					Return(entity.VaultObject{ID: objectID, OwnerAccountID: owner, State: entity.ObjectAppraising}, nil)
+					Return(entity.VaultObject{ID: objectID, OwnerAccountID: owner, State: entity.ObjectPendingInspection}, nil)
 			}
 
 			uc := biz.NewVault(discardLogger(), repo)
-			got, err := uc.List(context.Background(), owner, objectID, biz.ListRequest{Mode: tc.mode, DurationDays: tc.duration})
+			got, err := uc.List(context.Background(), owner, objectID, biz.ListRequest{
+				Mode:         tc.mode,
+				DurationDays: tc.duration,
+				CategoryCode: "WATCHES",
+				PrimaryLang:  "en",
+				Translations: []entity.ObjectTranslation{{Lang: "en", Title: "Patek", Description: "A fine watch"}},
+				ImageRefs:    []string{"k0", "k1"},
+			})
 
 			if tc.wantErr != nil {
 				require.ErrorIs(t, err, tc.wantErr)
@@ -77,7 +88,7 @@ func TestVault_List_DurationMatrix(t *testing.T) {
 			}
 
 			require.NoError(t, err)
-			require.Equal(t, entity.ObjectAppraising, got.State)
+			require.Equal(t, entity.ObjectPendingInspection, got.State)
 		})
 	}
 }

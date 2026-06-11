@@ -70,14 +70,21 @@ func TestObjectListedOutbox_Envelope(t *testing.T) {
 
 	var captured entity.OutboxEvent
 	repo.EXPECT().
-		TransitionTx(mock.Anything, objectID, entity.ObjectInVault, entity.ObjectAppraising, mock.Anything).
-		Run(func(_ context.Context, _ uuid.UUID, _ entity.ObjectState, _ entity.ObjectState, o entity.OutboxEvent) {
+		ListWithDetailsTx(mock.Anything, objectID, entity.ObjectInVault, entity.ObjectPendingInspection, mock.Anything, mock.Anything).
+		Run(func(_ context.Context, _ uuid.UUID, _ entity.ObjectState, _ entity.ObjectState, _ entity.ListingDetails, o entity.OutboxEvent) {
 			captured = o
 		}).
-		Return(entity.VaultObject{ID: objectID, OwnerAccountID: owner, State: entity.ObjectAppraising}, nil)
+		Return(entity.VaultObject{ID: objectID, OwnerAccountID: owner, State: entity.ObjectPendingInspection}, nil)
 
 	uc := biz.NewVault(discardLogger(), repo)
-	_, err := uc.List(context.Background(), owner, objectID, biz.ListRequest{Mode: entity.AuctionVickrey, DurationDays: 5})
+	_, err := uc.List(context.Background(), owner, objectID, biz.ListRequest{
+		Mode:         entity.AuctionVickrey,
+		DurationDays: 5,
+		CategoryCode: "WATCHES",
+		PrimaryLang:  "en",
+		Translations: []entity.ObjectTranslation{{Lang: "en", Title: "Nautilus", Description: "Steel sport watch"}},
+		ImageRefs:    []string{"k0"},
+	})
 	require.NoError(t, err)
 
 	require.Equal(t, biz.SubjectObjectListed, captured.Subject)
@@ -85,4 +92,5 @@ func TestObjectListedOutbox_Envelope(t *testing.T) {
 	require.Contains(t, string(captured.Payload), `"producer":"vault"`)
 	require.Contains(t, string(captured.Payload), `"DAYS_5"`)
 	require.Contains(t, string(captured.Payload), `"VICKREY"`)
+	require.Contains(t, string(captured.Payload), `"category":"WATCHES"`)
 }

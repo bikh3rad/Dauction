@@ -109,22 +109,99 @@ func (uc *vault) List(
 		return entity.VaultObject{}, fmt.Errorf("%w: object not IN_VAULT (state=%s)", ErrResourceInvalid, obj.State)
 	}
 
+	// Categorization + ≤7 media + the 4-language content (back-filled from the
+	// primary), validated and normalized before persistence.
+	details, err := buildListingDetails(req)
+	if err != nil {
+		logger.WarnContext(ctx, "invalid listing details", "error", err)
+
+		return entity.VaultObject{}, err
+	}
+
 	// Producer-stable key for this listing: one logical list per object listing.
 	idempotencyKey := fmt.Sprintf("vault:listed:%s", objectID)
 
-	outbox, err := newObjectListedOutbox(objectID, owner, req.Mode, req.DurationDays, obj.AppraisedValueCents, idempotencyKey)
+	outbox, err := newObjectListedOutbox(objectID, owner, req.Mode, req.DurationDays, obj.AppraisedValueCents, details, idempotencyKey)
 	if err != nil {
 		return entity.VaultObject{}, err
 	}
 
-	updated, err := uc.repo.TransitionTx(ctx, objectID, entity.ObjectInVault, entity.ObjectAppraising, outbox)
+	// Listed items go to PENDING_INSPECTION: not public until an Inspector seals
+	// them (§3.5). The catalog gate independently keeps the lot out of the gallery.
+	updated, err := uc.repo.ListWithDetailsTx(ctx, objectID,
+		entity.ObjectInVault, entity.ObjectPendingInspection, details, outbox)
 	if err != nil {
 		return entity.VaultObject{}, err
 	}
 
-	logger.InfoContext(ctx, "object listed", "mode", req.Mode, "durationDays", req.DurationDays)
+	logger.InfoContext(ctx, "object listed", "mode", req.Mode, "durationDays", req.DurationDays,
+		"category", details.CategoryCode, "images", len(details.ImageRefs))
 
 	return updated, nil
+}
+
+// buildListingDetails validates the categorization, media cap, and the 4-language
+// content, back-filling any blank language from the primary so every supported
+// language is present (CLAUDE.md §0 rule 7). Returns ErrResourceInvalid on a
+// missing category, >7 images, or a blank primary title/description.
+func buildListingDetails(req ListRequest) (entity.ListingDetails, error) {
+	if req.CategoryCode == "" {
+		return entity.ListingDetails{}, fmt.Errorf("%w: category is required", ErrResourceInvalid)
+	}
+	if len(req.ImageRefs) > 7 {
+		return entity.ListingDetails{}, fmt.Errorf("%w: at most 7 images per item", ErrResourceInvalid)
+	}
+
+	primary := req.PrimaryLang
+	if !isSupportedLang(primary) {
+		return entity.ListingDetails{}, fmt.Errorf("%w: primaryLang must be one of en/fa/ar/tr", ErrResourceInvalid)
+	}
+
+	// Index provided translations by language.
+	byLang := make(map[string]entity.ObjectTranslation, len(req.Translations))
+	for _, t := range req.Translations {
+		if !isSupportedLang(t.Lang) {
+			return entity.ListingDetails{}, fmt.Errorf("%w: unsupported language %q", ErrResourceInvalid, t.Lang)
+		}
+		byLang[t.Lang] = t
+	}
+
+	p, ok := byLang[primary]
+	if !ok || p.Title == "" || p.Description == "" {
+		return entity.ListingDetails{}, fmt.Errorf("%w: primary language title/description required", ErrResourceInvalid)
+	}
+
+	// Back-fill every supported language from the primary where blank.
+	full := make([]entity.ObjectTranslation, 0, len(entity.SupportedLangs))
+	for _, lang := range entity.SupportedLangs {
+		t := byLang[lang]
+		t.Lang = lang
+		if t.Title == "" {
+			t.Title = p.Title
+		}
+		if t.Description == "" {
+			t.Description = p.Description
+		}
+		full = append(full, t)
+	}
+
+	return entity.ListingDetails{
+		CategoryCode: req.CategoryCode,
+		PrimaryLang:  primary,
+		Translations: full,
+		ImageRefs:    req.ImageRefs,
+	}, nil
+}
+
+// isSupportedLang reports whether lang is one of the 4 supported languages.
+func isSupportedLang(lang string) bool {
+	for _, l := range entity.SupportedLangs {
+		if l == lang {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Buyback implements UsecaseVault: compute the integer payout, transition
