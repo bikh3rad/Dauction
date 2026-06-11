@@ -26,6 +26,8 @@ const (
 	CodeUnauthorized        = "UNAUTHORIZED"
 	CodeTierRequired        = "TIER_REQUIRED"
 	CodeKycRequired         = "KYC_REQUIRED"
+	CodeNotInspector        = "NOT_INSPECTOR"
+	CodeAdminRequired       = "ADMIN_REQUIRED"
 	CodeRateLimited         = "RATE_LIMITED"
 	CodeUpstreamUnavailable = "UPSTREAM_UNAVAILABLE"
 	CodeInternal            = "INTERNAL"
@@ -44,6 +46,8 @@ var errorsMap = map[error]codeMeta{
 	biz.ErrResourceAccessDenied: {CodeUnauthorized, http.StatusUnauthorized},
 	biz.ErrTierRequired:         {CodeTierRequired, http.StatusForbidden},
 	biz.ErrKycRequired:          {CodeKycRequired, http.StatusForbidden},
+	biz.ErrRoleRequired:         {CodeNotInspector, http.StatusForbidden},
+	biz.ErrAdminRequired:        {CodeAdminRequired, http.StatusForbidden},
 	biz.ErrRateLimited:          {CodeRateLimited, http.StatusTooManyRequests},
 	biz.ErrUpstreamUnavailable:  {CodeUpstreamUnavailable, http.StatusBadGateway},
 }
@@ -57,6 +61,8 @@ var codeStatus = map[string]int{
 	CodeUnauthorized:        http.StatusUnauthorized,
 	CodeTierRequired:        http.StatusForbidden,
 	CodeKycRequired:         http.StatusForbidden,
+	CodeNotInspector:        http.StatusForbidden,
+	CodeAdminRequired:       http.StatusForbidden,
 	CodeRateLimited:         http.StatusTooManyRequests,
 	CodeUpstreamUnavailable: http.StatusBadGateway,
 	CodeInternal:            http.StatusInternalServerError,

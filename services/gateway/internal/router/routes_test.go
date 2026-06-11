@@ -30,17 +30,22 @@ func TestMatch(t *testing.T) {
 		// public
 		{"weekly gallery", "GET", "/apis/gallery/weekly", "catalog", true, true, false, false},
 		{"lot read", "GET", "/apis/lots/abc", "catalog", true, true, false, false},
-		{"invite redeem", "POST", "/apis/invites/redeem", "invite", true, true, false, false},
+		{"otp request", "POST", "/apis/auth/otp/request", "identity", true, true, false, false},
+		{"otp verify", "POST", "/apis/auth/otp/verify", "identity", true, true, false, false},
+		{"oauth callback", "GET", "/apis/auth/oauth/google/callback", "identity", true, true, false, false},
 		{"kyc start", "POST", "/apis/kyc/start", "kyc", true, true, false, false},
 		{"kyc verify", "POST", "/apis/kyc/verify", "kyc", true, true, false, false},
 
 		// identity
 		{"me", "GET", "/apis/me", "identity", true, false, false, false},
 		{"internal access", "GET", "/apis/internal/accounts/x/access", "identity", true, false, false, false},
-		{"admin vip", "POST", "/apis/admin/accounts/x/vip", "identity", true, false, false, false},
+		{"admin user crud", "PATCH", "/apis/admin/users/x", "identity", true, false, false, false},
 
-		// invite + kyc authed/admin
-		{"admin invites", "GET", "/apis/admin/invites/list", "invite", true, false, false, false},
+		// inspector workflow (catalog upstream)
+		{"inspector queue", "GET", "/apis/inspector/queue", "catalog", true, false, false, false},
+		{"inspector seal", "POST", "/apis/inspector/lots/x/inspect", "catalog", true, false, false, false},
+
+		// kyc authed/admin
 		{"kyc status", "GET", "/apis/kyc/status", "kyc", true, false, false, false},
 		{"admin kyc queue", "GET", "/apis/admin/kyc", "kyc", true, false, false, false},
 		{"admin kyc approve", "POST", "/apis/admin/kyc/x/approve", "kyc", true, false, false, false},

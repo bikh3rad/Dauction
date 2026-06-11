@@ -25,9 +25,16 @@ never DB→DB (root `CLAUDE.md` §0–§2). The template plumbing docs below sti
 **Events emitted:** `account.tier_changed` (via the **outbox**: written in the same tx as the tier
 change; a background `OutboxPublisher` polls and relays to NATS/JetStream, marking rows published).
 
-**Events consumed:** `invite.redeemed` → elevate GUEST→MEMBER; `kyc.approved` → set `kyc_status=APPROVED`.
-Both are **idempotent** via the `consumed_event` inbox, keyed by a subject-scoped `idempotency_key`
-(falls back to `event_id`). The inbox write commits in the same tx as the state change.
+**Events consumed:** `kyc.approved` → set `kyc_status=APPROVED` **and** elevate GUEST→MEMBER (the
+invite system was removed; KYC is the sole membership trigger). Idempotent via the `consumed_event`
+inbox, keyed by a subject-scoped `idempotency_key` (falls back to `event_id`); the KYC-mirror and the
+elevation use distinct scoped keys so their inbox rows never collide. The inbox write commits in the
+same tx as the state change.
+
+**Step 2 scope (auth/RBAC, in progress):** identity additionally owns mobile-number + OTP auth,
+social OAuth (`oauth_identity`), RBAC roles (`account_role`: INSPECTOR/ADMIN), account `status`, and
+admin user CRUD. It emits `account.registered` (consumed by `vault` to auto-provision a Vault) and
+`account.role_changed`. See root `CLAUDE.md` §1–§2 and the identity proto.
 
 **State rules (enforced in `biz`, illegal → `ErrResourceInvalid`):** tier only ever **rises**
 GUEST→MEMBER→VIP. A no-op or downward grant is rejected. Replayed/out-of-order elevation events are

@@ -35,7 +35,6 @@ collector:
 # APP_UPSTREAMS_<NAME>, e.g. APP_UPSTREAMS_IDENTITY=http://localhost:9001.
 upstreams:
   identity: "http://identity:8080"
-  invite: "http://invite:8080"
   kyc: "http://kyc:8080"
   vault: "http://vault:8080"
   catalog: "http://catalog:8080"

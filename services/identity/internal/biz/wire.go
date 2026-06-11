@@ -10,4 +10,7 @@ var BizProviderSet = wire.NewSet(
 
 	NewAccount,
 	wire.Bind(new(UsecaseAccount), new(*account)),
+
+	NewAuth,
+	wire.Bind(new(UsecaseAuth), new(*auth)),
 )

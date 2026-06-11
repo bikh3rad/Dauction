@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -65,9 +66,10 @@ func (uc *account) GrantVIP(ctx context.Context, id uuid.UUID) (entity.Account, 
 	return updated, nil
 }
 
-// ElevateToMember raises a GUEST to MEMBER on invite.redeemed. Idempotent on
-// idempotencyKey (inbox); an already MEMBER/VIP account is a no-op success so a
-// replayed or out-of-order event never lowers or errors a tier.
+// ElevateToMember raises a GUEST to MEMBER once KYC is approved (the invite
+// system was removed; KYC is the trigger). Idempotent on idempotencyKey (inbox);
+// an already MEMBER/VIP account is a no-op success so a replayed or out-of-order
+// event never lowers or errors a tier.
 func (uc *account) ElevateToMember(ctx context.Context, id uuid.UUID, idempotencyKey string) error {
 	logger := uc.logger.With("method", "ElevateToMember", "account", id)
 
@@ -77,7 +79,7 @@ func (uc *account) ElevateToMember(ctx context.Context, id uuid.UUID, idempotenc
 	}
 
 	if !fresh {
-		logger.InfoContext(ctx, "duplicate invite.redeemed ignored", "key", idempotencyKey)
+		logger.InfoContext(ctx, "duplicate membership elevation ignored", "key", idempotencyKey)
 
 		return nil
 	}
@@ -131,6 +133,76 @@ func (uc *account) ApproveKyc(ctx context.Context, id uuid.UUID, idempotencyKey 
 	logger.InfoContext(ctx, "marked KYC approved")
 
 	return nil
+}
+
+// GrantRole assigns a functional role (e.g. promote to INSPECTOR) and emits
+// account.role_changed. Unknown roles -> ErrResourceInvalid.
+func (uc *account) GrantRole(
+	ctx context.Context, id uuid.UUID, role entity.Role, grantedBy uuid.UUID,
+) (entity.Account, error) {
+	logger := uc.logger.With("method", "GrantRole", "account", id, "role", role)
+
+	if !role.Valid() {
+		return entity.Account{}, fmt.Errorf("%w: unknown role %q", ErrResourceInvalid, role)
+	}
+
+	key := fmt.Sprintf("identity:role:grant:%s:%s", id, role)
+	outbox, err := newRoleChangedOutbox(id, role, true, grantedBy, key)
+	if err != nil {
+		return entity.Account{}, err
+	}
+
+	acc, err := uc.repo.GrantRoleTx(ctx, id, role, grantedBy, outbox)
+	if err != nil {
+		return entity.Account{}, err
+	}
+
+	logger.InfoContext(ctx, "granted role")
+
+	return acc, nil
+}
+
+// RevokeRole removes a functional role and emits account.role_changed.
+func (uc *account) RevokeRole(
+	ctx context.Context, id uuid.UUID, role entity.Role, by uuid.UUID,
+) (entity.Account, error) {
+	logger := uc.logger.With("method", "RevokeRole", "account", id, "role", role)
+
+	if !role.Valid() {
+		return entity.Account{}, fmt.Errorf("%w: unknown role %q", ErrResourceInvalid, role)
+	}
+
+	// A revoke is a distinct logical write from a grant; namespace the key so the
+	// two never dedup against each other in a consumer's inbox.
+	key := fmt.Sprintf("identity:role:revoke:%s:%s:%d", id, role, time.Now().UnixNano())
+	outbox, err := newRoleChangedOutbox(id, role, false, by, key)
+	if err != nil {
+		return entity.Account{}, err
+	}
+
+	acc, err := uc.repo.RevokeRoleTx(ctx, id, role, outbox)
+	if err != nil {
+		return entity.Account{}, err
+	}
+
+	logger.InfoContext(ctx, "revoked role")
+
+	return acc, nil
+}
+
+// ListUsers returns admin-filtered accounts + the total match count.
+func (uc *account) ListUsers(ctx context.Context, f UserFilter) ([]entity.Account, int, error) {
+	return uc.repo.ListUsers(ctx, f)
+}
+
+// UpdateUser applies admin profile edits (handle/status). Invalid status values
+// are rejected before hitting the DB.
+func (uc *account) UpdateUser(ctx context.Context, id uuid.UUID, p UserPatch) (entity.Account, error) {
+	if p.Status != nil && !p.Status.Valid() {
+		return entity.Account{}, fmt.Errorf("%w: unknown status %q", ErrResourceInvalid, *p.Status)
+	}
+
+	return uc.repo.UpdateUser(ctx, id, p)
 }
 
 // assertElevation enforces the golden rule "tier only rises": the target must be

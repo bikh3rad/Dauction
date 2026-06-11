@@ -22,6 +22,7 @@ var HandlerProviderSet = wire.NewSet(
 	NewServiceList,
 	NewMuxHealthzHandler,
 	NewAccountHandler,
+	NewAuthHandler,
 )
 
 // NewServiceList aggregates the service.Handler implementations registered on the
@@ -30,10 +31,12 @@ var HandlerProviderSet = wire.NewSet(
 func NewServiceList(
 	healthzSvc *HealthzHandler,
 	accountSvc *accountHandler,
+	authSvc *authHandler,
 	_ *eventbus.Runner,
 ) []service.Handler {
 	return []service.Handler{
 		healthzSvc,
 		accountSvc,
+		authSvc,
 	}
 }

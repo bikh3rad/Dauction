@@ -62,6 +62,8 @@ func wireApp(ctx context.Context) (app.Application, error) {
 	account := repo.NewAccount(logger, postgresDB)
 	bizAccount := biz.NewAccount(logger, account)
 	accountHandler := handler.NewAccountHandler(logger, serveMux, bizAccount)
+	auth := biz.NewAuth(logger, account)
+	authHandler := handler.NewAuthHandler(logger, serveMux, auth)
 	nats, err := datasource.NewNats(ctx, logger, kConfig, controller)
 	if err != nil {
 		return nil, err
@@ -70,7 +72,7 @@ func wireApp(ctx context.Context) (app.Application, error) {
 	outboxPublisher := biz.NewOutboxPublisher(logger, outbox, nats)
 	eventConsumer := biz.NewEventConsumer(logger, bizAccount)
 	runner := eventbus.NewRunner(logger, nats, outboxPublisher, eventConsumer, controller)
-	v := handler.NewServiceList(healthzHandler, accountHandler, runner)
+	v := handler.NewServiceList(healthzHandler, accountHandler, authHandler, runner)
 	httpHandler, err := service.NewHTTPHandler(ctx, logger, serveMux, v...)
 	if err != nil {
 		return nil, err

@@ -7,16 +7,20 @@ import "dauction/common/v1/common.proto";
 
 option go_package = "github.com/bikh3rad/Dauction/proto/gen/dauction/vault/v1;vaultv1";
 
-// A vault object. title is multilingual (I18nText), returned WHOLE.
+// A vault object. title/description are multilingual (I18nText), returned WHOLE.
 message VaultObject {
   string id = 1;
   string maison = 2;
   dauction.common.v1.I18nText title = 3;
-  string category = 4;             // machine key: HOROLOGY|BAG|SNEAKER|...
+  string category = 4;             // machine category key (FK to catalog.category.code)
   uint32 year = 5;
   dauction.common.v1.Money value = 6;
-  string state = 7;                // IN_VAULT | APPRAISING | IN_AUCTION | SOLD
-  string image_ref = 8;
+  // state machine: IN_VAULT -> PENDING_INSPECTION -> APPROVED|REJECTED -> IN_AUCTION -> SOLD
+  string state = 7;
+  reserved 8; reserved "image_ref"; // retired: single image -> image_refs (≤7)
+  repeated string image_refs = 9;  // ordered; max 7; image_refs[0] is the cover
+  dauction.common.v1.I18nText description = 10;
+  string vault_id = 11;            // owning vault (one per account)
 }
 
 // GET /apis/vault
@@ -27,12 +31,18 @@ message GetVaultResponse {
 }
 
 // POST /apis/vault/objects — add an object.
+// title/description carry all four languages; blanks are back-filled from the
+// primary language server-side (TRANSLATIONS_INCOMPLETE if the primary is blank).
+// image_refs is capped at 7 (MEDIA_LIMIT_EXCEEDED beyond that).
 message AddObjectRequest {
   string maison = 1;
-  dauction.common.v1.I18nText title = 2; // owner-authored, all four languages
-  string category = 3;
+  dauction.common.v1.I18nText title = 2;
+  string category = 3;                          // validate: required (catalog code)
   uint32 year = 4;
   dauction.common.v1.Money declared_value = 5;
+  dauction.common.v1.I18nText description = 6;
+  repeated string image_refs = 7;               // validate: max=7
+  dauction.common.v1.Locale primary_lang = 8;   // validate: required
 }
 message AddObjectResponse { VaultObject object = 1; }
 
@@ -44,7 +54,7 @@ message ListObjectRequest {
   dauction.common.v1.Money floor = 4;              // reserve floor
 }
 message ListObjectResponse {
-  VaultObject object = 1; // state -> APPRAISING
+  VaultObject object = 1; // state -> PENDING_INSPECTION (awaits Inspector seal before going public)
 }
 
 // POST /apis/vault/objects/{id}/buyback  { mode: cash|credit }

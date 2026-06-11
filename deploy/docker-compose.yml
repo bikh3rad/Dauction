@@ -65,15 +65,6 @@ services:
       # Schema applied on first boot of the volume (.down.sql files are IF EXISTS no-ops).
       - ../services/identity/migrations:/docker-entrypoint-initdb.d:ro
 
-  pg-invite:
-    <<: *postgres
-    container_name: dauction-pg-invite
-    environment: { <<: *postgres-env, POSTGRES_DB: invite }
-    ports: ["5533:5432"]
-    volumes:
-      - pg-invite:/var/lib/postgresql/data
-      - ../services/invite/migrations:/docker-entrypoint-initdb.d:ro
-
   pg-kyc:
     <<: *postgres
     container_name: dauction-pg-kyc
@@ -162,19 +153,6 @@ services:
       APP_DATASOURCE_NATS_DSN: nats://nats:4222
       APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT: jaeger:4317
     ports: ["18081:8080"]
-
-  invite:
-    build: ../services/invite
-    container_name: dauction-invite
-    restart: unless-stopped
-    depends_on:
-      pg-invite: { condition: service_healthy }
-      nats: { condition: service_healthy }
-    environment:
-      APP_DATASOURCE_POSTGRES_DSN: postgres://dauction:dauction@pg-invite:5432/invite?sslmode=disable
-      APP_DATASOURCE_NATS_DSN: nats://nats:4222
-      APP_COLLECTOR_EXPORTERS_OTLP_ENDPOINT: jaeger:4317
-    ports: ["18082:8080"]
 
   kyc:
     build: ../services/kyc
@@ -302,7 +280,6 @@ services:
     restart: unless-stopped
     depends_on:
       identity: { condition: service_started }
-      invite: { condition: service_started }
       kyc: { condition: service_started }
       vault: { condition: service_started }
       catalog: { condition: service_started }
@@ -340,7 +317,6 @@ services:
 volumes:
   nats-data:
   pg-identity:
-  pg-invite:
   pg-kyc:
   pg-vault:
   pg-catalog:

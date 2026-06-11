@@ -104,6 +104,16 @@ func (uc *access) Authorize(
 		return GuardResult{}, ErrKycRequired
 	}
 
+	// Admin route group: dev Basic-Auth (admin/admin) is enforced upstream in the
+	// admin middleware; here we also accept an ADMIN-role session (the prod path).
+	if req.RequireAdmin && !a.HasRole("ADMIN") {
+		return GuardResult{}, ErrAdminRequired
+	}
+
+	if req.RequireRole != "" && !a.HasRole(req.RequireRole) {
+		return GuardResult{}, ErrRoleRequired
+	}
+
 	return GuardResult{Allowed: true, Access: a}, nil
 }
 

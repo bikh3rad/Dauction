@@ -32,29 +32,12 @@ func envelope(t *testing.T, subject, key string, payload any) []byte {
 	return raw
 }
 
-func TestConsumer_InviteRedeemed(t *testing.T) {
-	t.Parallel()
-
-	redeemedBy := uuid.New()
-	raw := envelope(t, biz.SubjectInviteRedeemed, "k1", map[string]string{
-		"code":        "GOLD-1",
-		"redeemed_by": redeemedBy.String(),
-		"issued_by":   uuid.NewString(),
-	})
-
-	uc := mocks.NewMockUsecaseAccount(t)
-	// key is scoped by subject inside the consumer.
-	uc.EXPECT().
-		ElevateToMember(mock.Anything, redeemedBy, biz.SubjectInviteRedeemed+":k1").
-		Return(nil)
-
-	c := biz.NewEventConsumer(discardLogger(), uc)
-	require.NoError(t, c.Handle(context.Background(), raw))
-}
-
 func TestConsumer_KycApproved(t *testing.T) {
 	t.Parallel()
 
+	// kyc.approved is now the sole membership trigger (invites removed): the
+	// consumer mirrors the KYC status AND elevates GUEST->MEMBER, each with its
+	// own scoped inbox key.
 	accountID := uuid.New()
 	raw := envelope(t, biz.SubjectKycApproved, "k2", map[string]string{
 		"account_id":    accountID.String(),
@@ -64,6 +47,9 @@ func TestConsumer_KycApproved(t *testing.T) {
 	uc := mocks.NewMockUsecaseAccount(t)
 	uc.EXPECT().
 		ApproveKyc(mock.Anything, accountID, biz.SubjectKycApproved+":k2").
+		Return(nil)
+	uc.EXPECT().
+		ElevateToMember(mock.Anything, accountID, biz.SubjectKycApproved+":member:k2").
 		Return(nil)
 
 	c := biz.NewEventConsumer(discardLogger(), uc)

@@ -27,11 +27,25 @@ type Access struct {
 	Tier      Tier
 	KycStatus KycStatus
 	Eligible  bool
+	// Roles are the caller's elevated functional roles (e.g. INSPECTOR, ADMIN).
+	// USER is implicit and omitted. Drives the inspector/admin route groups.
+	Roles []string
 }
 
 // IsMember reports whether the account is at least MEMBER (MEMBER or VIP).
 func (a Access) IsMember() bool {
 	return a.Tier == TierMember || a.Tier == TierVIP
+}
+
+// HasRole reports whether the account holds the given functional role.
+func (a Access) HasRole(role string) bool {
+	for _, r := range a.Roles {
+		if r == role {
+			return true
+		}
+	}
+
+	return false
 }
 
 // KycApproved reports whether the account's KYC is approved.

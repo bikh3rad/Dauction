@@ -40,6 +40,13 @@ func (h *accountHandler) RegisterHandler(_ context.Context) error {
 	h.mux.HandleFunc("GET /apis/internal/accounts/{id}/access", h.access)
 	h.mux.HandleFunc("POST /apis/admin/accounts/{id}/vip", h.grantVIP)
 
+	// Admin user management (CLAUDE.md §6 admin; behind the gateway admin guard).
+	h.mux.HandleFunc("GET /apis/admin/users", h.listUsers)
+	h.mux.HandleFunc("GET /apis/admin/users/{id}", h.getUser)
+	h.mux.HandleFunc("PATCH /apis/admin/users/{id}", h.updateUser)
+	h.mux.HandleFunc("POST /apis/admin/users/{id}/roles", h.assignRole)
+	h.mux.HandleFunc("DELETE /apis/admin/users/{id}/roles/{role}", h.revokeRole)
+
 	return nil
 }
 

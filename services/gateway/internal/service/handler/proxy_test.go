@@ -27,7 +27,6 @@ func newGateway(t *testing.T, accessUC biz.UsecaseAccess, upstreamURL string) ht
 	mux := http.NewServeMux()
 	upstreams := &app.UpstreamsConfig{
 		Identity:       upstreamURL,
-		Invite:         upstreamURL,
 		Kyc:            upstreamURL,
 		Vault:          upstreamURL,
 		Catalog:        upstreamURL,

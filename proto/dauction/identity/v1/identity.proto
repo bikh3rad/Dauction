@@ -16,11 +16,48 @@ message Account {
   dauction.common.v1.Tier tier = 3;
   dauction.common.v1.KycState kyc = 4;
   dauction.common.v1.Locale preferred_locale = 5; // gateway hints the client; payloads stay neutral
-  string invited_by = 6;
-  string joined_at = 7; // ISO-8601 UTC
+  reserved 6; reserved "invited_by";              // retired: invite chain removed
+  string joined_at = 7;                           // ISO-8601 UTC
+  string mobile_e164 = 8;                          // E.164; primary identifier (international)
+  bool mobile_verified = 9;
+  repeated dauction.common.v1.Role roles = 10;     // elevated roles (USER is implicit)
+  string status = 11;                              // REGISTERED|ACTIVE|SUSPENDED|BANNED
 }
 message GetMeResponse {
   Account account = 1;
+  string vault_id = 2; // the user's auto-provisioned vault (CLAUDE.md onboarding)
+}
+
+// ---- Onboarding: mobile + OTP (replaces invite redemption) ----
+// POST /apis/auth/otp/request  { mobile_e164 } -> 202
+message RequestOtpRequest {
+  string mobile_e164 = 1; // validate: required,e164
+  string purpose = 2;     // SIGNUP | LOGIN
+}
+message RequestOtpResponse {
+  uint32 expires_in_secs = 1;
+}
+// POST /apis/auth/otp/verify  { mobile_e164, code } -> session + account
+message VerifyOtpRequest {
+  string mobile_e164 = 1; // validate: required,e164
+  string code = 2;        // validate: required,len=6
+}
+message VerifyOtpResponse {
+  string session_token = 1; // bearer (dev: the account id; prod: a real JWT)
+  Account account = 2;
+  bool created = 3;         // true if this verify created the account
+}
+
+// ---- Onboarding: social OAuth ----
+// GET /apis/auth/oauth/{provider}/callback?code=...
+message OAuthCallbackRequest {
+  string provider = 1; // GOOGLE | FACEBOOK | APPLE
+  string code = 2;     // provider authorization code
+}
+message OAuthCallbackResponse {
+  string session_token = 1;
+  Account account = 2;
+  bool created = 3;
 }
 
 // PATCH /apis/me/locale — persist the user's preferred locale.
@@ -36,4 +73,44 @@ message GetTierRequest { string account_id = 1; }
 message GetTierResponse {
   dauction.common.v1.Tier tier = 1;
   dauction.common.v1.KycState kyc = 2;
+  repeated dauction.common.v1.Role roles = 3; // gateway authorizes inspector/admin groups
 }
+
+// =====================================================================
+// Admin user management (CLAUDE.md §6 admin). Behind the gateway admin guard.
+// Full CRUD over accounts: edit profile, change status, assign/revoke roles.
+// =====================================================================
+
+// GET /apis/admin/users?status=&role=&q=
+message ListUsersRequest {
+  string status = 1;
+  dauction.common.v1.Role role = 2;
+  string q = 3; // free-text over handle/mobile
+  uint32 limit = 4;
+  uint32 offset = 5;
+}
+message ListUsersResponse {
+  repeated Account users = 1;
+  uint32 total = 2;
+}
+
+// GET /apis/admin/users/{id}
+message GetUserRequest { string id = 1; }
+message GetUserResponse { Account user = 1; }
+
+// PATCH /apis/admin/users/{id}  { handle?, status?, tier? }
+message UpdateUserRequest {
+  string id = 1;
+  string handle = 2;                  // optional
+  string status = 3;                  // optional: REGISTERED|ACTIVE|SUSPENDED|BANNED
+  dauction.common.v1.Tier tier = 4;   // optional: house override (e.g. grant VIP)
+}
+message UpdateUserResponse { Account user = 1; }
+
+// POST /apis/admin/users/{id}/roles      { role }   -> grant (e.g. promote to INSPECTOR)
+// DELETE /apis/admin/users/{id}/roles/{role}        -> revoke
+message AssignRoleRequest {
+  string id = 1;
+  dauction.common.v1.Role role = 2; // validate: required, one of INSPECTOR|ADMIN
+}
+message AssignRoleResponse { Account user = 1; }

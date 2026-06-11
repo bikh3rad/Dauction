@@ -11,8 +11,9 @@ import (
 // Subject vocabulary on the bus (CLAUDE.md §2). These are the NATS subjects /
 // EventEnvelope.type values this service produces and consumes.
 const (
+	SubjectAccountRegistered  = "account.registered"
 	SubjectAccountTierChanged = "account.tier_changed"
-	SubjectInviteRedeemed     = "invite.redeemed"
+	SubjectAccountRoleChanged = "account.role_changed"
 	SubjectKycApproved        = "kyc.approved"
 )
 
@@ -68,6 +69,101 @@ func newTierChangedOutbox(id uuid.UUID, from, to entity.Tier, idempotencyKey str
 	return entity.OutboxEvent{
 		ID:             uuid.New(),
 		Subject:        SubjectAccountTierChanged,
+		IdempotencyKey: idempotencyKey,
+		Payload:        envelope,
+	}, nil
+}
+
+// accountRegistered mirrors dauction.events.v1.AccountRegistered.
+type accountRegistered struct {
+	AccountID     string `json:"account_id"`
+	MobileE164    string `json:"mobile_e164"`
+	OAuthProvider string `json:"oauth_provider"`
+	RegisteredAt  string `json:"registered_at"`
+}
+
+// newRegisteredOutbox builds the outbox row + EventEnvelope for account.registered
+// (consumed by vault to auto-provision the user's Vault). idempotencyKey is the
+// account id so the event fires exactly once per account.
+func newRegisteredOutbox(id uuid.UUID, mobile, provider string) (entity.OutboxEvent, error) {
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	payload, err := json.Marshal(accountRegistered{
+		AccountID:     id.String(),
+		MobileE164:    mobile,
+		OAuthProvider: provider,
+		RegisteredAt:  now,
+	})
+	if err != nil {
+		return entity.OutboxEvent{}, err
+	}
+
+	key := "identity:registered:" + id.String()
+	envelope, err := json.Marshal(eventEnvelope{
+		EventID:        uuid.NewString(),
+		IdempotencyKey: key,
+		Producer:       producerName,
+		OccurredAt:     now,
+		Type:           SubjectAccountRegistered,
+		Version:        1,
+		Payload:        payload,
+	})
+	if err != nil {
+		return entity.OutboxEvent{}, err
+	}
+
+	return entity.OutboxEvent{
+		ID:             uuid.New(),
+		Subject:        SubjectAccountRegistered,
+		IdempotencyKey: key,
+		Payload:        envelope,
+	}, nil
+}
+
+// accountRoleChanged mirrors dauction.events.v1.AccountRoleChanged.
+type accountRoleChanged struct {
+	AccountID string `json:"account_id"`
+	Role      string `json:"role"`
+	Granted   bool   `json:"granted"`
+	ChangedBy string `json:"changed_by"`
+}
+
+// newRoleChangedOutbox builds the outbox row + EventEnvelope for an
+// account.role_changed emission. idempotencyKey is producer-stable for the same
+// (account, role, granted) write so consumers dedup.
+func newRoleChangedOutbox(
+	id uuid.UUID, role entity.Role, granted bool, changedBy uuid.UUID, idempotencyKey string,
+) (entity.OutboxEvent, error) {
+	changer := ""
+	if changedBy != uuid.Nil {
+		changer = changedBy.String()
+	}
+
+	payload, err := json.Marshal(accountRoleChanged{
+		AccountID: id.String(),
+		Role:      string(role),
+		Granted:   granted,
+		ChangedBy: changer,
+	})
+	if err != nil {
+		return entity.OutboxEvent{}, err
+	}
+
+	envelope, err := json.Marshal(eventEnvelope{
+		EventID:        uuid.NewString(),
+		IdempotencyKey: idempotencyKey,
+		Producer:       producerName,
+		OccurredAt:     time.Now().UTC().Format(time.RFC3339Nano),
+		Type:           SubjectAccountRoleChanged,
+		Version:        1,
+		Payload:        payload,
+	})
+	if err != nil {
+		return entity.OutboxEvent{}, err
+	}
+
+	return entity.OutboxEvent{
+		ID:             uuid.New(),
+		Subject:        SubjectAccountRoleChanged,
 		IdempotencyKey: idempotencyKey,
 		Payload:        envelope,
 	}, nil

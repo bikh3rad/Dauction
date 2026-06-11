@@ -97,12 +97,23 @@ enum EscrowState {
   DISPUTED = 8;       // dispute court; manual release suspended
 }
 
-// Tier is the access tier on an account (CLAUDE.md §1).
+// Tier is the commercial access tier on an account (CLAUDE.md §1). Orthogonal to
+// Role: a Tier gates participation, a Role grants function.
 enum Tier {
   TIER_UNSPECIFIED = 0;
-  GUEST = 1;  // browses gallery, cannot participate
-  MEMBER = 2; // redeemed an invite
+  GUEST = 1;  // browses gallery, cannot participate (anonymous or unverified)
+  MEMBER = 2; // KYC-approved (the invite system was removed; KYC is the trigger)
   VIP = 3;    // house-granted
+}
+
+// Role is a functional permission grant, distinct from Tier. A USER role is
+// implicit for every account; elevated roles are granted by an admin and let the
+// gateway authorize the inspector/admin route groups.
+enum Role {
+  ROLE_UNSPECIFIED = 0;
+  USER = 1;      // implicit default
+  INSPECTOR = 2; // verifies authenticity/condition of listed items
+  ADMIN = 3;     // house operator (KYC, certification, invites→removed, disputes)
 }
 
 // KycState is the identity-verification status.
@@ -165,15 +176,18 @@ enum ErrorCode {
   INTERNAL_ERROR = 8;
 
   // access / identity
-  INVITE_INVALID = 20;          // invalid or expired invite code
-  INVITE_ALREADY_REDEEMED = 21;
-  INVITE_REVOKED = 22;
+  reserved 20, 21, 22; // retired invite codes: INVITE_INVALID/ALREADY_REDEEMED/REVOKED
+  reserved "INVITE_INVALID", "INVITE_ALREADY_REDEEMED", "INVITE_REVOKED";
   KYC_REQUIRED = 23;            // participation needs KYC=APPROVED
   KYC_PENDING = 24;
   KYC_REJECTED = 25;
   TIER_TOO_LOW = 26;           // needs MEMBER/VIP
   OTP_INVALID = 27;
   OTP_EXPIRED = 28;
+  MOBILE_IN_USE = 29;          // mobile number already bound to another account
+  OAUTH_FAILED = 30;           // OAuth provider exchange failed
+  NOT_INSPECTOR = 31;          // route requires the INSPECTOR role
+  ADMIN_REQUIRED = 32;         // route requires the ADMIN role / admin creds
 
   // bids economy
   OUT_OF_CREDITS = 40;     // no bid credits to spend on a passive bid
@@ -191,6 +205,11 @@ enum ErrorCode {
   PRICE_CHANGED = 68;         // buy attempted at a stale descending price
   LOT_NOT_CERTIFIED = 69;     // certification gate not passed
   WEEKLY_CAP_REACHED = 70;    // 32-lot/week supply cap
+  INSPECTION_REQUIRED = 71;   // item not yet sealed by an Inspector
+  INSPECTION_FAILED = 72;     // Inspector rejected authenticity/condition
+  MEDIA_LIMIT_EXCEEDED = 73;  // more than 7 images on a listing
+  TRANSLATIONS_INCOMPLETE = 74;// missing a required {en,fa,ar,tr} title/description
+  CATEGORY_UNKNOWN = 75;      // category code not in the catalog
 
   // escrow / settlement
   INSUFFICIENT_FUNDS = 80;

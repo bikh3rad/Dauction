@@ -14,12 +14,12 @@ import (
 // Nats is the JetStream client. It is the EventPublisher (outbox relay target)
 // and hosts the durable consumer the identity event consumer drains.
 type Nats struct {
-	logger    *slog.Logger
-	conn      *nats.Conn
-	js        jetstream.JetStream
-	stream    jetstream.Stream
-	durable   string
-	subjects  []string
+	logger   *slog.Logger
+	conn     *nats.Conn
+	js       jetstream.JetStream
+	stream   jetstream.Stream
+	durable  string
+	subjects []string
 }
 
 // NatsConfig is the datasource.nats sub-tree (koanf). DSN is the NATS URL;

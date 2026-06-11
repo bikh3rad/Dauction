@@ -9,12 +9,18 @@ import (
 // router resolves this per request; the access use case enforces it.
 type RouteRequirement struct {
 	// Public routes skip auth and the tier/KYC guard entirely (gallery, lot
-	// reads, invite redeem, kyc start/verify).
+	// reads, auth OTP request/verify, OAuth callback, kyc start/verify).
 	Public bool
 	// RequireMember demands tier ∈ {MEMBER, VIP}.
 	RequireMember bool
 	// RequireKyc demands kyc_status == APPROVED.
 	RequireKyc bool
+	// RequireRole, when non-empty, demands the caller hold this functional role
+	// (e.g. "INSPECTOR"). Checked against the access read model's Roles set.
+	RequireRole string
+	// RequireAdmin marks the admin route group. The admin guard (dev Basic-Auth
+	// admin/admin; prod ADMIN role) is enforced for these routes.
+	RequireAdmin bool
 }
 
 // GuardResult is the outcome of an authorization decision. On Allowed it carries

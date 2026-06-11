@@ -32,16 +32,30 @@ func NewAccount(logger *slog.Logger, db *datasource.PostgresDB) *account {
 	}
 }
 
+// accountColumns is the canonical projection used everywhere an Account is read.
+// Nullable auth columns are COALESCEd so the entity scan stays string-typed.
+const accountColumns = `
+	id, COALESCE(handle, ''), COALESCE(mobile_e164, ''),
+	mobile_verified_at IS NOT NULL, tier, kyc_status, status, created_at, updated_at`
+
+// scanAccount scans the accountColumns projection into an entity.Account (roles
+// are loaded separately).
+func scanAccount(row interface{ Scan(...any) error }) (entity.Account, error) {
+	var a entity.Account
+	err := row.Scan(&a.ID, &a.Handle, &a.MobileE164, &a.MobileVerified,
+		&a.Tier, &a.KycStatus, &a.Status, &a.CreatedAt, &a.UpdatedAt)
+
+	return a, err
+}
+
 // Get implements biz.RepositoryAccount.
 func (r *account) Get(ctx context.Context, id uuid.UUID) (entity.Account, error) {
 	ctx, span := r.tracer.Start(ctx, "account.Get")
 	defer span.End()
 
-	const query = `SELECT id, tier, kyc_status, created_at, updated_at FROM account WHERE id = $1`
+	query := `SELECT ` + accountColumns + ` FROM account WHERE id = $1`
 
-	var a entity.Account
-	err := r.db.QueryRowContext(ctx, query, id).
-		Scan(&a.ID, &a.Tier, &a.KycStatus, &a.CreatedAt, &a.UpdatedAt)
+	a, err := scanAccount(r.db.QueryRowContext(ctx, query, id))
 	if errors.Is(err, sql.ErrNoRows) {
 		return entity.Account{}, biz.ErrResourceNotFound
 	}
@@ -52,7 +66,35 @@ func (r *account) Get(ctx context.Context, id uuid.UUID) (entity.Account, error)
 		return entity.Account{}, err
 	}
 
+	roles, err := r.loadRoles(ctx, id)
+	if err != nil {
+		return entity.Account{}, err
+	}
+	a.Roles = roles
+
 	return a, nil
+}
+
+// loadRoles returns the elevated roles held by an account (empty for plain USER).
+func (r *account) loadRoles(ctx context.Context, id uuid.UUID) ([]entity.Role, error) {
+	const query = `SELECT role FROM account_role WHERE account_id = $1 ORDER BY role`
+
+	rows, err := r.db.QueryContext(ctx, query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = rows.Close() }()
+
+	var roles []entity.Role
+	for rows.Next() {
+		var role entity.Role
+		if err := rows.Scan(&role); err != nil {
+			return nil, err
+		}
+		roles = append(roles, role)
+	}
+
+	return roles, rows.Err()
 }
 
 // EnsureExists implements biz.RepositoryAccount: upsert a GUEST/PENDING row if
@@ -93,14 +135,13 @@ func (r *account) SetTierTx(
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	const updateQuery = `
+	updateQuery := `
 		UPDATE account SET tier = $1, updated_at = NOW()
 		WHERE id = $2
-		RETURNING id, tier, kyc_status, created_at, updated_at`
+		RETURNING ` + accountColumns
 
-	var a entity.Account
-	if err := tx.QueryRowContext(ctx, updateQuery, to, id).
-		Scan(&a.ID, &a.Tier, &a.KycStatus, &a.CreatedAt, &a.UpdatedAt); err != nil {
+	a, err := scanAccount(tx.QueryRowContext(ctx, updateQuery, to, id))
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return entity.Account{}, biz.ErrResourceNotFound
 		}
@@ -119,6 +160,10 @@ func (r *account) SetTierTx(
 	}
 
 	if err := tx.Commit(); err != nil {
+		return entity.Account{}, err
+	}
+
+	if a.Roles, err = r.loadRoles(ctx, id); err != nil {
 		return entity.Account{}, err
 	}
 

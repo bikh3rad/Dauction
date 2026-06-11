@@ -24,9 +24,12 @@ message EventEnvelope {
   string type = 5;            // subject/vocabulary, e.g. "escrow.locked"
   uint32 version = 6;         // schema version, starts at 1
 
+  reserved 101;             // retired: invite_redeemed (invite system removed)
+  reserved "invite_redeemed";
+
   oneof payload {
     AccountTierChanged account_tier_changed = 100; // identity
-    InviteRedeemed invite_redeemed = 101;          // invite
+    // 101 retired (was invite_redeemed); see `reserved` above.
     KycApproved kyc_approved = 102;                // kyc
     KycRejected kyc_rejected = 103;                // kyc
     ObjectListed object_listed = 104;              // vault
@@ -46,6 +49,9 @@ message EventEnvelope {
     EscrowReleased escrow_released = 118;          // escrow
     EscrowForfeited escrow_forfeited = 119;        // escrow
     DisputeResolved dispute_resolved = 120;        // dispute
+    AccountRegistered account_registered = 121;    // identity (mobile/oauth signup)
+    AccountRoleChanged account_role_changed = 122; // identity (inspector/admin grant)
+    InspectionRequested inspection_requested = 123;// catalog (item enters inspection queue)
   }
 }
 
@@ -56,11 +62,22 @@ message AccountTierChanged {
   dauction.common.v1.Tier to = 3;
 }
 
-// ---- invite ----
-message InviteRedeemed {
-  string code = 1;
-  string redeemed_by = 2;  // account id of the new member
-  string issued_by = 3;    // account id of the inviter (chain parent)
+// ---- identity (registration + RBAC) ----
+// AccountRegistered fires on first successful mobile-OTP or OAuth signup. The
+// vault service consumes it to auto-provision the user's personal Vault.
+message AccountRegistered {
+  string account_id = 1;
+  string mobile_e164 = 2;   // empty for pure-OAuth signup
+  string oauth_provider = 3;// GOOGLE|FACEBOOK|APPLE, empty for mobile signup
+  string registered_at = 4; // ISO-8601 UTC
+}
+// AccountRoleChanged fires when an admin grants/revokes a functional role
+// (INSPECTOR/ADMIN). Distinct from AccountTierChanged (commercial access tier).
+message AccountRoleChanged {
+  string account_id = 1;
+  dauction.common.v1.Role role = 2;
+  bool granted = 3;         // true = granted, false = revoked
+  string changed_by = 4;    // admin account id
 }
 
 // ---- kyc ----
@@ -102,11 +119,25 @@ message LotScheduled {
   string closes_at = 5;           // ISO-8601 UTC; empty for DUTCH
   uint32 week = 6;                // ISO week of the weekly 32-cap
 }
+// InspectionRequested fires when a listed item enters the inspector queue
+// (catalog created a lot in APPRAISING). An Inspector must seal it before the
+// lot can be certified/scheduled — the auction-eligibility gate.
+message InspectionRequested {
+  string lot_id = 1;
+  string object_id = 2;
+  string owner_id = 3;
+  string category = 4;            // machine category key
+  string requested_at = 5;        // ISO-8601 UTC
+}
+// AttestationRecorded is the Inspector's sealing verdict (the certification gate).
+// pass=true ⇒ catalog certifies the lot; pass=false ⇒ lot blocked, owner may relist.
 message AttestationRecorded {
   string attestation_id = 1;
   string lot_id = 2;
-  string inspector = 3;
+  string inspector = 3;           // account id holding the INSPECTOR role
   bool pass = 4;                  // true = PASS seal (certification gate)
+  string authenticity = 5;        // GENUINE|COUNTERFEIT|INCONCLUSIVE
+  string condition_grade = 6;     // MINT|EXCELLENT|GOOD|FAIR|POOR (empty if failed)
 }
 
 // ---- auction-dutch ----

@@ -3,8 +3,10 @@
 package mocks
 
 import (
-	entity "application/internal/entity"
+	biz "application/internal/biz"
 	context "context"
+
+	entity "application/internal/entity"
 
 	mock "github.com/stretchr/testify/mock"
 
@@ -177,6 +179,65 @@ func (_c *MockUsecaseAccount_Get_Call) RunAndReturn(run func(context.Context, uu
 	return _c
 }
 
+// GrantRole provides a mock function with given fields: ctx, id, role, grantedBy
+func (_m *MockUsecaseAccount) GrantRole(ctx context.Context, id uuid.UUID, role entity.Role, grantedBy uuid.UUID) (entity.Account, error) {
+	ret := _m.Called(ctx, id, role, grantedBy)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GrantRole")
+	}
+
+	var r0 entity.Account
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entity.Role, uuid.UUID) (entity.Account, error)); ok {
+		return rf(ctx, id, role, grantedBy)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entity.Role, uuid.UUID) entity.Account); ok {
+		r0 = rf(ctx, id, role, grantedBy)
+	} else {
+		r0 = ret.Get(0).(entity.Account)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, entity.Role, uuid.UUID) error); ok {
+		r1 = rf(ctx, id, role, grantedBy)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUsecaseAccount_GrantRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GrantRole'
+type MockUsecaseAccount_GrantRole_Call struct {
+	*mock.Call
+}
+
+// GrantRole is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+//   - role entity.Role
+//   - grantedBy uuid.UUID
+func (_e *MockUsecaseAccount_Expecter) GrantRole(ctx interface{}, id interface{}, role interface{}, grantedBy interface{}) *MockUsecaseAccount_GrantRole_Call {
+	return &MockUsecaseAccount_GrantRole_Call{Call: _e.mock.On("GrantRole", ctx, id, role, grantedBy)}
+}
+
+func (_c *MockUsecaseAccount_GrantRole_Call) Run(run func(ctx context.Context, id uuid.UUID, role entity.Role, grantedBy uuid.UUID)) *MockUsecaseAccount_GrantRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(entity.Role), args[3].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *MockUsecaseAccount_GrantRole_Call) Return(_a0 entity.Account, _a1 error) *MockUsecaseAccount_GrantRole_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUsecaseAccount_GrantRole_Call) RunAndReturn(run func(context.Context, uuid.UUID, entity.Role, uuid.UUID) (entity.Account, error)) *MockUsecaseAccount_GrantRole_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GrantVIP provides a mock function with given fields: ctx, id
 func (_m *MockUsecaseAccount) GrantVIP(ctx context.Context, id uuid.UUID) (entity.Account, error) {
 	ret := _m.Called(ctx, id)
@@ -230,6 +291,189 @@ func (_c *MockUsecaseAccount_GrantVIP_Call) Return(_a0 entity.Account, _a1 error
 }
 
 func (_c *MockUsecaseAccount_GrantVIP_Call) RunAndReturn(run func(context.Context, uuid.UUID) (entity.Account, error)) *MockUsecaseAccount_GrantVIP_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListUsers provides a mock function with given fields: ctx, f
+func (_m *MockUsecaseAccount) ListUsers(ctx context.Context, f biz.UserFilter) ([]entity.Account, int, error) {
+	ret := _m.Called(ctx, f)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListUsers")
+	}
+
+	var r0 []entity.Account
+	var r1 int
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, biz.UserFilter) ([]entity.Account, int, error)); ok {
+		return rf(ctx, f)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, biz.UserFilter) []entity.Account); ok {
+		r0 = rf(ctx, f)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entity.Account)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, biz.UserFilter) int); ok {
+		r1 = rf(ctx, f)
+	} else {
+		r1 = ret.Get(1).(int)
+	}
+
+	if rf, ok := ret.Get(2).(func(context.Context, biz.UserFilter) error); ok {
+		r2 = rf(ctx, f)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
+// MockUsecaseAccount_ListUsers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListUsers'
+type MockUsecaseAccount_ListUsers_Call struct {
+	*mock.Call
+}
+
+// ListUsers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - f biz.UserFilter
+func (_e *MockUsecaseAccount_Expecter) ListUsers(ctx interface{}, f interface{}) *MockUsecaseAccount_ListUsers_Call {
+	return &MockUsecaseAccount_ListUsers_Call{Call: _e.mock.On("ListUsers", ctx, f)}
+}
+
+func (_c *MockUsecaseAccount_ListUsers_Call) Run(run func(ctx context.Context, f biz.UserFilter)) *MockUsecaseAccount_ListUsers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(biz.UserFilter))
+	})
+	return _c
+}
+
+func (_c *MockUsecaseAccount_ListUsers_Call) Return(_a0 []entity.Account, _a1 int, _a2 error) *MockUsecaseAccount_ListUsers_Call {
+	_c.Call.Return(_a0, _a1, _a2)
+	return _c
+}
+
+func (_c *MockUsecaseAccount_ListUsers_Call) RunAndReturn(run func(context.Context, biz.UserFilter) ([]entity.Account, int, error)) *MockUsecaseAccount_ListUsers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RevokeRole provides a mock function with given fields: ctx, id, role, by
+func (_m *MockUsecaseAccount) RevokeRole(ctx context.Context, id uuid.UUID, role entity.Role, by uuid.UUID) (entity.Account, error) {
+	ret := _m.Called(ctx, id, role, by)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RevokeRole")
+	}
+
+	var r0 entity.Account
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entity.Role, uuid.UUID) (entity.Account, error)); ok {
+		return rf(ctx, id, role, by)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entity.Role, uuid.UUID) entity.Account); ok {
+		r0 = rf(ctx, id, role, by)
+	} else {
+		r0 = ret.Get(0).(entity.Account)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, entity.Role, uuid.UUID) error); ok {
+		r1 = rf(ctx, id, role, by)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUsecaseAccount_RevokeRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokeRole'
+type MockUsecaseAccount_RevokeRole_Call struct {
+	*mock.Call
+}
+
+// RevokeRole is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+//   - role entity.Role
+//   - by uuid.UUID
+func (_e *MockUsecaseAccount_Expecter) RevokeRole(ctx interface{}, id interface{}, role interface{}, by interface{}) *MockUsecaseAccount_RevokeRole_Call {
+	return &MockUsecaseAccount_RevokeRole_Call{Call: _e.mock.On("RevokeRole", ctx, id, role, by)}
+}
+
+func (_c *MockUsecaseAccount_RevokeRole_Call) Run(run func(ctx context.Context, id uuid.UUID, role entity.Role, by uuid.UUID)) *MockUsecaseAccount_RevokeRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(entity.Role), args[3].(uuid.UUID))
+	})
+	return _c
+}
+
+func (_c *MockUsecaseAccount_RevokeRole_Call) Return(_a0 entity.Account, _a1 error) *MockUsecaseAccount_RevokeRole_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUsecaseAccount_RevokeRole_Call) RunAndReturn(run func(context.Context, uuid.UUID, entity.Role, uuid.UUID) (entity.Account, error)) *MockUsecaseAccount_RevokeRole_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateUser provides a mock function with given fields: ctx, id, p
+func (_m *MockUsecaseAccount) UpdateUser(ctx context.Context, id uuid.UUID, p biz.UserPatch) (entity.Account, error) {
+	ret := _m.Called(ctx, id, p)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateUser")
+	}
+
+	var r0 entity.Account
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, biz.UserPatch) (entity.Account, error)); ok {
+		return rf(ctx, id, p)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, biz.UserPatch) entity.Account); ok {
+		r0 = rf(ctx, id, p)
+	} else {
+		r0 = ret.Get(0).(entity.Account)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, biz.UserPatch) error); ok {
+		r1 = rf(ctx, id, p)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUsecaseAccount_UpdateUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateUser'
+type MockUsecaseAccount_UpdateUser_Call struct {
+	*mock.Call
+}
+
+// UpdateUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+//   - p biz.UserPatch
+func (_e *MockUsecaseAccount_Expecter) UpdateUser(ctx interface{}, id interface{}, p interface{}) *MockUsecaseAccount_UpdateUser_Call {
+	return &MockUsecaseAccount_UpdateUser_Call{Call: _e.mock.On("UpdateUser", ctx, id, p)}
+}
+
+func (_c *MockUsecaseAccount_UpdateUser_Call) Run(run func(ctx context.Context, id uuid.UUID, p biz.UserPatch)) *MockUsecaseAccount_UpdateUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(biz.UserPatch))
+	})
+	return _c
+}
+
+func (_c *MockUsecaseAccount_UpdateUser_Call) Return(_a0 entity.Account, _a1 error) *MockUsecaseAccount_UpdateUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUsecaseAccount_UpdateUser_Call) RunAndReturn(run func(context.Context, uuid.UUID, biz.UserPatch) (entity.Account, error)) *MockUsecaseAccount_UpdateUser_Call {
 	_c.Call.Return(run)
 	return _c
 }

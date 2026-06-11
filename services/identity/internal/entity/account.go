@@ -13,7 +13,7 @@ type Tier string
 
 const (
 	TierGuest  Tier = "GUEST"  // browses gallery, cannot participate
-	TierMember Tier = "MEMBER" // redeemed an invite
+	TierMember Tier = "MEMBER" // KYC-approved (invites removed; KYC is the trigger)
 	TierVIP    Tier = "VIP"    // house-granted
 )
 
@@ -57,15 +57,63 @@ func (k KycState) Valid() bool {
 	}
 }
 
+// Role is a functional permission grant, orthogonal to Tier (CLAUDE.md §0 rule 8).
+// USER is implicit (never stored); INSPECTOR/ADMIN are explicit account_role rows.
+type Role string
+
+const (
+	RoleInspector Role = "INSPECTOR"
+	RoleAdmin     Role = "ADMIN"
+)
+
+// Valid reports whether r is a grantable role.
+func (r Role) Valid() bool { return r == RoleInspector || r == RoleAdmin }
+
+// Status is the account lifecycle state, orthogonal to tier/role.
+type Status string
+
+const (
+	StatusRegistered Status = "REGISTERED"
+	StatusActive     Status = "ACTIVE"
+	StatusSuspended  Status = "SUSPENDED"
+	StatusBanned     Status = "BANNED"
+)
+
+// Valid reports whether s is a known status.
+func (s Status) Valid() bool {
+	switch s {
+	case StatusRegistered, StatusActive, StatusSuspended, StatusBanned:
+		return true
+	default:
+		return false
+	}
+}
+
 // Account is the identity-owned record for a platform user. It carries the
-// access tier and a mirrored KYC status so the gateway guard can read
-// participation eligibility from one place.
+// access tier, a mirrored KYC status, RBAC roles and the mobile identifier so the
+// gateway guard can read participation eligibility and role grants from one place.
 type Account struct {
-	ID        uuid.UUID `json:"id"`
-	Tier      Tier      `json:"tier"`
-	KycStatus KycState  `json:"kycStatus"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID             uuid.UUID `json:"id"`
+	Handle         string    `json:"handle"`
+	MobileE164     string    `json:"mobileE164"`
+	MobileVerified bool      `json:"mobileVerified"`
+	Tier           Tier      `json:"tier"`
+	KycStatus      KycState  `json:"kycStatus"`
+	Status         Status    `json:"status"`
+	Roles          []Role    `json:"roles"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+}
+
+// HasRole reports whether the account holds the given functional role.
+func (a Account) HasRole(role Role) bool {
+	for _, r := range a.Roles {
+		if r == role {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Eligible reports whether the account may participate in auctions:

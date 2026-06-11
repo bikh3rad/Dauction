@@ -32,8 +32,6 @@ x-build-proxy: &build-proxy
 services:
   identity:
     build: { <<: *build-proxy }
-  invite:
-    build: { <<: *build-proxy }
   kyc:
     build: { <<: *build-proxy }
   vault:

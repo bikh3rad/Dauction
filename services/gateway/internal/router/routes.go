@@ -38,6 +38,14 @@ var participate = biz.RouteRequirement{RequireMember: true, RequireKyc: true}
 // reading your own /me, wallet, escrow status). Not public, but not gated on tier.
 var authed = biz.RouteRequirement{}
 
+// inspector requires the caller to hold the INSPECTOR role (the verification
+// workflow — sealing item authenticity before a lot can be certified).
+var inspector = biz.RouteRequirement{RequireRole: "INSPECTOR"}
+
+// admin requires the admin guard (dev: Basic-Auth admin/admin; prod: ADMIN role).
+// Applied to every /apis/admin/* route.
+var adminReq = biz.RouteRequirement{RequireAdmin: true}
+
 // Table is the ordered gateway route table. It is sorted by descending prefix
 // length at construction so Match implements longest-prefix-wins; routes with a
 // Suffix or Exact constraint are evaluated before plain-prefix routes of equal
@@ -55,22 +63,26 @@ func NewTable() *Table {
 		{Method: "GET", Prefix: "/apis/gallery/", Upstream: "catalog", Req: public},
 		{Method: "GET", Prefix: "/apis/gallery", Exact: true, Upstream: "catalog", Req: public},
 		{Method: "GET", Prefix: "/apis/lots/", Upstream: "catalog", Req: public},
-		{Method: "POST", Prefix: "/apis/invites/redeem", Upstream: "invite", Req: public},
+		{Method: "GET", Prefix: "/apis/categories", Upstream: "catalog", Req: public},
+		// onboarding: mobile OTP + OAuth (replaces invite redemption)
+		{Prefix: "/apis/auth/otp/", Upstream: "identity", Req: public},
+		{Prefix: "/apis/auth/oauth/", Upstream: "identity", Req: public},
 		{Method: "POST", Prefix: "/apis/kyc/start", Upstream: "kyc", Req: public},
 		{Method: "POST", Prefix: "/apis/kyc/verify", Upstream: "kyc", Req: public},
 
-		// ---- identity (authed; reading own account / internal+admin) ----
+		// ---- identity (authed; reading own account / internal + admin CRUD) ----
 		{Method: "GET", Prefix: "/apis/me", Exact: true, Upstream: "identity", Req: authed},
 		{Prefix: "/apis/internal/accounts/", Upstream: "identity", Req: authed},
-		{Prefix: "/apis/admin/accounts/", Upstream: "identity", Req: authed},
+		{Prefix: "/apis/admin/accounts/", Upstream: "identity", Req: adminReq},
+		{Prefix: "/apis/admin/users/", Upstream: "identity", Req: adminReq},
+		{Prefix: "/apis/admin/users", Exact: true, Upstream: "identity", Req: adminReq},
 
-		// ---- invite (authed redemption beyond /redeem + admin) ----
-		{Prefix: "/apis/admin/invites/", Upstream: "invite", Req: authed},
-		{Prefix: "/apis/invites/", Upstream: "invite", Req: authed},
+		// ---- inspector workflow (INSPECTOR role; auction-eligibility gate) ----
+		{Prefix: "/apis/inspector/", Upstream: "catalog", Req: inspector},
 
 		// ---- kyc (authed status + admin queue) ----
-		{Prefix: "/apis/admin/kyc/", Upstream: "kyc", Req: authed},
-		{Prefix: "/apis/admin/kyc", Exact: true, Upstream: "kyc", Req: authed},
+		{Prefix: "/apis/admin/kyc/", Upstream: "kyc", Req: adminReq},
+		{Prefix: "/apis/admin/kyc", Exact: true, Upstream: "kyc", Req: adminReq},
 		{Prefix: "/apis/kyc/", Upstream: "kyc", Req: authed},
 
 		// ---- vault (seller; participation-gated) ----
@@ -88,16 +100,18 @@ func NewTable() *Table {
 		// passive (timed): bid | standing
 		{Prefix: "/apis/auctions/", Suffix: "/bid", Upstream: "auction-passive", Req: participate},
 		{Prefix: "/apis/auctions/", Suffix: "/standing", Upstream: "auction-passive", Req: participate},
+		// admin lot certification + scheduling
+		{Prefix: "/apis/admin/lots/", Upstream: "catalog", Req: adminReq},
 		// admin auction actions: open|complete|abort → dutch; close → passive
-		{Prefix: "/apis/admin/auctions/", Suffix: "/open", Upstream: "auction-dutch", Req: authed},
-		{Prefix: "/apis/admin/auctions/", Suffix: "/complete", Upstream: "auction-dutch", Req: authed},
-		{Prefix: "/apis/admin/auctions/", Suffix: "/abort", Upstream: "auction-dutch", Req: authed},
-		{Prefix: "/apis/admin/auctions/", Suffix: "/close", Upstream: "auction-passive", Req: authed},
+		{Prefix: "/apis/admin/auctions/", Suffix: "/open", Upstream: "auction-dutch", Req: adminReq},
+		{Prefix: "/apis/admin/auctions/", Suffix: "/complete", Upstream: "auction-dutch", Req: adminReq},
+		{Prefix: "/apis/admin/auctions/", Suffix: "/abort", Upstream: "auction-dutch", Req: adminReq},
+		{Prefix: "/apis/admin/auctions/", Suffix: "/close", Upstream: "auction-passive", Req: adminReq},
 
 		// ---- escrow + dispute ----
 		// dispute court routes are mounted under /apis/escrow/{id}/dispute → dispute service
 		{Prefix: "/apis/escrow/", Suffix: "/dispute/resolve", Upstream: "dispute", Req: authed},
-		{Prefix: "/apis/admin/escrow/", Upstream: "escrow", Req: authed},
+		{Prefix: "/apis/admin/escrow/", Upstream: "escrow", Req: adminReq},
 		{Prefix: "/apis/escrow/", Upstream: "escrow", Req: participate},
 
 		// ---- notifier (realtime WS/SSE) ----

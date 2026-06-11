@@ -10,7 +10,6 @@ import (
 // resolves a matched route to one of these names.
 type UpstreamsConfig struct {
 	Identity       string `koanf:"identity"`
-	Invite         string `koanf:"invite"`
 	Kyc            string `koanf:"kyc"`
 	Vault          string `koanf:"vault"`
 	Catalog        string `koanf:"catalog"`
@@ -27,7 +26,6 @@ type UpstreamsConfig struct {
 func NewUpstreamsConfig(_ context.Context, c *KConfig) (*UpstreamsConfig, error) {
 	cfg := &UpstreamsConfig{
 		Identity:       "http://identity:8080",
-		Invite:         "http://invite:8080",
 		Kyc:            "http://kyc:8080",
 		Vault:          "http://vault:8080",
 		Catalog:        "http://catalog:8080",
@@ -50,8 +48,6 @@ func (u *UpstreamsConfig) URL(name string) (string, error) {
 	switch name {
 	case "identity":
 		return u.Identity, nil
-	case "invite":
-		return u.Invite, nil
 	case "kyc":
 		return u.Kyc, nil
 	case "vault":

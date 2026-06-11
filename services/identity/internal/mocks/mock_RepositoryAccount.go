@@ -3,8 +3,10 @@
 package mocks
 
 import (
-	entity "application/internal/entity"
+	biz "application/internal/biz"
 	context "context"
+
+	entity "application/internal/entity"
 
 	mock "github.com/stretchr/testify/mock"
 
@@ -138,6 +140,132 @@ func (_c *MockRepositoryAccount_Get_Call) RunAndReturn(run func(context.Context,
 	return _c
 }
 
+// GrantRoleTx provides a mock function with given fields: ctx, id, role, grantedBy, outbox
+func (_m *MockRepositoryAccount) GrantRoleTx(ctx context.Context, id uuid.UUID, role entity.Role, grantedBy uuid.UUID, outbox entity.OutboxEvent) (entity.Account, error) {
+	ret := _m.Called(ctx, id, role, grantedBy, outbox)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GrantRoleTx")
+	}
+
+	var r0 entity.Account
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entity.Role, uuid.UUID, entity.OutboxEvent) (entity.Account, error)); ok {
+		return rf(ctx, id, role, grantedBy, outbox)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entity.Role, uuid.UUID, entity.OutboxEvent) entity.Account); ok {
+		r0 = rf(ctx, id, role, grantedBy, outbox)
+	} else {
+		r0 = ret.Get(0).(entity.Account)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, entity.Role, uuid.UUID, entity.OutboxEvent) error); ok {
+		r1 = rf(ctx, id, role, grantedBy, outbox)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRepositoryAccount_GrantRoleTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GrantRoleTx'
+type MockRepositoryAccount_GrantRoleTx_Call struct {
+	*mock.Call
+}
+
+// GrantRoleTx is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+//   - role entity.Role
+//   - grantedBy uuid.UUID
+//   - outbox entity.OutboxEvent
+func (_e *MockRepositoryAccount_Expecter) GrantRoleTx(ctx interface{}, id interface{}, role interface{}, grantedBy interface{}, outbox interface{}) *MockRepositoryAccount_GrantRoleTx_Call {
+	return &MockRepositoryAccount_GrantRoleTx_Call{Call: _e.mock.On("GrantRoleTx", ctx, id, role, grantedBy, outbox)}
+}
+
+func (_c *MockRepositoryAccount_GrantRoleTx_Call) Run(run func(ctx context.Context, id uuid.UUID, role entity.Role, grantedBy uuid.UUID, outbox entity.OutboxEvent)) *MockRepositoryAccount_GrantRoleTx_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(entity.Role), args[3].(uuid.UUID), args[4].(entity.OutboxEvent))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryAccount_GrantRoleTx_Call) Return(_a0 entity.Account, _a1 error) *MockRepositoryAccount_GrantRoleTx_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRepositoryAccount_GrantRoleTx_Call) RunAndReturn(run func(context.Context, uuid.UUID, entity.Role, uuid.UUID, entity.OutboxEvent) (entity.Account, error)) *MockRepositoryAccount_GrantRoleTx_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListUsers provides a mock function with given fields: ctx, f
+func (_m *MockRepositoryAccount) ListUsers(ctx context.Context, f biz.UserFilter) ([]entity.Account, int, error) {
+	ret := _m.Called(ctx, f)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListUsers")
+	}
+
+	var r0 []entity.Account
+	var r1 int
+	var r2 error
+	if rf, ok := ret.Get(0).(func(context.Context, biz.UserFilter) ([]entity.Account, int, error)); ok {
+		return rf(ctx, f)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, biz.UserFilter) []entity.Account); ok {
+		r0 = rf(ctx, f)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]entity.Account)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, biz.UserFilter) int); ok {
+		r1 = rf(ctx, f)
+	} else {
+		r1 = ret.Get(1).(int)
+	}
+
+	if rf, ok := ret.Get(2).(func(context.Context, biz.UserFilter) error); ok {
+		r2 = rf(ctx, f)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
+// MockRepositoryAccount_ListUsers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListUsers'
+type MockRepositoryAccount_ListUsers_Call struct {
+	*mock.Call
+}
+
+// ListUsers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - f biz.UserFilter
+func (_e *MockRepositoryAccount_Expecter) ListUsers(ctx interface{}, f interface{}) *MockRepositoryAccount_ListUsers_Call {
+	return &MockRepositoryAccount_ListUsers_Call{Call: _e.mock.On("ListUsers", ctx, f)}
+}
+
+func (_c *MockRepositoryAccount_ListUsers_Call) Run(run func(ctx context.Context, f biz.UserFilter)) *MockRepositoryAccount_ListUsers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(biz.UserFilter))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryAccount_ListUsers_Call) Return(_a0 []entity.Account, _a1 int, _a2 error) *MockRepositoryAccount_ListUsers_Call {
+	_c.Call.Return(_a0, _a1, _a2)
+	return _c
+}
+
+func (_c *MockRepositoryAccount_ListUsers_Call) RunAndReturn(run func(context.Context, biz.UserFilter) ([]entity.Account, int, error)) *MockRepositoryAccount_ListUsers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // MarkConsumed provides a mock function with given fields: ctx, inboxKey
 func (_m *MockRepositoryAccount) MarkConsumed(ctx context.Context, inboxKey string) (bool, error) {
 	ret := _m.Called(ctx, inboxKey)
@@ -191,6 +319,65 @@ func (_c *MockRepositoryAccount_MarkConsumed_Call) Return(_a0 bool, _a1 error) *
 }
 
 func (_c *MockRepositoryAccount_MarkConsumed_Call) RunAndReturn(run func(context.Context, string) (bool, error)) *MockRepositoryAccount_MarkConsumed_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RevokeRoleTx provides a mock function with given fields: ctx, id, role, outbox
+func (_m *MockRepositoryAccount) RevokeRoleTx(ctx context.Context, id uuid.UUID, role entity.Role, outbox entity.OutboxEvent) (entity.Account, error) {
+	ret := _m.Called(ctx, id, role, outbox)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RevokeRoleTx")
+	}
+
+	var r0 entity.Account
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entity.Role, entity.OutboxEvent) (entity.Account, error)); ok {
+		return rf(ctx, id, role, outbox)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, entity.Role, entity.OutboxEvent) entity.Account); ok {
+		r0 = rf(ctx, id, role, outbox)
+	} else {
+		r0 = ret.Get(0).(entity.Account)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, entity.Role, entity.OutboxEvent) error); ok {
+		r1 = rf(ctx, id, role, outbox)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRepositoryAccount_RevokeRoleTx_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokeRoleTx'
+type MockRepositoryAccount_RevokeRoleTx_Call struct {
+	*mock.Call
+}
+
+// RevokeRoleTx is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+//   - role entity.Role
+//   - outbox entity.OutboxEvent
+func (_e *MockRepositoryAccount_Expecter) RevokeRoleTx(ctx interface{}, id interface{}, role interface{}, outbox interface{}) *MockRepositoryAccount_RevokeRoleTx_Call {
+	return &MockRepositoryAccount_RevokeRoleTx_Call{Call: _e.mock.On("RevokeRoleTx", ctx, id, role, outbox)}
+}
+
+func (_c *MockRepositoryAccount_RevokeRoleTx_Call) Run(run func(ctx context.Context, id uuid.UUID, role entity.Role, outbox entity.OutboxEvent)) *MockRepositoryAccount_RevokeRoleTx_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(entity.Role), args[3].(entity.OutboxEvent))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryAccount_RevokeRoleTx_Call) Return(_a0 entity.Account, _a1 error) *MockRepositoryAccount_RevokeRoleTx_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRepositoryAccount_RevokeRoleTx_Call) RunAndReturn(run func(context.Context, uuid.UUID, entity.Role, entity.OutboxEvent) (entity.Account, error)) *MockRepositoryAccount_RevokeRoleTx_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -299,6 +486,64 @@ func (_c *MockRepositoryAccount_SetTierTx_Call) Return(_a0 entity.Account, _a1 e
 }
 
 func (_c *MockRepositoryAccount_SetTierTx_Call) RunAndReturn(run func(context.Context, uuid.UUID, entity.Tier, entity.OutboxEvent) (entity.Account, error)) *MockRepositoryAccount_SetTierTx_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateUser provides a mock function with given fields: ctx, id, p
+func (_m *MockRepositoryAccount) UpdateUser(ctx context.Context, id uuid.UUID, p biz.UserPatch) (entity.Account, error) {
+	ret := _m.Called(ctx, id, p)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateUser")
+	}
+
+	var r0 entity.Account
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, biz.UserPatch) (entity.Account, error)); ok {
+		return rf(ctx, id, p)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, biz.UserPatch) entity.Account); ok {
+		r0 = rf(ctx, id, p)
+	} else {
+		r0 = ret.Get(0).(entity.Account)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, biz.UserPatch) error); ok {
+		r1 = rf(ctx, id, p)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRepositoryAccount_UpdateUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateUser'
+type MockRepositoryAccount_UpdateUser_Call struct {
+	*mock.Call
+}
+
+// UpdateUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uuid.UUID
+//   - p biz.UserPatch
+func (_e *MockRepositoryAccount_Expecter) UpdateUser(ctx interface{}, id interface{}, p interface{}) *MockRepositoryAccount_UpdateUser_Call {
+	return &MockRepositoryAccount_UpdateUser_Call{Call: _e.mock.On("UpdateUser", ctx, id, p)}
+}
+
+func (_c *MockRepositoryAccount_UpdateUser_Call) Run(run func(ctx context.Context, id uuid.UUID, p biz.UserPatch)) *MockRepositoryAccount_UpdateUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uuid.UUID), args[2].(biz.UserPatch))
+	})
+	return _c
+}
+
+func (_c *MockRepositoryAccount_UpdateUser_Call) Return(_a0 entity.Account, _a1 error) *MockRepositoryAccount_UpdateUser_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRepositoryAccount_UpdateUser_Call) RunAndReturn(run func(context.Context, uuid.UUID, biz.UserPatch) (entity.Account, error)) *MockRepositoryAccount_UpdateUser_Call {
 	_c.Call.Return(run)
 	return _c
 }

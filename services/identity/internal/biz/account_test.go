@@ -68,13 +68,13 @@ func TestAccount_GrantVIP(t *testing.T) {
 	}
 }
 
-// TestAccount_ElevateToMember covers invite.redeemed handling: GUEST rises,
+// TestAccount_ElevateToMember covers KYC-driven membership: GUEST rises,
 // already-elevated tiers are left untouched, and duplicate events are no-ops.
 func TestAccount_ElevateToMember(t *testing.T) {
 	t.Parallel()
 
 	id := uuid.New()
-	const key = "invite.redeemed:abc"
+	const key = "kyc.approved:member:abc"
 
 	tests := []struct {
 		name        string

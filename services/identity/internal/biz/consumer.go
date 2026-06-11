@@ -9,13 +9,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// inviteRedeemed mirrors dauction.events.v1.InviteRedeemed.
-type inviteRedeemed struct {
-	Code       string `json:"code"`
-	RedeemedBy string `json:"redeemed_by"`
-	IssuedBy   string `json:"issued_by"`
-}
-
 // kycApproved mirrors dauction.events.v1.KycApproved.
 type kycApproved struct {
 	AccountID    string `json:"account_id"`
@@ -24,7 +17,8 @@ type kycApproved struct {
 
 // EventConsumer decodes inbound EventEnvelopes from the bus and applies them to
 // the account use case. It is the consume side of CLAUDE.md §2 for identity:
-// invite.redeemed -> elevate GUEST->MEMBER; kyc.approved -> mark eligible.
+// the invite system was removed, so kyc.approved is now the sole membership
+// trigger — it both marks the account KYC-eligible AND elevates GUEST->MEMBER.
 // Idempotency is enforced downstream via the inbox (consumed_event), keyed by
 // the envelope's idempotency_key.
 type EventConsumer struct {
@@ -42,7 +36,7 @@ func NewEventConsumer(logger *slog.Logger, account UsecaseAccount) *EventConsume
 
 // Subjects returns the NATS subjects this consumer subscribes to.
 func (c *EventConsumer) Subjects() []string {
-	return []string{SubjectInviteRedeemed, SubjectKycApproved}
+	return []string{SubjectKycApproved}
 }
 
 // Handle dispatches a raw EventEnvelope. Unknown subjects are ignored (acked) so
@@ -61,8 +55,6 @@ func (c *EventConsumer) Handle(ctx context.Context, raw []byte) error {
 	}
 
 	switch env.Type {
-	case SubjectInviteRedeemed:
-		return c.onInviteRedeemed(ctx, env.Payload, key)
 	case SubjectKycApproved:
 		return c.onKycApproved(ctx, env.Payload, key)
 	default:
@@ -70,20 +62,6 @@ func (c *EventConsumer) Handle(ctx context.Context, raw []byte) error {
 
 		return nil
 	}
-}
-
-func (c *EventConsumer) onInviteRedeemed(ctx context.Context, payload []byte, key string) error {
-	var msg inviteRedeemed
-	if err := json.Unmarshal(payload, &msg); err != nil {
-		return fmt.Errorf("decode invite.redeemed: %w", err)
-	}
-
-	id, err := uuid.Parse(msg.RedeemedBy)
-	if err != nil {
-		return fmt.Errorf("%w: invite.redeemed redeemed_by %q", ErrResourceInvalid, msg.RedeemedBy)
-	}
-
-	return c.account.ElevateToMember(ctx, id, scopedKey(SubjectInviteRedeemed, key))
 }
 
 func (c *EventConsumer) onKycApproved(ctx context.Context, payload []byte, key string) error {
@@ -97,7 +75,14 @@ func (c *EventConsumer) onKycApproved(ctx context.Context, payload []byte, key s
 		return fmt.Errorf("%w: kyc.approved account_id %q", ErrResourceInvalid, msg.AccountID)
 	}
 
-	return c.account.ApproveKyc(ctx, id, scopedKey(SubjectKycApproved, key))
+	// KYC is now the membership trigger (invites removed). Mirror the KYC status,
+	// then elevate GUEST->MEMBER. Both are idempotent; the elevation uses a
+	// distinct scoped key so its inbox row never collides with the KYC mirror.
+	if err := c.account.ApproveKyc(ctx, id, scopedKey(SubjectKycApproved, key)); err != nil {
+		return err
+	}
+
+	return c.account.ElevateToMember(ctx, id, scopedKey(SubjectKycApproved+":member", key))
 }
 
 // scopedKey namespaces an inbound idempotency key by subject so keys from

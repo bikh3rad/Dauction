@@ -50,4 +50,4 @@ datasource:
     dsn: "nats://nats:4222"
     initJetstream: true
     streamName: "DAUCTION"
-    subject: "account.>,invite.>,kyc.>,object.>,credit.>,lot.>,attestation.>,auction.>,escrow.>,bid.>,bids.>,dispute.>"
+    subject: "account.>,kyc.>,object.>,credit.>,lot.>,attestation.>,auction.>,escrow.>,bid.>,bids.>,dispute.>"

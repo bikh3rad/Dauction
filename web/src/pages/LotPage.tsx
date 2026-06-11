@@ -9,7 +9,7 @@ import { Sheet } from "@/components/ui/Sheet";
 import { Icon } from "@/components/ui/Icon";
 import { Seal } from "@/components/ui/Seal";
 import { Money } from "@/components/ui/Money";
-import { Ph } from "@/components/ui/ProductArt";
+import { LotCarousel } from "@/components/ui/LotCarousel";
 import { Label, Stat, iconBtnStyle } from "@/components/ui/Primitives";
 import { LoadingScreen, ErrorState } from "@/components/ui/States";
 import { categoryLabel } from "@/lib/enrich";
@@ -85,12 +85,7 @@ export function LotPage() {
         top={<TopBar kicker={`${t("gal_lot")} ${String(seq).padStart(2, "0")} · ${categoryLabel(v.category, lang)}`} title={v.maison} onBack={() => nav(-1)} right={<button className="iconbtn" style={iconBtnStyle} aria-label="watch"><Icon name="eye" size={18} /></button>} />}
         footer={footer}
       >
-        <div style={{ position: "relative" }}>
-          <Ph label={`${v.maison} · ${t("lot_view360") || "360°"}`} art={v.art} ratio="1 / 1" style={{ borderRadius: 0, borderInline: 0 }} />
-          <div style={{ position: "absolute", top: 14, insetInlineStart: 14 }}>
-            <span className="chip" data-st="good"><Icon name="check" size={12} /> {t("lot_authentic") || "Authenticated"}</span>
-          </div>
-        </div>
+        <LotCarousel images={lot.imageRefs} art={v.art} label={v.maison} />
 
         <div style={{ padding: "18px 20px 0" }}>
           <h1 className="serif" style={{ fontSize: 24, lineHeight: 1.18, margin: "0 0 4px", color: "var(--gold-pale)" }}>{v.body}</h1>

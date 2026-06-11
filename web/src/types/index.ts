@@ -55,6 +55,17 @@ export interface Lot {
   isoWeek: string;
   createdAt: string;
   scheduledAt?: string;
+  /** Catalog category code (WATCHES|JEWELRY|…); client localizes the label. */
+  categoryCode?: string;
+  /** Ordered carousel images (≤7); imageRefs[0] is the cover. */
+  imageRefs?: string[];
+  /** Inspector seal (populated after an APPROVED inspection). */
+  certified?: boolean;
+  authenticity?: "GENUINE" | "COUNTERFEIT" | "INCONCLUSIVE";
+  conditionGrade?: "MINT" | "EXCELLENT" | "GOOD" | "FAIR" | "POOR";
+  /** Owner-authored 4-language title/description, returned whole. */
+  titleI18n?: Partial<Record<"en" | "fa" | "ar" | "tr", string>>;
+  descriptionI18n?: Partial<Record<"en" | "fa" | "ar" | "tr", string>>;
 }
 export interface Attestation {
   id: string;

@@ -19,10 +19,11 @@ import (
 
 // accessResp mirrors identity's dto.AccessResp (the internal guard read model).
 type accessResp struct {
-	ID        string `json:"id"`
-	Tier      string `json:"tier"`
-	KycStatus string `json:"kycStatus"`
-	Eligible  bool   `json:"eligible"`
+	ID        string   `json:"id"`
+	Tier      string   `json:"tier"`
+	KycStatus string   `json:"kycStatus"`
+	Eligible  bool     `json:"eligible"`
+	Roles     []string `json:"roles"`
 }
 
 // identityAccessConfig holds the identity base URL used by the guard.
@@ -112,5 +113,6 @@ func (r *identityAccess) FetchAccess(ctx context.Context, accountID string) (ent
 		Tier:      entity.Tier(body.Tier),
 		KycStatus: entity.KycStatus(body.KycStatus),
 		Eligible:  body.Eligible,
+		Roles:     body.Roles,
 	}, nil
 }

@@ -29,10 +29,13 @@ message Lot {
   string closes_at = 18;                   // ISO-8601 UTC; empty for DUTCH
   uint32 watching = 19;
   uint32 participants = 20;
-  string inspector = 21;
-  bool certified = 22;
+  string inspector = 21;                   // sealing inspector account id (empty until inspected)
+  bool certified = 22;                     // true only after an APPROVED inspection
   bool box = 23;
   int32 premium_bps = 24;                  // buyer's premium in basis points (e.g. 1000 = 10%)
+  repeated string image_refs = 25;         // ordered carousel images (≤7), [0] is the cover
+  string authenticity = 26;                // GENUINE|... from the inspection seal (empty if pending)
+  string condition_grade = 27;             // MINT|EXCELLENT|... from the inspection seal
 }
 
 // GET /apis/gallery/weekly
@@ -55,3 +58,39 @@ message CertifyLotRequest {
   string attestation_id = 2; // PASS attestation reference
 }
 message CertifyLotResponse { Lot lot = 1; }
+
+// =====================================================================
+// Categories — robust categorization for items. Codes are language-neutral; the
+// client localizes display names. icon_key maps to the design-team icon set.
+// =====================================================================
+message Category {
+  string code = 1;       // WATCHES|JEWELRY|FINE_ART|AUTOMOBILES|HANDBAGS|RARE_SPIRITS|COLLECTIBLES
+  string icon_key = 2;   // sprite key for the per-category icon
+  uint32 sort_order = 3;
+  bool active = 4;
+}
+// GET /apis/categories
+message ListCategoriesRequest {}
+message ListCategoriesResponse { repeated Category categories = 1; }
+
+// =====================================================================
+// Inspector workflow — the auction-eligibility gate. A lot cannot be certified
+// or scheduled (and therefore cannot appear in the gallery or open) until an
+// account with the INSPECTOR role seals an APPROVED verdict.
+// =====================================================================
+
+// GET /apis/inspector/queue — lots awaiting inspection (INSPECTOR role required)
+message InspectionQueueRequest { uint32 limit = 1; uint32 offset = 2; }
+message InspectionQueueResponse { repeated Lot lots = 1; uint32 total = 2; }
+
+// POST /apis/inspector/lots/{id}/inspect — record the sealing verdict.
+message InspectLotRequest {
+  string lot_id = 1;
+  string verdict = 2;          // validate: required, APPROVED|REJECTED
+  string authenticity = 3;     // validate: required, GENUINE|COUNTERFEIT|INCONCLUSIVE
+  string condition_grade = 4;  // MINT|EXCELLENT|GOOD|FAIR|POOR (required when APPROVED)
+  string notes = 5;            // machine/free notes (not shown as localized prose)
+}
+message InspectLotResponse {
+  Lot lot = 1;                 // certified=true & state advanced on APPROVED
+}

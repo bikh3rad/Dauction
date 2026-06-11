@@ -40,7 +40,7 @@ check "bids packages seeded (PKG_100)" "PKG_100" "$pk"
 echo
 echo "== per-service direct health (debug ports) =="
 declare -A ports=(
-  [identity]=18081 [invite]=18082 [kyc]=18083 [vault]=18084 [catalog]=18085
+  [identity]=18081 [kyc]=18083 [vault]=18084 [catalog]=18085
   [bids]=18086 [auction-dutch]=18087 [auction-passive]=18088 [escrow]=18089
   [dispute]=18090 [notifier]=18091
 )

@@ -19,6 +19,10 @@ var (
 	ErrTierRequired = errors.New("TIER_REQUIRED")
 	// ErrKycRequired — route needs KYC APPROVED but caller is not (403).
 	ErrKycRequired = errors.New("KYC_REQUIRED")
+	// ErrRoleRequired — route needs a functional role (e.g. INSPECTOR) (403).
+	ErrRoleRequired = errors.New("NOT_INSPECTOR")
+	// ErrAdminRequired — route is in the admin group and caller lacks admin (403).
+	ErrAdminRequired = errors.New("ADMIN_REQUIRED")
 	// ErrRateLimited — client exceeded the configured rate window (429).
 	ErrRateLimited = errors.New("RATE_LIMITED")
 	// ErrUpstreamUnavailable — the resolved upstream service could not be reached (502).
