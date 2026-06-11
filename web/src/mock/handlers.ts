@@ -26,17 +26,18 @@ export function requestOtp(_mobile: string, _purpose?: string): RequestOtpResp {
   return { expiresInSecs: 300, devCode: "000000" };
 }
 
-// verifyOtp creates (or signs in) the account for a mobile number. New accounts
-// start GUEST/PENDING — they become MEMBER only after KYC approval.
+// verifyOtp signs the user in by mobile number. In this product, verifying the
+// SMS code IS the identity check — the account is verified (MEMBER) immediately;
+// there is no separate document/KYC step.
 export function verifyOtp(mobile: string, code: string): SessionResp {
   if (!code || code.length < 4) throw { message: "invalid code", code: "RESOURCE_INVALID" };
   const account: Account = {
     id: uid("acc"),
-    tier: "GUEST",
-    kycStatus: "PENDING",
-    eligible: false,
+    tier: "MEMBER",
+    kycStatus: "APPROVED",
+    eligible: true,
     roles: [],
-    status: "REGISTERED",
+    status: "ACTIVE",
     mobileE164: mobile,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -45,14 +46,16 @@ export function verifyOtp(mobile: string, code: string): SessionResp {
   return { token: account.id, created: true, account };
 }
 
+// oauthLogin signs the user in via a social provider. Social sign-in is a
+// complete identity check — the account is verified (MEMBER) immediately.
 export function oauthLogin(provider: OAuthProvider): SessionResp {
   const account: Account = {
     id: uid("acc"),
-    tier: "GUEST",
-    kycStatus: "PENDING",
-    eligible: false,
+    tier: "MEMBER",
+    kycStatus: "APPROVED",
+    eligible: true,
     roles: [],
-    status: "REGISTERED",
+    status: "ACTIVE",
     mobileE164: "",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -201,7 +204,7 @@ let kycSub: KycSubmission | null = null;
 export function startKyc(phone: string): StartKycResp {
   const id = uid("kyc");
   kycSub = {
-    id, accountId: db.account.id, docType: "EMIRATES_ID", docRef: "pending", phone,
+    id, accountId: db.account.id, docType: "NATIONAL_ID", docRef: "pending", phone,
     state: "STARTED", submittedAt: new Date().toISOString(),
   };
   return { submissionId: id, challengeId: uid("chl"), state: "STARTED", expiresAt: new Date(Date.now() + 300_000).toISOString(), devCode: "0000" };

@@ -29,9 +29,9 @@ export const accounts: AdminAccount[] = [
 ];
 
 export const kycQueue: AdminKycReview[] = [
-  { id: "kyc-91", accountId: "0x91", handle: "@noor.auh", docType: "EMIRATES_ID", status: "PENDING", issuedBy: "0x7A4E" },
+  { id: "kyc-91", accountId: "0x91", handle: "@noor.auh", docType: "NATIONAL_ID", status: "PENDING", issuedBy: "0x7A4E" },
   { id: "kyc-4c", accountId: "0x4C", handle: "@sterling.ldn", docType: "PASSPORT", status: "PENDING", issuedBy: "0x2D" },
-  { id: "kyc-f7", accountId: "0xF7", handle: "@dana.doh", docType: "EMIRATES_ID", status: "APPROVED", issuedBy: "House" },
+  { id: "kyc-f7", accountId: "0xF7", handle: "@dana.doh", docType: "NATIONAL_ID", status: "APPROVED", issuedBy: "House" },
 ];
 
 export const certQueue: AdminCertReview[] = [

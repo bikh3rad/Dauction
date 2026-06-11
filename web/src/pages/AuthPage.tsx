@@ -42,7 +42,7 @@ export function AuthPage() {
     setErr("");
     try {
       await verifyOtp.mutateAsync({ mobile: e164, code });
-      nav("/kyc"); // new account -> KYC to become a MEMBER
+      nav("/"); // verifying the SMS code is the identity check — straight in
     } catch {
       setErr(t("auth_err_code") || "Invalid code.");
     }
@@ -52,7 +52,7 @@ export function AuthPage() {
     setErr("");
     try {
       await oauth.mutateAsync(provider);
-      nav("/kyc");
+      nav("/"); // social sign-in is a complete identity check
     } catch {
       setErr(t("auth_err_oauth") || "Sign-in failed.");
     }

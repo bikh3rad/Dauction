@@ -6,7 +6,7 @@ const TABS = [
   { path: "/", icon: "layers", key: "nav_gallery", match: ["/", "/lot", "/auction", "/passive", "/escrow", "/bidstore"] },
   { path: "/vault", icon: "package", key: "nav_closet", match: ["/vault"] },
   { path: "/membership", icon: "crown", key: "nav_membership", match: ["/membership"] },
-  { path: "/account", icon: "user", key: "nav_account", match: ["/account", "/invite", "/kyc"] },
+  { path: "/account", icon: "user", key: "nav_account", match: ["/account"] },
 ];
 
 export function BottomNav() {

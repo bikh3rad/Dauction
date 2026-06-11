@@ -29,7 +29,7 @@ export type EscrowState =
 export type ReleaseMode = "CASH" | "VAULT_CREDIT";
 export type BuybackMode = "CASH" | "CREDIT";
 export type InviteStatus = "ISSUED" | "REDEEMED" | "REVOKED" | "FLAGGED";
-export type DocType = "EMIRATES_ID" | "PASSPORT";
+export type DocType = "PASSPORT" | "NATIONAL_ID";
 export type KycSubmissionState =
   | "STARTED" | "OTP_VERIFIED" | "SUBMITTED" | "APPROVED" | "REJECTED";
 
