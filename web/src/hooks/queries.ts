@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  auth, bids, catalog, dutch, escrow, identity, invite, kyc, passive, vault,
+  auth, bids, catalog, dutch, escrow, identity, invite, kyc, membership, passive, vault,
 } from "@/services";
 import { signOut as clearSession } from "@/auth/session";
 import type { AType, BuybackMode, DocType, OAuthProvider, ReleaseMode } from "@/types";
@@ -32,7 +32,7 @@ export function useRequestOtp() {
 export function useVerifyOtp() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (v: { mobile: string; code: string }) => auth.verifyOtp(v.mobile, v.code),
+    mutationFn: (v: { mobile: string; code: string; handle?: string }) => auth.verifyOtp(v.mobile, v.code, v.handle),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.me }),
   });
 }
@@ -47,6 +47,15 @@ export function useSignOut() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async () => { clearSession(); },
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.me }),
+  });
+}
+
+// ---------------- membership (paid leveling) ----------------
+export function useUpgradeMembership() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (level: number) => membership.upgrade(level),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.me }),
   });
 }

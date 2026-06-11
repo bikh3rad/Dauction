@@ -29,19 +29,25 @@ export function requestOtp(_mobile: string, _purpose?: string): RequestOtpResp {
 // verifyOtp signs the user in by mobile number. In this product, verifying the
 // SMS code IS the identity check — the account is verified (MEMBER) immediately;
 // there is no separate document/KYC step.
-export function verifyOtp(mobile: string, code: string): SessionResp {
-  if (!code || code.length < 4) throw { message: "invalid code", code: "RESOURCE_INVALID" };
-  const account: Account = {
+function newMember(mobile: string, handle = ""): Account {
+  return {
     id: uid("acc"),
+    handle,
     tier: "MEMBER",
     kycStatus: "APPROVED",
     eligible: true,
     roles: [],
     status: "ACTIVE",
     mobileE164: mobile,
+    membershipLevel: 1, // signing in grants Member · Level 1 (free)
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
+}
+
+export function verifyOtp(mobile: string, code: string, handle = ""): SessionResp {
+  if (!code || code.length < 4) throw { message: "invalid code", code: "RESOURCE_INVALID" };
+  const account = newMember(mobile, handle);
   setSession(account);
   return { token: account.id, created: true, account };
 }
@@ -49,19 +55,24 @@ export function verifyOtp(mobile: string, code: string): SessionResp {
 // oauthLogin signs the user in via a social provider. Social sign-in is a
 // complete identity check — the account is verified (MEMBER) immediately.
 export function oauthLogin(provider: OAuthProvider): SessionResp {
-  const account: Account = {
-    id: uid("acc"),
-    tier: "MEMBER",
-    kycStatus: "APPROVED",
-    eligible: true,
-    roles: [],
-    status: "ACTIVE",
-    mobileE164: "",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+  const account = newMember("");
   setSession(account);
   return { token: account.id, created: true, account };
+}
+
+// upgradeMembership raises the paid membership level (after payment). Level >= 2
+// maps to VIP for participation. Persisted on the session.
+export function upgradeMembership(level: number): Account {
+  const acc = currentAccount();
+  if (acc.id === "guest") throw { message: "sign in first", code: "ACCESS_DENIED" };
+  const next: Account = {
+    ...acc,
+    membershipLevel: level,
+    tier: level >= 2 ? "VIP" : "MEMBER",
+    updatedAt: new Date().toISOString(),
+  };
+  setSession(next);
+  return next;
 }
 
 // ---- catalog ----

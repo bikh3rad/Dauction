@@ -97,10 +97,14 @@ export interface Account {
   eligible: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Display name chosen at registration (optional). */
+  handle?: string;
   /** Elevated functional roles (USER is implicit). */
   roles?: Role[];
   status?: AccountStatus;
   mobileE164?: string;
+  /** Paid membership level (1 = free Member on sign-in; 2+ are purchased). */
+  membershipLevel?: number;
 }
 
 // ---- auth (mobile OTP + OAuth) ----

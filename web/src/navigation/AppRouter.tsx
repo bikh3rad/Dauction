@@ -27,7 +27,7 @@ export function AppRouter({ showNav = true }: { showNav?: boolean } = {}) {
   // First run: no session at all -> land on the sign-in page (mobile OTP / OAuth).
   // Once the user signs in OR chooses "browse as guest", a session exists and the
   // app is reachable normally.
-  if (!hasSession() && location.pathname !== "/login") {
+  if (!hasSession() && location.pathname !== "/login" && location.pathname !== "/register") {
     return <Navigate to="/login" replace />;
   }
   // On desktop the top nav drives navigation, so the bottom nav is suppressed.
@@ -48,7 +48,8 @@ export function AppRouter({ showNav = true }: { showNav?: boolean } = {}) {
             transition={{ duration: 0.22, ease: [0.2, 0.65, 0.2, 1] }}
           >
             <Routes location={location}>
-              <Route path="/login" element={<AuthPage />} />
+              <Route path="/login" element={<AuthPage mode="login" />} />
+              <Route path="/register" element={<AuthPage mode="register" />} />
               <Route path="/" element={<GalleryPage />} />
               <Route path="/lot/:id" element={<LotPage />} />
               <Route path="/auction/:id" element={<AuctionPage />} />

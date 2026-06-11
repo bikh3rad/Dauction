@@ -25,16 +25,22 @@ export const auth = {
       () => post("/auth/otp/request", { mobileE164, purpose }),
       () => mock.requestOtp(mobileE164, purpose),
     ),
-  verifyOtp: (mobileE164: string, code: string) =>
+  verifyOtp: (mobileE164: string, code: string, handle?: string) =>
     withFallback<SessionResp>(
-      () => post("/auth/otp/verify", { mobileE164, code }),
-      () => mock.verifyOtp(mobileE164, code),
+      () => post("/auth/otp/verify", { mobileE164, code, handle }),
+      () => mock.verifyOtp(mobileE164, code, handle),
     ),
   oauth: (provider: OAuthProvider) =>
     withFallback<SessionResp>(
       () => get(`/auth/oauth/${provider.toLowerCase()}/callback`, { params: { code: "demo" } }),
       () => mock.oauthLogin(provider),
     ),
+};
+
+// ---------- membership (paid leveling) ----------
+export const membership = {
+  upgrade: (level: number) =>
+    withFallback<Account>(() => post("/membership/upgrade", { level }), () => mock.upgradeMembership(level)),
 };
 
 // ---------- catalog ----------

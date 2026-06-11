@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import { useAccount } from "./queries";
+import { levelOf } from "@/lib/membership";
 import type { Account, Tier } from "@/types";
 
 // Per-lot participation is not exposed by a backend read model, so the client
@@ -10,6 +11,8 @@ type Participation = "REQUESTED" | "LOCKED_FULL" | "WON";
 interface SessionValue {
   account?: Account;
   tier: Tier;
+  /** Paid membership level: 0 = guest, 1 = free Member, 2+ = purchased. */
+  level: number;
   /** MEMBER/VIP AND kyc APPROVED — the participation gate (root CLAUDE.md §1). */
   canParticipate: boolean;
   isGuest: boolean;
@@ -33,6 +36,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     return {
       account,
       tier,
+      level: levelOf(account),
       isGuest: tier === "GUEST",
       canParticipate: (tier === "MEMBER" || tier === "VIP") && account?.kycStatus === "APPROVED",
       loading: isLoading,
