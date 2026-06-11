@@ -221,10 +221,13 @@ export function addObject(req: import("@/types").CreateObjectReq): VaultObject {
   db.vault.objects.unshift(obj);
   return { ...obj };
 }
-export function listObject(id: string, _atype: AType, _durationDays?: number) {
+export function listObject(id: string, atype: AType, durationDays?: number) {
   const obj = db.vault.objects.find((o) => o.id === id);
   if (!obj) throw { message: "object not found", code: "404" };
-  obj.state = "APPRAISING";
+  // Publish a live gallery lot from this object (carries its category icon +
+  // photos), and mark the object as in-auction.
+  db.listFromObject(obj, atype, durationDays);
+  obj.state = "IN_AUCTION";
   obj.updatedAt = new Date().toISOString();
   return { ...obj };
 }

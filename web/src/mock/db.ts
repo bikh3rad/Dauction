@@ -155,6 +155,38 @@ export function passiveAuction(id: string): PassiveAuction | undefined {
   };
 }
 
+// listFromObject turns a just-listed vault object into a live gallery lot: it
+// pushes a SCHEDULED lot (so it shows in the weekly gallery, carrying the owner's
+// category icon + photos) and registers the matching auction seed so the lot's
+// auction page renders. Re-listing the same object replaces its prior lot.
+export function listFromObject(obj: VaultObject, atype: Lot["atype"], durationDays?: number): Lot {
+  const lotId = `lot-${obj.id}`;
+  const stale = lots.findIndex((l) => l.objectId === obj.id);
+  if (stale >= 0) lots.splice(stale, 1);
+
+  const floor = Math.max(c(1), Math.round(obj.appraisedValueCents * 0.6));
+  const lot: Lot = {
+    id: lotId, objectId: obj.id, sellerAccountId: account.id,
+    title: obj.title, description: obj.description || obj.title,
+    atype, durationDays: atype === "DUTCH" ? null : (durationDays ?? 5),
+    reserveCents: floor, appraisedValueCents: obj.appraisedValueCents,
+    state: "SCHEDULED", isoWeek: WEEK, createdAt: iso(0), scheduledAt: iso(-1000),
+    category: obj.category, imageRefs: obj.imageRefs,
+  };
+  lots.unshift(lot);
+
+  if (atype === "DUTCH") {
+    dutchSeed[lotId] = {
+      ceiling: obj.appraisedValueCents, floor,
+      step: Math.max(c(10), Math.round(obj.appraisedValueCents / 400)),
+      interval: 22, openOffsetMs: -1000, // already open (live)
+    };
+  } else {
+    passiveSeed[lotId] = { closesInMs: (durationDays ?? 5) * 86400_000, participants: 1 };
+  }
+  return lot;
+}
+
 // deterministic competing prices (cents) for a UniqBid/Vickrey lot, so standing feels alive
 export function simTakenCents(id: string): number[] {
   const lot = lots.find((l) => l.id === id);

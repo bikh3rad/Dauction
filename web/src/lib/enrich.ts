@@ -38,17 +38,18 @@ function hashCategory(seed: string): Category {
   return CATEGORIES[h % CATEGORIES.length];
 }
 
-export function categoryOf(lot: Pick<Lot, "id" | "title" | "description">): Category {
+export function categoryOf(lot: Pick<Lot, "id" | "title" | "description" | "category">): Category {
+  if (lot.category) return lot.category; // explicit category (e.g. owner-chosen) wins
   const hay = `${lot.title} ${lot.description ?? ""}`;
   for (const [cat, re] of KEYWORDS) if (re.test(hay)) return cat;
   return hashCategory(lot.id || lot.title);
 }
 
-export function accentOf(lot: Pick<Lot, "id" | "title" | "description">): string {
+export function accentOf(lot: Pick<Lot, "id" | "title" | "description" | "category">): string {
   return CATEGORY_META[categoryOf(lot)].accent;
 }
 
-export function artOf(lot: Pick<Lot, "id" | "title" | "description">): string {
+export function artOf(lot: Pick<Lot, "id" | "title" | "description" | "category">): string {
   return CATEGORY_META[categoryOf(lot)].art;
 }
 

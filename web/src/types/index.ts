@@ -57,6 +57,8 @@ export interface Lot {
   scheduledAt?: string;
   /** Catalog category code (WATCHES|JEWELRY|…); client localizes the label. */
   categoryCode?: string;
+  /** Presentation category (drives the icon/glyph) when set explicitly. */
+  category?: Category;
   /** Ordered carousel images (≤7); imageRefs[0] is the cover. */
   imageRefs?: string[];
   /** Inspector seal (populated after an APPROVED inspection). */

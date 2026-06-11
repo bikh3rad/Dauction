@@ -152,7 +152,10 @@ export function useListObject() {
   return useMutation({
     mutationFn: (v: { id: string; atype: AType; durationDays?: number }) =>
       vault.list(v.id, v.atype, v.durationDays),
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.vault }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.vault });
+      qc.invalidateQueries({ queryKey: ["gallery"] }); // freshly-listed lot appears in the gallery
+    },
   });
 }
 export function useBuyback() {
