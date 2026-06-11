@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useI18n } from "@/i18n/I18nProvider";
-import { useOAuthLogin, useRequestOtp, useVerifyOtp } from "@/hooks/queries";
+import { useDemoLogin, useOAuthLogin, useRequestOtp, useVerifyOtp } from "@/hooks/queries";
 import { continueAsGuest } from "@/auth/session";
 import { COUNTRIES, DEFAULT_COUNTRY } from "@/auth/countries";
 import { Icon } from "@/components/ui/Icon";
@@ -18,7 +18,13 @@ export function AuthPage({ mode }: { mode: Mode }) {
   const requestOtp = useRequestOtp();
   const verifyOtp = useVerifyOtp();
   const oauth = useOAuthLogin();
+  const demo = useDemoLogin();
   const register = mode === "register";
+
+  const demoLogin = async (profile: string) => {
+    await demo.mutateAsync(profile);
+    nav("/");
+  };
 
   const [step, setStep] = useState<"mobile" | "otp">("mobile");
   const [name, setName] = useState("");
@@ -127,6 +133,29 @@ export function AuthPage({ mode }: { mode: Mode }) {
         )}
 
         {err && <p style={{ color: "var(--st-bad)", fontSize: 13, marginTop: 14, textAlign: "center" }}>{err}</p>}
+
+        {/* demo accounts — one-tap sign-in at any level / role (login only) */}
+        {!register && step === "mobile" && (
+          <div style={{ marginTop: 22, border: "1px solid var(--line)", borderRadius: "var(--r-2)", padding: "12px 14px", background: "var(--bg-1)" }}>
+            <div className="mono up" style={{ fontSize: 9, color: "var(--gold)", letterSpacing: "0.12em", marginBottom: 10 }}>{t("auth_demo_title")}</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              {[
+                { k: "member", label: t("auth_demo_member") },
+                { k: "gold", label: t("auth_demo_gold") },
+                { k: "platinum", label: t("auth_demo_platinum") },
+                { k: "inspector", label: t("auth_demo_inspector") },
+              ].map((d) => (
+                <button key={d.k} onClick={() => demoLogin(d.k)} disabled={demo.isPending}
+                  className="mono" style={{ fontSize: 11.5, padding: "10px 8px", borderRadius: "var(--r-1)", border: "1px solid var(--line-strong)", background: "var(--bg-0)", color: "var(--fg-muted)", cursor: "pointer", fontWeight: 600 }}>
+                  {d.label}
+                </button>
+              ))}
+            </div>
+            <div className="mono" style={{ fontSize: 10, color: "var(--fg-faint)", marginTop: 10, textAlign: "center" }}>
+              {t("auth_demo_admin")}
+            </div>
+          </div>
+        )}
 
         {/* cross-link between login and register */}
         <div style={{ textAlign: "center", marginTop: 22, fontSize: 13, color: "var(--fg-muted)" }}>

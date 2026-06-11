@@ -10,7 +10,7 @@ import type {
   KycSubmission, LotDetail, PassiveAuction, RedeemInviteResp, ReleaseMode,
   Reservation, Standing, StartKycResp, Trade, TradeState, VaultObject,
   VaultView, WeeklyGallery, Wallet, BidResp, AType, DocType,
-  RequestOtpResp, SessionResp, OAuthProvider,
+  RequestOtpResp, SessionResp, OAuthProvider, CreateObjectReq,
 } from "@/types";
 
 // ---------- identity ----------
@@ -35,6 +35,8 @@ export const auth = {
       () => get(`/auth/oauth/${provider.toLowerCase()}/callback`, { params: { code: "demo" } }),
       () => mock.oauthLogin(provider),
     ),
+  // Demo profiles (member / gold / platinum / inspector) — mock-only convenience.
+  demo: (profile: string) => Promise.resolve(mock.demoLogin(profile)),
 };
 
 // ---------- membership (paid leveling) ----------
@@ -84,6 +86,8 @@ export const bids = {
 // ---------- vault ----------
 export const vault = {
   view: () => withFallback<VaultView>(() => get("/vault"), mock.getVault),
+  add: (req: CreateObjectReq) =>
+    withFallback<VaultObject>(() => post("/vault/objects", req), () => mock.addObject(req)),
   list: (id: string, atype: AType, durationDays?: number) =>
     withFallback<VaultObject>(
       () => post(`/vault/objects/${id}/list`, { atype, durationDays }),

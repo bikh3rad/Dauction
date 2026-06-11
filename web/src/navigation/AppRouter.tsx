@@ -3,7 +3,7 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { BottomNav, showBottomNav } from "./BottomNav";
 import { hasSession } from "@/auth/session";
 import { AuthPage } from "@/pages/AuthPage";
-import { MockBanner } from "@/components/ui/MockBanner";
+// Sample data is presented as live (the offline banner is intentionally omitted).
 import { GalleryPage } from "@/pages/GalleryPage";
 import { LotPage } from "@/pages/LotPage";
 import { AuctionPage } from "@/pages/AuctionPage";
@@ -35,7 +35,6 @@ export function AppRouter({ showNav = true }: { showNav?: boolean } = {}) {
 
   return (
     <>
-      <MockBanner />
       <div className="app-viewport">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div

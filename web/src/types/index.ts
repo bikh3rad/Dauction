@@ -157,15 +157,24 @@ export interface VaultObject {
   state: VaultObjectState;
   createdAt: string;
   updatedAt: string;
+  /** Product category — drives the one icon shown for this object everywhere. */
+  category?: Category;
+  /** Up to 7 images of the object (imageRefs[0] is the cover). */
+  imageRefs?: string[];
 }
 export interface VaultView {
   objects: VaultObject[];
   creditBalanceCents: number;
 }
 export interface CreateObjectReq {
+  maison?: string;
   title: string;
   description?: string;
   appraisedValueCents: number;
+  /** Category drives the object's icon (one icon, compatible with the type). */
+  category?: Category;
+  /** Up to 7 images (imageRefs[0] is the cover). */
+  imageRefs?: string[];
 }
 export interface ListObjectReq { atype: AType; durationDays?: number; }
 export interface BuybackReq { mode: BuybackMode; }

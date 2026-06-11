@@ -1,20 +1,24 @@
 import { useState } from "react";
 import { useI18n } from "@/i18n/I18nProvider";
-import { useBuyback, useListObject, useVault } from "@/hooks/queries";
+import { useAddObject, useBuyback, useListObject, useVault } from "@/hooks/queries";
 import { ScreenShell } from "@/components/ui/ScreenShell";
 import { TopBar } from "@/components/ui/TopBar";
 import { LangPill } from "@/components/ui/LangPill";
 import { Sheet } from "@/components/ui/Sheet";
 import { Icon } from "@/components/ui/Icon";
 import { Money } from "@/components/ui/Money";
-import { Ph } from "@/components/ui/ProductArt";
+import { Ph, ProductArt } from "@/components/ui/ProductArt";
 import { Chip } from "@/components/ui/Chip";
 import { Label } from "@/components/ui/Primitives";
 import { LoadingScreen, ErrorState } from "@/components/ui/States";
-import { artOf } from "@/lib/enrich";
-import { maisonOf } from "@/lib/enrich";
+import { artOf, maisonOf, CATEGORIES, CATEGORY_META, categoryLabel } from "@/lib/enrich";
 import { usdc0 } from "@/lib/format";
-import type { AType, VaultObject } from "@/types";
+import type { AType, Category, VaultObject } from "@/types";
+
+// The single icon for an object: its explicit category if set, else inferred.
+function objectArt(o: VaultObject): string {
+  return o.category ? CATEGORY_META[o.category].art : artOf(o);
+}
 
 export function VaultPage() {
   const { t } = useI18n();
@@ -22,6 +26,7 @@ export function VaultPage() {
   const [bb, setBb] = useState<VaultObject | null>(null);
   const [listItem, setListItem] = useState<VaultObject | null>(null);
   const [listed, setListed] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
   const [mag] = useState(false);
 
   if (isLoading) return <ScreenShell top={<TopBar title={t("clo_title")} right={<LangPill />} />}><LoadingScreen /></ScreenShell>;
@@ -62,9 +67,15 @@ export function VaultPage() {
               const inVault = o.state === "IN_VAULT";
               return (
                 <div key={o.id} className="fade-up" style={{ background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-2)", overflow: "hidden" }}>
-                  <div style={{ position: "relative" }}>
-                    <Ph art={artOf(o)} ratio={mag ? "5 / 3" : "1 / 1"} label={maisonOf(o.title)} />
+                  <div style={{ position: "relative", aspectRatio: mag ? "5 / 3" : "1 / 1", overflow: "hidden", background: "var(--bg-0)" }}>
+                    {o.imageRefs && o.imageRefs.length > 0
+                      ? <img src={o.imageRefs[0]} alt={maisonOf(o.title)} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                      : <Ph art={objectArt(o)} ratio={mag ? "5 / 3" : "1 / 1"} label={maisonOf(o.title)} />}
                     <div style={{ position: "absolute", top: 8, insetInlineStart: 8 }}><Chip state={o.state} label={t(stateKey(o.state))} /></div>
+                    {/* the object's category icon — the one icon shown everywhere */}
+                    <div style={{ position: "absolute", bottom: 8, insetInlineEnd: 8, width: 30, height: 30, borderRadius: "50%", background: "rgba(12,8,9,0.72)", border: "1px solid var(--gold-line)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                      <ProductArt cat={objectArt(o)} w="20px" />
+                    </div>
                   </div>
                   <div style={{ padding: "10px 12px" }}>
                     <div className="serif" style={{ fontSize: 13.5, color: "var(--fg)", marginBottom: 4, lineHeight: 1.2 }}>{o.title.split(/\s+[—–-]\s+/).slice(1).join(" — ") || o.title}</div>
@@ -83,12 +94,13 @@ export function VaultPage() {
             })}
           </div>
 
-          <button className="btn btn-ghost" style={{ width: "100%", margin: "16px 0", borderStyle: "dashed", borderColor: "var(--gold-line)", color: "var(--gold-pale)" }}>
+          <button onClick={() => setAddOpen(true)} className="btn btn-ghost" style={{ width: "100%", margin: "16px 0", borderStyle: "dashed", borderColor: "var(--gold-line)", color: "var(--gold-pale)" }}>
             <Icon name="plus" size={18} /> {t("clo_add")}
           </button>
         </div>
       </ScreenShell>
 
+      <AddObjectSheet open={addOpen} onClose={() => setAddOpen(false)} />
       <BuybackSheet item={bb} onClose={() => setBb(null)} />
       <ListToAuctionSheet item={listItem} onClose={() => setListItem(null)} onSubmitted={() => { setListItem(null); setListed(true); setTimeout(() => setListed(false), 2200); }} />
       {listed && (
@@ -108,6 +120,90 @@ function stateKey(state: VaultObject["state"]): string {
     case "SOLD": case "BOUGHT_BACK": return "st_completed";
     default: return "st_in_closet";
   }
+}
+
+// AddObjectSheet — register a new object in the vault: maison + title, ONE
+// category (its icon), a declared value, and up to 7 images of the object.
+function AddObjectSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t, lang } = useI18n();
+  const add = useAddObject();
+  const [maison, setMaison] = useState("");
+  const [title, setTitle] = useState("");
+  const [cat, setCat] = useState<Category>("horology");
+  const [value, setValue] = useState("");
+  const [images, setImages] = useState<string[]>([]);
+
+  const reset = () => { setMaison(""); setTitle(""); setCat("horology"); setValue(""); setImages([]); };
+  const valid = title.trim().length > 1 && Number(value) > 0;
+
+  const onPick = (files: FileList | null) => {
+    if (!files) return;
+    const urls = Array.from(files).map((f) => URL.createObjectURL(f));
+    setImages((prev) => [...prev, ...urls].slice(0, 7)); // hard cap at 7
+  };
+
+  const submit = async () => {
+    if (!valid) return;
+    await add.mutateAsync({
+      maison: maison.trim() || undefined,
+      title: title.trim(),
+      category: cat,
+      appraisedValueCents: Math.round(Number(value) * 100),
+      imageRefs: images,
+    });
+    reset();
+    onClose();
+  };
+
+  return (
+    <Sheet open={open} onClose={onClose}>
+      <div className="serif" style={{ fontSize: 20, color: "var(--gold-pale)", marginBottom: 14 }}>{t("clo_add")}</div>
+
+      <Label>{t("add_maison")}</Label>
+      <input className="field" value={maison} onChange={(e) => setMaison(e.target.value)} placeholder="Rolex" style={{ width: "100%", marginBottom: 12 }} />
+
+      <Label>{t("add_title")}</Label>
+      <input className="field" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Daytona 116500LN — Panda Dial" style={{ width: "100%", marginBottom: 12 }} />
+
+      {/* category — one icon per object, compatible with the type */}
+      <Label>{t("add_category")}</Label>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(88px, 1fr))", gap: 8, marginBottom: 14 }}>
+        {CATEGORIES.map((c) => {
+          const on = cat === c;
+          return (
+            <button key={c} onClick={() => setCat(c)} style={{ cursor: "pointer", border: "1px solid", borderColor: on ? "var(--gold)" : "var(--line-strong)", borderRadius: "var(--r-2)", background: on ? "linear-gradient(120deg,var(--burg-deep),var(--bg-1))" : "var(--bg-0)", padding: "10px 6px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+              <div style={{ width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center" }}><ProductArt cat={CATEGORY_META[c].art} w="30px" /></div>
+              <span style={{ fontSize: 10, color: on ? "var(--gold-pale)" : "var(--fg-muted)", textAlign: "center", lineHeight: 1.2 }}>{categoryLabel(c, lang)}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <Label>{t("add_value")}</Label>
+      <input className="field" inputMode="decimal" value={value} onChange={(e) => setValue(e.target.value.replace(/[^\d.]/g, ""))} placeholder="38500" style={{ width: "100%", marginBottom: 14 }} dir="ltr" />
+
+      {/* up to 7 images of the object */}
+      <Label>{t("add_images")} · {images.length}/7</Label>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 16 }}>
+        {images.map((src, i) => (
+          <div key={i} style={{ position: "relative", aspectRatio: "1/1", borderRadius: "var(--r-1)", overflow: "hidden", border: "1px solid var(--line)" }}>
+            <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <button onClick={() => setImages((p) => p.filter((_, j) => j !== i))} style={{ position: "absolute", top: 2, insetInlineEnd: 2, width: 18, height: 18, borderRadius: "50%", border: "none", background: "rgba(12,8,9,0.8)", color: "var(--fg)", cursor: "pointer", fontSize: 11, lineHeight: 1 }}>×</button>
+          </div>
+        ))}
+        {images.length < 7 && (
+          <label style={{ aspectRatio: "1/1", borderRadius: "var(--r-1)", border: "1px dashed var(--gold-line)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--gold-pale)" }}>
+            <Icon name="plus" size={18} />
+            <input type="file" accept="image/*" multiple onChange={(e) => onPick(e.target.files)} style={{ display: "none" }} />
+          </label>
+        )}
+      </div>
+
+      <button className="btn btn-gold" style={{ width: "100%" }} onClick={submit} disabled={!valid || add.isPending}>
+        <Icon name="plus" size={17} /> {t("clo_add")}
+      </button>
+    </Sheet>
+  );
 }
 
 function BuybackSheet({ item, onClose }: { item: VaultObject | null; onClose: () => void }) {

@@ -9,7 +9,7 @@ import type {
   KycSubmission, LotDetail, PassiveAuction, RedeemInviteResp, Reservation,
   Standing, StartKycResp, Trade, TradeState, VaultView, WeeklyGallery,
   Wallet, BidResp, BuybackMode, ReleaseMode, AType, RequestOtpResp, SessionResp,
-  OAuthProvider,
+  OAuthProvider, VaultObject,
 } from "@/types";
 
 const uid = (p: string) => `${p}-${Math.random().toString(16).slice(2, 10)}`;
@@ -58,6 +58,27 @@ export function oauthLogin(provider: OAuthProvider): SessionResp {
   const account = newMember("");
   setSession(account);
   return { token: account.id, created: true, account };
+}
+
+// demoLogin signs in as a ready-made profile so the demo can be explored at any
+// membership level or as an inspector/auditor, without an SMS/OAuth round-trip.
+export function demoLogin(profile: string): SessionResp {
+  const acc = newMember("+10000000000", "");
+  switch (profile) {
+    case "gold":
+      Object.assign(acc, { handle: "Gold Member", membershipLevel: 2, tier: "VIP" });
+      break;
+    case "platinum":
+      Object.assign(acc, { handle: "Platinum Member", membershipLevel: 3, tier: "VIP" });
+      break;
+    case "inspector":
+      Object.assign(acc, { handle: "Inspector (Auditor)", roles: ["INSPECTOR"] });
+      break;
+    default:
+      Object.assign(acc, { handle: "Member" }); // standard, Level 1
+  }
+  setSession(acc);
+  return { token: acc.id, created: false, account: acc };
 }
 
 // upgradeMembership raises the paid membership level (after payment). Level >= 2
@@ -183,6 +204,22 @@ export function buyBids(packageId: string): BuyBidsResp {
 // ---- vault ----
 export function getVault(): VaultView {
   return { objects: db.vault.objects.map((o) => ({ ...o })), creditBalanceCents: db.vault.creditBalanceCents };
+}
+export function addObject(req: import("@/types").CreateObjectReq): VaultObject {
+  const title = req.maison ? `${req.maison} — ${req.title}` : req.title;
+  const obj: VaultObject = {
+    id: uid("obj"),
+    title,
+    description: req.description ?? "",
+    appraisedValueCents: req.appraisedValueCents,
+    state: "IN_VAULT",
+    category: req.category,
+    imageRefs: (req.imageRefs ?? []).slice(0, 7),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  db.vault.objects.unshift(obj);
+  return { ...obj };
 }
 export function listObject(id: string, _atype: AType, _durationDays?: number) {
   const obj = db.vault.objects.find((o) => o.id === id);

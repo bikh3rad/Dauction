@@ -3,7 +3,7 @@ import {
   auth, bids, catalog, dutch, escrow, identity, invite, kyc, membership, passive, vault,
 } from "@/services";
 import { signOut as clearSession } from "@/auth/session";
-import type { AType, BuybackMode, DocType, OAuthProvider, ReleaseMode } from "@/types";
+import type { AType, BuybackMode, CreateObjectReq, DocType, OAuthProvider, ReleaseMode } from "@/types";
 
 // ---- query keys ----
 export const qk = {
@@ -40,6 +40,13 @@ export function useOAuthLogin() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (provider: OAuthProvider) => auth.oauth(provider),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.me }),
+  });
+}
+export function useDemoLogin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (profile: string) => auth.demo(profile),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.me }),
   });
 }
@@ -132,6 +139,13 @@ export function useBuyBids() {
 // ---------------- vault ----------------
 export function useVault() {
   return useQuery({ queryKey: qk.vault, queryFn: vault.view });
+}
+export function useAddObject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (req: CreateObjectReq) => vault.add(req),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.vault }),
+  });
 }
 export function useListObject() {
   const qc = useQueryClient();

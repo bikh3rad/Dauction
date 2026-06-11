@@ -7,7 +7,7 @@
 
 import type { Category, Lot } from "@/types";
 
-const CATEGORIES: Category[] = [
+export const CATEGORIES: Category[] = [
   "horology", "bag", "sneaker", "perfume", "art", "painting", "jewel",
 ];
 
