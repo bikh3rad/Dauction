@@ -89,10 +89,20 @@
 }
 /* wide browse screens (gallery, vault) use the full width */
 .desk-center.wide .frame { max-width: 1280px; }
-/* forms + detail flows read better in a contained column */
+/* forms + detail flows read better in a contained column — but roomier than a
+   phone so they don't feel mobile-native on a desktop. */
 .desk-center.readable .frame {
-  max-width: 660px;
+  max-width: 720px;
   border-inline: 1px solid var(--gold-line);
+}
+
+/* Responsive card lists: a single column on mobile, multi-column on desktop so
+   tier/package/option lists fan out instead of stacking like a phone. Pages opt
+   in with className="resp-cards". */
+.desk-stage .resp-cards {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  align-items: start;
 }
 
 /* On desktop the gallery/vault grids fan out responsively, overriding the

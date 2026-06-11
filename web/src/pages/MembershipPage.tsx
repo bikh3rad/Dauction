@@ -21,7 +21,7 @@ export function MembershipPage() {
 
   return (
     <ScreenShell top={<TopBar kicker={t("mem_sub")} title={t("mem_title")} right={<LangPill />} />}>
-      <div style={{ padding: "18px 16px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
+      <div className="resp-cards" style={{ padding: "18px 16px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
         {TIERS.map((tr) => {
           const on = tr.key === tier;
           const vip = tr.key === "VIP";

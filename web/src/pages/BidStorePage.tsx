@@ -38,7 +38,7 @@ export function BidStorePage() {
         {isLoading ? (
           <LoadingScreen rows={2} />
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div className="resp-cards" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {packages?.map((pkg) => {
               const perBid = (pkg.priceCents / pkg.credits) / 100;
               const save = perBid < 1 ? `${Math.round((1 - perBid) * 100)}%` : "—";

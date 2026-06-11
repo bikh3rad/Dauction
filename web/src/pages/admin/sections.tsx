@@ -4,8 +4,8 @@ import { Chip } from "@/components/ui/Chip";
 import { Icon } from "@/components/ui/Icon";
 import { Money } from "@/components/ui/Money";
 import {
-  useAdminStats, useAdminInvites, useAdminAccounts, useAdminKyc, useAdminCert,
-  useAdminAuctions, useAdminVault, useAdminEscrow, useRevokeInvite,
+  useAdminStats, useAdminAccounts, useAdminKyc, useAdminCert,
+  useAdminAuctions, useAdminVault, useAdminEscrow,
   useSetAccountStatus, useSetAccountTier, useSetAccountRole, useDecideKyc, useCertify,
   useCreateAuction, useSetAuctionState, useHoldRelease, useRuleDispute,
 } from "@/hooks/adminQueries";
@@ -19,26 +19,27 @@ const mono = (color = "var(--gold-pale)") => ({ fontFamily: "var(--mono)", color
 export function Overview({ go }: { go: (s: string) => void }) {
   const { t } = useI18n();
   const { data: s } = useAdminStats();
-  const { data: invites = [] } = useAdminInvites();
+  const { data: accounts = [] } = useAdminAccounts();
   const { data: escrow = [] } = useAdminEscrow();
+  const inspectors = accounts.filter((a) => (a.roles ?? []).includes("INSPECTOR")).length;
   return (
     <div className="fade-up">
       <SecHead kicker="WEEK 2026·W23" title={t("adm_overview")} />
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 26 }}>
-        <Tile label={t("adm_active_invites")} value={s?.activeInvites ?? "—"} sub={`${s?.flaggedInvites ?? 0} flagged`} accent />
-        <Tile label={t("adm_pending_kyc")} value={s?.pendingKyc ?? "—"} sub={`${s?.members ?? 0} members`} />
+        <Tile label={t("adm_members")} value={s?.members ?? accounts.length} sub={`${inspectors} inspectors`} accent />
+        <Tile label={t("adm_pending_kyc")} value={s?.pendingKyc ?? "—"} sub={`${accounts.length} accounts`} />
         <Tile label={t("adm_open_auctions")} value={s?.openAuctions ?? "—"} sub={`${s?.lotsThisWeek ?? 0} / ${s?.supplyCap ?? 32} lots`} />
         <Tile label={t("adm_escrow_locked")} value={s ? <Money cents={s.escrowLockedCents} withCents={false} /> : "—"} sub={`${escrow.length} trades`} accent />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 20 }}>
         <div>
-          <div className="mono up" style={{ fontSize: 10, color: "var(--gold)", marginBottom: 10, cursor: "pointer" }} onClick={() => go("invites")}>{t("adm_chain")} ↗</div>
-          <DTable cols={[{ label: "CODE" }, { label: t("adm_issued_by") }, { label: t("adm_status"), end: true }]}>
-            {invites.slice(0, 4).map((iv) => (
-              <tr key={iv.code}>
-                <td style={tdS}><span style={mono()}>{iv.code}</span></td>
-                <td style={tdMuted} className="mono">{iv.issuedBy}</td>
-                <td style={tdEnd}><Chip state={iv.status} /></td>
+          <div className="mono up" style={{ fontSize: 10, color: "var(--gold)", marginBottom: 10, cursor: "pointer" }} onClick={() => go("accounts")}>{t("adm_accounts")} ↗</div>
+          <DTable cols={[{ label: t("adm_account") }, { label: t("adm_tier") }, { label: t("adm_roles") || "Roles", end: true }]}>
+            {accounts.slice(0, 4).map((a) => (
+              <tr key={a.id}>
+                <td style={tdS}><span style={mono()}>{a.handle}</span></td>
+                <td style={tdMuted}><Chip state={a.tier === "VIP" ? "active" : "ISSUED"} label={a.tier} /></td>
+                <td style={tdEnd}>{(a.roles ?? []).includes("INSPECTOR") ? <Chip state="active" label="INSPECTOR" /> : <span className="mono" style={{ fontSize: 11, color: "var(--fg-faint)" }}>USER</span>}</td>
               </tr>
             ))}
           </DTable>
@@ -234,31 +235,6 @@ export function Vaults() {
 }
 
 // ============================ Invites ============================
-export function Invites() {
-  const { t } = useI18n();
-  const { data: rows = [] } = useAdminInvites();
-  const revoke = useRevokeInvite();
-  return (
-    <div className="fade-up">
-      <SecHead kicker={t("adm_title")} title={t("adm_invites")} />
-      <DTable cols={[{ label: "CODE" }, { label: t("adm_issued_by") }, { label: "USES" }, { label: t("adm_chain") }, { label: t("adm_status") }, { label: t("adm_action"), end: true }]}>
-        {rows.map((iv) => (
-          <tr key={iv.code}>
-            <td style={tdS}><span style={mono()}>{iv.code}</span></td>
-            <td style={tdMuted} className="mono">{iv.issuedBy}</td>
-            <td style={tdS} className="mono">{iv.uses} / {iv.maxUses}</td>
-            <td style={tdMuted} className="mono">{iv.chain}</td>
-            <td style={tdS}><Chip state={iv.status} /></td>
-            <td style={tdEnd}>{iv.status === "ACTIVE" || iv.status === "FLAGGED"
-              ? <GBtn kind={iv.status === "FLAGGED" ? "bad" : "ghost"} small onClick={() => revoke.mutate(iv.code)}>{t("adm_revoke")}</GBtn>
-              : <Dash />}</td>
-          </tr>
-        ))}
-      </DTable>
-    </div>
-  );
-}
-
 // ============================ Escrow + dispute court ============================
 export function Escrow() {
   const { t } = useI18n();
