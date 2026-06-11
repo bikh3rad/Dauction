@@ -86,7 +86,7 @@ export function PassivePage() {
         </div>
 
         {!canParticipate ? (
-          <button className="btn btn-burg" style={{ width: "100%" }} onClick={() => nav("/invite")}>
+          <button className="btn btn-burg" style={{ width: "100%" }} onClick={() => nav("/login")}>
             <Icon name="crown" size={17} /> {t("need_member")}
           </button>
         ) : (

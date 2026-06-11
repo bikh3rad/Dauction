@@ -47,7 +47,7 @@ export function GalleryPage() {
     <ScreenShell top={<TopBar kicker={t("gal_kicker")} title={t("gal_title")} right={<LangPill />} />}>
       {isGuest && (
         <button
-          onClick={() => nav("/invite")}
+          onClick={() => nav("/login")}
           style={{ width: "calc(100% - 32px)", margin: "14px 16px 0", cursor: "pointer", textAlign: "start", border: "1px solid var(--gold-line)", borderRadius: "var(--r-2)", background: "linear-gradient(110deg,var(--burg),var(--bg-1) 80%)", padding: "12px 14px", display: "flex", alignItems: "center", gap: 12, color: "var(--fg)" }}
         >
           <span style={{ color: "var(--gold)" }}><Icon name="crown" size={20} /></span>

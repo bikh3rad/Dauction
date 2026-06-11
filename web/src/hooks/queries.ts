@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  bids, catalog, dutch, escrow, identity, invite, kyc, passive, vault,
+  auth, bids, catalog, dutch, escrow, identity, invite, kyc, passive, vault,
 } from "@/services";
-import type { AType, BuybackMode, DocType, ReleaseMode } from "@/types";
+import { signOut as clearSession } from "@/auth/session";
+import type { AType, BuybackMode, DocType, OAuthProvider, ReleaseMode } from "@/types";
 
 // ---- query keys ----
 export const qk = {
@@ -22,6 +23,32 @@ export const qk = {
 // ---------------- identity ----------------
 export function useAccount() {
   return useQuery({ queryKey: qk.me, queryFn: identity.me, staleTime: 30_000 });
+}
+
+// ---------------- auth (mobile OTP + OAuth) ----------------
+export function useRequestOtp() {
+  return useMutation({ mutationFn: (mobile: string) => auth.requestOtp(mobile) });
+}
+export function useVerifyOtp() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { mobile: string; code: string }) => auth.verifyOtp(v.mobile, v.code),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.me }),
+  });
+}
+export function useOAuthLogin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (provider: OAuthProvider) => auth.oauth(provider),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.me }),
+  });
+}
+export function useSignOut() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => { clearSession(); },
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.me }),
+  });
 }
 
 // ---------------- catalog ----------------

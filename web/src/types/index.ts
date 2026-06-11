@@ -87,6 +87,9 @@ export interface LotDetail {
 }
 
 // ---- identity ----
+export type Role = "USER" | "INSPECTOR" | "ADMIN";
+export type AccountStatus = "REGISTERED" | "ACTIVE" | "SUSPENDED" | "BANNED";
+
 export interface Account {
   id: string;
   tier: Tier;
@@ -94,7 +97,16 @@ export interface Account {
   eligible: boolean;
   createdAt: string;
   updatedAt: string;
+  /** Elevated functional roles (USER is implicit). */
+  roles?: Role[];
+  status?: AccountStatus;
+  mobileE164?: string;
 }
+
+// ---- auth (mobile OTP + OAuth) ----
+export type OAuthProvider = "GOOGLE" | "FACEBOOK" | "APPLE";
+export interface RequestOtpResp { expiresInSecs: number; devCode?: string; }
+export interface SessionResp { token: string; created: boolean; account: Account; }
 export interface Access {
   id: string;
   tier: Tier;

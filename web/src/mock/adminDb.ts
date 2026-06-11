@@ -21,11 +21,11 @@ export const invites: AdminInvite[] = [
 ];
 
 export const accounts: AdminAccount[] = [
-  { id: "0x7A4E", handle: "@aurelia.dxb", tier: "MEMBER", kycStatus: "APPROVED", status: "ACTIVE", walletUsdcCents: c(212400), vaultCreditCents: c(34850), bidCredits: 18, invitedBy: "Maison · 0x11", joinedAt: "2025-11-02" },
-  { id: "0x91", handle: "@noor.auh", tier: "MEMBER", kycStatus: "PENDING", status: "ACTIVE", walletUsdcCents: c(48000), vaultCreditCents: 0, bidCredits: 50, invitedBy: "0x7A4E", joinedAt: "2026-03-14" },
-  { id: "0x2D", handle: "@khalid.vip", tier: "VIP", kycStatus: "APPROVED", status: "ACTIVE", walletUsdcCents: c(980000), vaultCreditCents: c(120000), bidCredits: 100, invitedBy: "House", joinedAt: "2025-09-01" },
-  { id: "0x4C", handle: "@sterling.ldn", tier: "MEMBER", kycStatus: "PENDING", status: "ACTIVE", walletUsdcCents: c(15000), vaultCreditCents: 0, bidCredits: 20, invitedBy: "0x2D", joinedAt: "2026-05-02" },
-  { id: "0xF7", handle: "@dana.doh", tier: "MEMBER", kycStatus: "APPROVED", status: "SUSPENDED", walletUsdcCents: c(3200), vaultCreditCents: 0, bidCredits: 0, invitedBy: "House", joinedAt: "2026-01-20" },
+  { id: "0x7A4E", handle: "@aurelia.dxb", tier: "MEMBER", kycStatus: "APPROVED", status: "ACTIVE", walletUsdcCents: c(212400), vaultCreditCents: c(34850), bidCredits: 18, invitedBy: "Maison · 0x11", joinedAt: "2025-11-02", roles: ["INSPECTOR"] },
+  { id: "0x91", handle: "@noor.auh", tier: "MEMBER", kycStatus: "PENDING", status: "ACTIVE", walletUsdcCents: c(48000), vaultCreditCents: 0, bidCredits: 50, invitedBy: "0x7A4E", joinedAt: "2026-03-14", roles: [] },
+  { id: "0x2D", handle: "@khalid.vip", tier: "VIP", kycStatus: "APPROVED", status: "ACTIVE", walletUsdcCents: c(980000), vaultCreditCents: c(120000), bidCredits: 100, invitedBy: "House", joinedAt: "2025-09-01", roles: [] },
+  { id: "0x4C", handle: "@sterling.ldn", tier: "MEMBER", kycStatus: "PENDING", status: "ACTIVE", walletUsdcCents: c(15000), vaultCreditCents: 0, bidCredits: 20, invitedBy: "0x2D", joinedAt: "2026-05-02", roles: [] },
+  { id: "0xF7", handle: "@dana.doh", tier: "MEMBER", kycStatus: "APPROVED", status: "SUSPENDED", walletUsdcCents: c(3200), vaultCreditCents: 0, bidCredits: 0, invitedBy: "House", joinedAt: "2026-01-20", roles: [] },
 ];
 
 export const kycQueue: AdminKycReview[] = [

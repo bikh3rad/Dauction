@@ -8,7 +8,7 @@ import type {
   AdminInvite, AdminKycReview, AdminStats, AdminVaultObject, CreateAuctionReq,
   DisputeRuling,
 } from "@/types/admin";
-import type { Tier } from "@/types";
+import type { Role, Tier } from "@/types";
 
 const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x));
 const uid = (p: string) => `${p}-${Math.random().toString(16).slice(2, 8)}`;
@@ -55,6 +55,15 @@ export function setAccountTier(id: string, tier: Tier): AdminAccount {
   const a = db.accounts.find((x) => x.id === id);
   if (!a) throw { message: "account not found", code: "404" };
   a.tier = tier;
+  return clone(a);
+}
+// Grant/revoke a functional role (e.g. promote a user to INSPECTOR).
+export function setAccountRole(id: string, role: Role, grant: boolean): AdminAccount {
+  const a = db.accounts.find((x) => x.id === id);
+  if (!a) throw { message: "account not found", code: "404" };
+  const current = new Set(a.roles ?? []);
+  if (grant) current.add(role); else current.delete(role);
+  a.roles = [...current];
   return clone(a);
 }
 

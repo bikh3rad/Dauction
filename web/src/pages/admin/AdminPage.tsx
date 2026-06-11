@@ -1,7 +1,56 @@
+import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Icon } from "@/components/ui/Icon";
 import { Overview, Auctions, Accounts, Memberships, Vaults, Invites, Escrow } from "./sections";
+
+// Admin route protection. Dev-only Basic credential check (admin/admin) gating
+// the console; the auth flag is held for the session. Production replaces this
+// with an ADMIN-role session (CLAUDE.md §6 admin guard).
+const ADMIN_FLAG = "dauction.admin";
+const DEV_USER = "admin";
+const DEV_PASS = "admin";
+
+function AdminLogin({ onAuthed }: { onAuthed: () => void }) {
+  const { t } = useI18n();
+  const nav = useNavigate();
+  const [user, setUser] = useState("");
+  const [pass, setPass] = useState("");
+  const [err, setErr] = useState("");
+
+  const submit = () => {
+    if (user === DEV_USER && pass === DEV_PASS) {
+      sessionStorage.setItem(ADMIN_FLAG, "1");
+      onAuthed();
+    } else {
+      setErr(t("adm_login_err") || "Invalid credentials.");
+    }
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg-void)", color: "var(--fg)", padding: 24 }}>
+      <div className="fade-up" style={{ width: "100%", maxWidth: 340, border: "1px solid var(--gold-line)", borderRadius: "var(--r-3)", padding: "28px 24px", background: "var(--bg-0)" }}>
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <span style={{ color: "var(--gold)" }}><Icon name="shield" size={26} /></span>
+          <div className="serif" style={{ fontSize: 20, color: "var(--gold-pale)", marginTop: 8 }}>{t("adm_login_title") || "House Operations"}</div>
+          <div className="mono up" style={{ fontSize: 9.5, color: "var(--fg-faint)", marginTop: 4, letterSpacing: "0.12em" }}>ADMIN ACCESS</div>
+        </div>
+        <label className="mono up" style={{ fontSize: 10, color: "var(--gold)" }}>{t("adm_user") || "Username"}</label>
+        <input className="field" value={user} autoFocus onChange={(e) => setUser(e.target.value)} placeholder="admin" style={{ width: "100%", marginTop: 6, marginBottom: 12 }} />
+        <label className="mono up" style={{ fontSize: 10, color: "var(--gold)" }}>{t("adm_pass") || "Password"}</label>
+        <input className="field" type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="admin" style={{ width: "100%", marginTop: 6 }} onKeyDown={(e) => { if (e.key === "Enter") submit(); }} />
+        {err && <p style={{ color: "var(--st-bad)", fontSize: 13, marginTop: 12 }}>{err}</p>}
+        <button className="btn btn-gold" style={{ width: "100%", marginTop: 16 }} onClick={submit}>
+          <Icon name="key" size={16} /> {t("adm_sign_in") || "Sign in"}
+        </button>
+        <button className="btn btn-ghost" style={{ width: "100%", marginTop: 10, fontSize: 13 }} onClick={() => nav("/")}>
+          <Icon name="arrow-left" size={15} /> {t("adm_exit") || "Exit"}
+        </button>
+        <p className="mono" style={{ fontSize: 10, color: "var(--fg-faint)", textAlign: "center", marginTop: 14 }}>dev credentials · admin / admin</p>
+      </div>
+    </div>
+  );
+}
 
 // House Operations console. A full-viewport desktop shell (status bar · 240px
 // sidebar · scrolling content) that overlays whichever buyer shell is mounted —
@@ -14,10 +63,13 @@ const SECTIONS: SectionKey[] = ["overview", "auctions", "accounts", "memberships
 export function AdminPage() {
   const { t } = useI18n();
   const nav = useNavigate();
+  const [authed, setAuthed] = useState(() => sessionStorage.getItem(ADMIN_FLAG) === "1");
   // Section lives in the URL (?s=auctions) so it is deep-linkable and survives reload.
   const [params, setParams] = useSearchParams();
   const sec = (SECTIONS.includes(params.get("s") as SectionKey) ? params.get("s") : "overview") as SectionKey;
   const setSec = (s: SectionKey) => setParams(s === "overview" ? {} : { s }, { replace: true });
+
+  if (!authed) return <AdminLogin onAuthed={() => setAuthed(true)} />;
 
   const navItems: { k: SectionKey; icon: string; label: string }[] = [
     { k: "overview", icon: "grid", label: t("adm_overview") },

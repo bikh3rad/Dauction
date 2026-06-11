@@ -6,7 +6,7 @@
    credits are whole units; enums are MONOSPACE_UPPERCASE.
    ============================================================ */
 import type {
-  AType, DocType, EscrowState, KycStatus, Tier, VaultObjectState,
+  AType, DocType, EscrowState, KycStatus, Role, Tier, VaultObjectState,
 } from "@/types";
 
 // Auctions span both engines; admin sees a unified state union.
@@ -51,6 +51,8 @@ export interface AdminAccount {
   bidCredits: number;
   invitedBy: string;
   joinedAt: string;
+  /** Elevated functional roles (USER is implicit). Admins grant INSPECTOR/ADMIN. */
+  roles?: Role[];
 }
 
 export interface AdminKycReview {

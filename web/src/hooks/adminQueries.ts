@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { admin } from "@/services/admin";
 import type { AccountStatus, AdminAuction, CreateAuctionReq, DisputeRuling } from "@/types/admin";
-import type { Tier } from "@/types";
+import type { Role, Tier } from "@/types";
 
 // ---- query keys ----
 export const aqk = {
@@ -43,6 +43,9 @@ export const useSetAccountStatus = () =>
 
 export const useSetAccountTier = () =>
   useAdminMutation((v: { id: string; tier: Tier }) => admin.setAccountTier(v.id, v.tier), [aqk.accounts]);
+
+export const useSetAccountRole = () =>
+  useAdminMutation((v: { id: string; role: Role; grant: boolean }) => admin.setAccountRole(v.id, v.role, v.grant), [aqk.accounts]);
 
 export const useDecideKyc = () =>
   useAdminMutation((v: { id: string; approve: boolean }) => admin.decideKyc(v.id, v.approve), [aqk.kyc, aqk.accounts]);

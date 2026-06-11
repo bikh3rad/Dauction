@@ -6,7 +6,7 @@ import { Money } from "@/components/ui/Money";
 import {
   useAdminStats, useAdminInvites, useAdminAccounts, useAdminKyc, useAdminCert,
   useAdminAuctions, useAdminVault, useAdminEscrow, useRevokeInvite,
-  useSetAccountStatus, useSetAccountTier, useDecideKyc, useCertify,
+  useSetAccountStatus, useSetAccountTier, useSetAccountRole, useDecideKyc, useCertify,
   useCreateAuction, useSetAuctionState, useHoldRelease, useRuleDispute,
 } from "@/hooks/adminQueries";
 import type { AType } from "@/types";
@@ -129,18 +129,28 @@ export function Accounts() {
   const { data: rows = [] } = useAdminAccounts();
   const setStatus = useSetAccountStatus();
   const setTier = useSetAccountTier();
+  const setRole = useSetAccountRole();
   return (
     <div className="fade-up">
       <SecHead kicker={t("adm_title")} title={t("adm_accounts")} />
-      <DTable cols={[{ label: t("adm_account") }, { label: t("adm_tier") }, { label: "KYC" }, { label: t("adm_wallet") }, { label: t("adm_status") }, { label: t("adm_action"), end: true }]}>
-        {rows.map((a) => (
+      <DTable cols={[{ label: t("adm_account") }, { label: t("adm_tier") }, { label: "KYC" }, { label: t("adm_roles") || "Roles" }, { label: t("adm_status") }, { label: t("adm_action"), end: true }]}>
+        {rows.map((a) => {
+          const isInspector = (a.roles ?? []).includes("INSPECTOR");
+          return (
           <tr key={a.id}>
             <td style={tdS}><span style={mono()}>{a.id}</span><div className="mono" style={{ fontSize: 10.5, color: "var(--fg-faint)", marginTop: 2 }}>{a.handle}</div></td>
             <td style={tdS}><Chip state={a.tier === "VIP" ? "active" : "ISSUED"} label={a.tier} /></td>
             <td style={tdS}><Chip state={a.kycStatus} /></td>
-            <td style={tdS} className="mono"><Money cents={a.walletUsdcCents} withCents={false} /><div style={{ fontSize: 10.5, color: "var(--fg-faint)", marginTop: 2 }}>{a.bidCredits} credits</div></td>
+            <td style={tdS}>
+              {(a.roles ?? []).length
+                ? <span style={{ display: "inline-flex", gap: 5, flexWrap: "wrap" }}>{(a.roles ?? []).map((r) => <Chip key={r} state="active" label={r} />)}</span>
+                : <span className="mono" style={{ fontSize: 11, color: "var(--fg-faint)" }}>USER</span>}
+            </td>
             <td style={tdS}><Chip state={a.status === "ACTIVE" ? "active" : "flagged"} label={a.status} /></td>
             <td style={tdEnd}><Actions>
+              {isInspector
+                ? <GBtn kind="bad" small onClick={() => setRole.mutate({ id: a.id, role: "INSPECTOR", grant: false })}>{t("adm_revoke_inspector") || "Revoke Inspector"}</GBtn>
+                : <GBtn kind="gold" small onClick={() => setRole.mutate({ id: a.id, role: "INSPECTOR", grant: true })}>{t("adm_make_inspector") || "Make Inspector"}</GBtn>}
               {a.tier === "MEMBER"
                 ? <GBtn small onClick={() => setTier.mutate({ id: a.id, tier: "VIP" })}>{t("adm_grant_vip")}</GBtn>
                 : a.tier === "VIP" && <GBtn small onClick={() => setTier.mutate({ id: a.id, tier: "MEMBER" })}>{t("adm_set_member")}</GBtn>}
@@ -149,7 +159,7 @@ export function Accounts() {
                 : <GBtn kind="gold" small onClick={() => setStatus.mutate({ id: a.id, status: "ACTIVE" })}>{t("adm_reinstate")}</GBtn>}
             </Actions></td>
           </tr>
-        ))}
+        );})}
       </DTable>
     </div>
   );

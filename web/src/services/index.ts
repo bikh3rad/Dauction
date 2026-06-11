@@ -10,11 +10,31 @@ import type {
   KycSubmission, LotDetail, PassiveAuction, RedeemInviteResp, ReleaseMode,
   Reservation, Standing, StartKycResp, Trade, TradeState, VaultObject,
   VaultView, WeeklyGallery, Wallet, BidResp, AType, DocType,
+  RequestOtpResp, SessionResp, OAuthProvider,
 } from "@/types";
 
 // ---------- identity ----------
 export const identity = {
   me: () => withFallback<Account>(() => get("/me"), mock.me),
+};
+
+// ---------- auth (mobile OTP + social OAuth) ----------
+export const auth = {
+  requestOtp: (mobileE164: string, purpose = "SIGNUP") =>
+    withFallback<RequestOtpResp>(
+      () => post("/auth/otp/request", { mobileE164, purpose }),
+      () => mock.requestOtp(mobileE164, purpose),
+    ),
+  verifyOtp: (mobileE164: string, code: string) =>
+    withFallback<SessionResp>(
+      () => post("/auth/otp/verify", { mobileE164, code }),
+      () => mock.verifyOtp(mobileE164, code),
+    ),
+  oauth: (provider: OAuthProvider) =>
+    withFallback<SessionResp>(
+      () => get(`/auth/oauth/${provider.toLowerCase()}/callback`, { params: { code: "demo" } }),
+      () => mock.oauthLogin(provider),
+    ),
 };
 
 // ---------- catalog ----------

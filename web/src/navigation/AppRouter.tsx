@@ -1,6 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { BottomNav, showBottomNav } from "./BottomNav";
+import { hasSession } from "@/auth/session";
+import { AuthPage } from "@/pages/AuthPage";
 import { MockBanner } from "@/components/ui/MockBanner";
 import { GalleryPage } from "@/pages/GalleryPage";
 import { LotPage } from "@/pages/LotPage";
@@ -11,7 +13,6 @@ import { EscrowPage } from "@/pages/EscrowPage";
 import { VaultPage } from "@/pages/VaultPage";
 import { MembershipPage } from "@/pages/MembershipPage";
 import { AccountPage } from "@/pages/AccountPage";
-import { InvitePage } from "@/pages/InvitePage";
 import { KycPage } from "@/pages/KycPage";
 import { AdminPage } from "@/pages/admin/AdminPage";
 
@@ -24,6 +25,12 @@ const variants = {
 
 export function AppRouter({ showNav = true }: { showNav?: boolean } = {}) {
   const location = useLocation();
+  // First run: no session at all -> land on the sign-in page (mobile OTP / OAuth).
+  // Once the user signs in OR chooses "browse as guest", a session exists and the
+  // app is reachable normally.
+  if (!hasSession() && location.pathname !== "/login") {
+    return <Navigate to="/login" replace />;
+  }
   // On desktop the top nav drives navigation, so the bottom nav is suppressed.
   const withNav = showNav && showBottomNav(location.pathname);
 
@@ -42,6 +49,7 @@ export function AppRouter({ showNav = true }: { showNav?: boolean } = {}) {
             transition={{ duration: 0.22, ease: [0.2, 0.65, 0.2, 1] }}
           >
             <Routes location={location}>
+              <Route path="/login" element={<AuthPage />} />
               <Route path="/" element={<GalleryPage />} />
               <Route path="/lot/:id" element={<LotPage />} />
               <Route path="/auction/:id" element={<AuctionPage />} />
@@ -51,7 +59,8 @@ export function AppRouter({ showNav = true }: { showNav?: boolean } = {}) {
               <Route path="/vault" element={<VaultPage />} />
               <Route path="/membership" element={<MembershipPage />} />
               <Route path="/account" element={<AccountPage />} />
-              <Route path="/invite" element={<InvitePage />} />
+              {/* invite system removed — any lingering link lands on sign-in */}
+              <Route path="/invite" element={<Navigate to="/login" replace />} />
               <Route path="/kyc" element={<KycPage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="*" element={<GalleryPage />} />

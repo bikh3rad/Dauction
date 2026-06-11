@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useStartKyc, useVerifyKyc } from "@/hooks/queries";
+import { COUNTRIES, DEFAULT_COUNTRY } from "@/auth/countries";
 import { ScreenShell } from "@/components/ui/ScreenShell";
 import { TopBar } from "@/components/ui/TopBar";
 import { Icon } from "@/components/ui/Icon";
@@ -16,13 +17,17 @@ export function KycPage() {
   const verifyKyc = useVerifyKyc();
 
   const [step, setStep] = useState(0); // 0 phone, 1 otp, 2 doc, 3 pending
-  const [phone, setPhone] = useState("");
+  const [dial, setDial] = useState(DEFAULT_COUNTRY.dial);
+  const [local, setLocal] = useState("");
   const [otp, setOtp] = useState("");
   const [doc, setDoc] = useState(false);
 
+  const phone = `${dial}${local.replace(/[^\d]/g, "")}`;
+  const phoneValid = local.replace(/[^\d]/g, "").length >= 6;
+
   const sendOtp = async () => {
-    if (!phone) return;
-    await startKyc.mutateAsync({ docType: "EMIRATES_ID", docRef: "scan-pending", phone });
+    if (!phoneValid) return;
+    await startKyc.mutateAsync({ docType: "PASSPORT", docRef: "scan-pending", phone });
     setStep(1);
   };
   const verify = async () => {
@@ -43,10 +48,13 @@ export function KycPage() {
         {step <= 1 && (
           <div className="fade-up" style={{ marginTop: 24 }}>
             <Label>{t("kyc_phone")}</Label>
-            <div style={{ display: "flex", gap: 8 }}>
-              <input className="field" dir="ltr" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+971 5X XXX XXXX" style={{ flex: 1 }} />
-              <button className="btn btn-ghost" onClick={sendOtp} disabled={!phone || startKyc.isPending}>{t("kyc_send_otp")}</button>
+            <div style={{ display: "flex", gap: 8 }} dir="ltr">
+              <select className="field" value={dial} onChange={(e) => setDial(e.target.value)} style={{ flex: "0 0 120px" }} aria-label="country code">
+                {COUNTRIES.map((c) => <option key={c.iso} value={c.dial}>{c.flag} {c.dial}</option>)}
+              </select>
+              <input className="field" dir="ltr" inputMode="tel" value={local} onChange={(e) => setLocal(e.target.value)} placeholder="50 123 4567" style={{ flex: 1 }} />
             </div>
+            <button className="btn btn-ghost" style={{ width: "100%", marginTop: 10 }} onClick={sendOtp} disabled={!phoneValid || startKyc.isPending}>{t("kyc_send_otp")}</button>
             {step === 1 && (
               <div className="fade-up" style={{ marginTop: 18 }}>
                 <Label>{t("kyc_otp")}</Label>

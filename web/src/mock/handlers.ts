@@ -3,18 +3,62 @@
 // difference. Mutations persist for the session.
 
 import * as db from "./db";
+import { currentAccount, setSession } from "@/auth/session";
 import type {
   Account, BidPackage, BuyBidsResp, BuybackResp, ConfirmReq, DutchAuction,
   KycSubmission, LotDetail, PassiveAuction, RedeemInviteResp, Reservation,
   Standing, StartKycResp, Trade, TradeState, VaultView, WeeklyGallery,
-  Wallet, BidResp, BuybackMode, ReleaseMode, AType,
+  Wallet, BidResp, BuybackMode, ReleaseMode, AType, RequestOtpResp, SessionResp,
+  OAuthProvider,
 } from "@/types";
 
 const uid = (p: string) => `${p}-${Math.random().toString(16).slice(2, 10)}`;
 
 // ---- identity ----
+// me() reflects the client-side session: a logged-in account or the GUEST visitor.
 export function me(): Account {
-  return { ...db.account };
+  return { ...currentAccount() };
+}
+
+// ---- auth: mobile OTP + social OAuth (replaces invite redemption) ----
+// In dev/demo there is no SMS provider, so requestOtp returns a fixed devCode.
+export function requestOtp(_mobile: string, _purpose?: string): RequestOtpResp {
+  return { expiresInSecs: 300, devCode: "000000" };
+}
+
+// verifyOtp creates (or signs in) the account for a mobile number. New accounts
+// start GUEST/PENDING — they become MEMBER only after KYC approval.
+export function verifyOtp(mobile: string, code: string): SessionResp {
+  if (!code || code.length < 4) throw { message: "invalid code", code: "RESOURCE_INVALID" };
+  const account: Account = {
+    id: uid("acc"),
+    tier: "GUEST",
+    kycStatus: "PENDING",
+    eligible: false,
+    roles: [],
+    status: "REGISTERED",
+    mobileE164: mobile,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  setSession(account);
+  return { token: account.id, created: true, account };
+}
+
+export function oauthLogin(provider: OAuthProvider): SessionResp {
+  const account: Account = {
+    id: uid("acc"),
+    tier: "GUEST",
+    kycStatus: "PENDING",
+    eligible: false,
+    roles: [],
+    status: "REGISTERED",
+    mobileE164: "",
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  setSession(account);
+  return { token: account.id, created: true, account };
 }
 
 // ---- catalog ----
@@ -163,13 +207,19 @@ export function startKyc(phone: string): StartKycResp {
   return { submissionId: id, challengeId: uid("chl"), state: "STARTED", expiresAt: new Date(Date.now() + 300_000).toISOString(), devCode: "0000" };
 }
 export function verifyKyc(_code: string): KycSubmission {
-  if (!kycSub) kycSub = { id: uid("kyc"), accountId: db.account.id, docType: "EMIRATES_ID", docRef: "pending", phone: "+9715xxxxxxx", state: "STARTED", submittedAt: new Date().toISOString() };
-  kycSub = { ...kycSub, state: "SUBMITTED", submittedAt: new Date().toISOString() };
+  const acc = currentAccount();
+  if (!kycSub) kycSub = { id: uid("kyc"), accountId: acc.id, docType: "PASSPORT", docRef: "pending", phone: acc.mobileE164 || "+0000000000", state: "STARTED", submittedAt: new Date().toISOString() };
+  kycSub = { ...kycSub, state: "APPROVED", submittedAt: new Date().toISOString() };
+  // KYC approval is the membership trigger: GUEST -> MEMBER + KYC APPROVED.
+  if (acc.id !== "guest") {
+    setSession({ ...acc, tier: acc.tier === "GUEST" ? "MEMBER" : acc.tier, kycStatus: "APPROVED", eligible: true, updatedAt: new Date().toISOString() });
+  }
   return { ...kycSub };
 }
 export function kycStatus(): KycSubmission {
+  const acc = currentAccount();
   if (!kycSub) {
-    return { id: uid("kyc"), accountId: db.account.id, docType: "EMIRATES_ID", docRef: "approved", phone: "+9715xxxxxxx", state: db.account.kycStatus === "APPROVED" ? "APPROVED" : "SUBMITTED", submittedAt: new Date().toISOString() };
+    return { id: uid("kyc"), accountId: acc.id, docType: "PASSPORT", docRef: "approved", phone: acc.mobileE164 || "+0000000000", state: acc.kycStatus === "APPROVED" ? "APPROVED" : "STARTED", submittedAt: new Date().toISOString() };
   }
   return { ...kycSub };
 }

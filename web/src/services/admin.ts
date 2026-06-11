@@ -13,7 +13,7 @@ import type {
   AdminInvite, AdminKycReview, AdminStats, AdminVaultObject, CreateAuctionReq,
   DisputeRuling,
 } from "@/types/admin";
-import type { Tier } from "@/types";
+import type { Role, Tier } from "@/types";
 
 const ok = <T>(v: T): Promise<T> => Promise.resolve(v);
 
@@ -27,6 +27,8 @@ export const admin = {
   setAccountStatus: (id: string, status: AccountStatus) =>
     ok<AdminAccount>(mock.setAccountStatus(id, status)),
   setAccountTier: (id: string, tier: Tier) => ok<AdminAccount>(mock.setAccountTier(id, tier)),
+  setAccountRole: (id: string, role: Role, grant: boolean) =>
+    ok<AdminAccount>(mock.setAccountRole(id, role, grant)),
 
   kyc: () => ok<AdminKycReview[]>(mock.listKyc()),
   decideKyc: (id: string, approve: boolean) => ok<AdminKycReview>(mock.decideKyc(id, approve)),
