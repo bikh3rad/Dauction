@@ -161,6 +161,18 @@ export function bidCostOf(id: string): number {
   return passiveSeed[id]?.bidCost ?? 1;
 }
 
+// setBidCost lets the admin retune a live timed auction's per-bid credit cost.
+export function setBidCost(id: string, cost: number): void {
+  if (passiveSeed[id]) passiveSeed[id].bidCost = Math.max(1, Math.round(cost));
+}
+
+// setLotReserve retunes a lot's floor/reserve (admin price edit).
+export function setLotReserve(id: string, reserveCents: number): void {
+  const lot = lots.find((l) => l.id === id);
+  if (lot) lot.reserveCents = Math.max(0, Math.round(reserveCents));
+  if (dutchSeed[id]) dutchSeed[id].floor = Math.max(0, Math.round(reserveCents));
+}
+
 // listFromObject turns a just-listed vault object into a live gallery lot: it
 // pushes a SCHEDULED lot (so it shows in the weekly gallery, carrying the owner's
 // category icon + photos) and registers the matching auction seed so the lot's

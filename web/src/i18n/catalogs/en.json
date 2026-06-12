@@ -131,6 +131,8 @@
   "adm_bid_cost": "Bid cost (credits)",
   "adm_create": "Create",
   "adm_cancel": "Cancel",
+  "adm_edit": "Edit",
+  "adm_save": "Save",
   "adm_schedule": "Schedule",
   "adm_open": "Open",
   "adm_disable": "Disable",

@@ -54,6 +54,10 @@ export const useCreateAuction = () =>
 export const useSetAuctionState = () =>
   useAdminMutation((v: { id: string; state: AdminAuction["state"] }) => admin.setAuctionState(v.id, v.state), [aqk.auctions]);
 
+export const useUpdateAuction = () =>
+  useAdminMutation((v: { id: string; bidCostCredits?: number; floorCents?: number }) =>
+    admin.updateAuction(v.id, { bidCostCredits: v.bidCostCredits, floorCents: v.floorCents }), [aqk.auctions]);
+
 export const useHoldRelease = () =>
   useAdminMutation((id: string) => admin.holdRelease(id), [aqk.escrow]);
 

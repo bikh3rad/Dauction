@@ -3,6 +3,7 @@
 // live. Each returns the response shape the real `/apis/admin/*` route will.
 
 import * as db from "./adminDb";
+import { setBidCost, setLotReserve } from "./db";
 import type {
   AccountStatus, AdminAccount, AdminAuction, AdminCertReview, AdminEscrowRow,
   AdminKycReview, AdminStats, AdminVaultObject, CreateAuctionReq,
@@ -102,6 +103,23 @@ export function setAuctionState(id: string, state: AdminAuction["state"]): Admin
   const a = db.auctions.find((x) => x.id === id);
   if (!a) throw { message: "auction not found", code: "404" };
   a.state = state;
+  return clone(a);
+}
+
+// updateAuction edits an existing auction — e.g. customize the per-bid credit
+// cost or the floor price. Changes flow through to the live auction the buyers
+// see (passive bid cost + lot reserve), not just the admin row.
+export function updateAuction(id: string, patch: { bidCostCredits?: number; floorCents?: number }): AdminAuction {
+  const a = db.auctions.find((x) => x.id === id);
+  if (!a) throw { message: "auction not found", code: "404" };
+  if (patch.bidCostCredits != null && a.atype !== "DUTCH") {
+    a.bidCostCredits = Math.max(1, Math.round(patch.bidCostCredits));
+    setBidCost(a.lotId, a.bidCostCredits);
+  }
+  if (patch.floorCents != null) {
+    a.priceCents = Math.max(0, Math.round(patch.floorCents));
+    setLotReserve(a.lotId, a.priceCents);
+  }
   return clone(a);
 }
 
