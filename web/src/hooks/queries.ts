@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  auth, bids, catalog, dutch, escrow, inspector, invite, kyc, passive, profile, vault,
+  auth, bids, catalog, dutch, escrow, inspector, kyc, passive, profile, vault,
 } from "@/services";
 import { signOut as clearSession } from "@/auth/session";
 import type { AType, BuybackMode, CreateObjectReq, DocType, OAuthProvider, ReleaseMode } from "@/types";
@@ -191,15 +191,6 @@ export function useBuyback() {
   return useMutation({
     mutationFn: (v: { id: string; mode: BuybackMode }) => vault.buyback(v.id, v.mode),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.vault }),
-  });
-}
-
-// ---------------- invite ----------------
-export function useRedeemInvite() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (code: string) => invite.redeem(code),
-    onSuccess: () => qc.invalidateQueries({ queryKey: qk.me }),
   });
 }
 

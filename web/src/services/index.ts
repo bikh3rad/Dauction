@@ -7,7 +7,7 @@ import { withFallback } from "./withFallback";
 import * as mock from "@/mock/handlers";
 import type {
   Account, BidPackage, BuyBidsResp, BuybackMode, BuybackResp, DutchAuction,
-  KycSubmission, LotDetail, PassiveAuction, RedeemInviteResp, ReleaseMode,
+  KycSubmission, LotDetail, PassiveAuction, ReleaseMode,
   Reservation, Standing, StartKycResp, Trade, TradeState, VaultObject,
   VaultView, WeeklyGallery, Wallet, BidResp, AType, DocType,
   RequestOtpResp, SessionResp, OAuthProvider, CreateObjectReq,
@@ -108,12 +108,6 @@ export const vault = {
     ),
   buyback: (id: string, mode: BuybackMode) =>
     withFallback<BuybackResp>(() => post(`/vault/objects/${id}/buyback`, { mode }), () => mock.buyback(id, mode)),
-};
-
-// ---------- invite ----------
-export const invite = {
-  redeem: (code: string) =>
-    withFallback<RedeemInviteResp>(() => post("/invites/redeem", { code }), () => mock.redeemInvite(code)),
 };
 
 // ---------- kyc ----------

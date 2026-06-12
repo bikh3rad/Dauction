@@ -140,9 +140,10 @@ export function dutchAuction(id: string): DutchAuction | undefined {
 }
 
 // ---- passive auctions (keyed by lot/auction id) ----
-const passiveSeed: Record<string, { closesInMs: number; participants: number }> = {
-  "lot-13": { closesInMs: 5 * 86400_000 - 86400_000, participants: 41 },
-  "lot-14": { closesInMs: 7 * 86400_000 - 43200_000, participants: 184 },
+const passiveSeed: Record<string, { closesInMs: number; participants: number; bidCost: number }> = {
+  "lot-13": { closesInMs: 5 * 86400_000 - 86400_000, participants: 41, bidCost: 1 },
+  // a premium timed auction where each bid costs 40 credits (per-auction custom).
+  "lot-14": { closesInMs: 7 * 86400_000 - 43200_000, participants: 184, bidCost: 40 },
 };
 export function passiveAuction(id: string): PassiveAuction | undefined {
   const lot = lots.find((l) => l.id === id);
@@ -151,8 +152,13 @@ export function passiveAuction(id: string): PassiveAuction | undefined {
   return {
     id, lotId: id, atype: lot.atype, state: "OPEN",
     closesAt: iso(seed.closesInMs), reserveCents: lot.reserveCents,
-    participantCount: seed.participants,
+    participantCount: seed.participants, bidCostCredits: seed.bidCost,
   };
+}
+
+// bidCostOf returns the per-bid credit cost for a passive auction (default 1).
+export function bidCostOf(id: string): number {
+  return passiveSeed[id]?.bidCost ?? 1;
 }
 
 // listFromObject turns a just-listed vault object into a live gallery lot: it
@@ -182,7 +188,7 @@ export function listFromObject(obj: VaultObject, atype: Lot["atype"], durationDa
       interval: 22, openOffsetMs: -1000, // already open (live)
     };
   } else {
-    passiveSeed[lotId] = { closesInMs: (durationDays ?? 5) * 86400_000, participants: 1 };
+    passiveSeed[lotId] = { closesInMs: (durationDays ?? 5) * 86400_000, participants: 1, bidCost: 1 };
   }
   return lot;
 }

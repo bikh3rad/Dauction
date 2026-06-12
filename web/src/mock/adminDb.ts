@@ -6,26 +6,18 @@
    offline. Mirrors the style of mock/db.ts.
    ============================================================ */
 import type {
-  AdminAccount, AdminAuction, AdminCertReview, AdminEscrowRow, AdminInvite,
+  AdminAccount, AdminAuction, AdminCertReview, AdminEscrowRow,
   AdminKycReview, AdminVaultObject,
 } from "@/types/admin";
 
 const c = (dollars: number) => Math.round(dollars * 100); // dollars → USDC cents
 
-export const invites: AdminInvite[] = [
-  { code: "LUX-7F2A-9KQ", issuedBy: "0x11 · Maison", uses: 0, maxUses: 1, status: "ACTIVE", chain: "Maison → ?" },
-  { code: "VELT-3C8-XQ2", issuedBy: "0x7A4E", uses: 1, maxUses: 1, status: "REDEEMED", chain: "0x7A4E → 0x91" },
-  { code: "NOIR-55K-A0", issuedBy: "0x2D · VIP", uses: 0, maxUses: 1, status: "ACTIVE", chain: "VIP → ?" },
-  { code: "GHOST-99-ZZ", issuedBy: "unknown", uses: 3, maxUses: 1, status: "FLAGGED", chain: "⚠ over-use" },
-  { code: "MAISON-04", issuedBy: "House", uses: 0, maxUses: 1, status: "ACTIVE", chain: "House → ?" },
-];
-
 export const accounts: AdminAccount[] = [
-  { id: "0x7A4E", handle: "@aurelia.dxb", tier: "MEMBER", kycStatus: "APPROVED", status: "ACTIVE", walletUsdcCents: c(212400), vaultCreditCents: c(34850), bidCredits: 18, invitedBy: "Maison · 0x11", joinedAt: "2025-11-02", roles: ["INSPECTOR"] },
-  { id: "0x91", handle: "@noor.auh", tier: "MEMBER", kycStatus: "PENDING", status: "ACTIVE", walletUsdcCents: c(48000), vaultCreditCents: 0, bidCredits: 50, invitedBy: "0x7A4E", joinedAt: "2026-03-14", roles: [] },
-  { id: "0x2D", handle: "@khalid.vip", tier: "VIP", kycStatus: "APPROVED", status: "ACTIVE", walletUsdcCents: c(980000), vaultCreditCents: c(120000), bidCredits: 100, invitedBy: "House", joinedAt: "2025-09-01", roles: [] },
-  { id: "0x4C", handle: "@sterling.ldn", tier: "MEMBER", kycStatus: "PENDING", status: "ACTIVE", walletUsdcCents: c(15000), vaultCreditCents: 0, bidCredits: 20, invitedBy: "0x2D", joinedAt: "2026-05-02", roles: [] },
-  { id: "0xF7", handle: "@dana.doh", tier: "MEMBER", kycStatus: "APPROVED", status: "SUSPENDED", walletUsdcCents: c(3200), vaultCreditCents: 0, bidCredits: 0, invitedBy: "House", joinedAt: "2026-01-20", roles: [] },
+  { id: "0x7A4E", handle: "@aurelia.dxb", tier: "MEMBER", kycStatus: "APPROVED", status: "ACTIVE", walletUsdcCents: c(212400), vaultCreditCents: c(34850), bidCredits: 18, joinedAt: "2025-11-02", roles: ["INSPECTOR"] },
+  { id: "0x91", handle: "@noor.auh", tier: "MEMBER", kycStatus: "PENDING", status: "ACTIVE", walletUsdcCents: c(48000), vaultCreditCents: 0, bidCredits: 50, joinedAt: "2026-03-14", roles: [] },
+  { id: "0x2D", handle: "@khalid.vip", tier: "VIP", kycStatus: "APPROVED", status: "ACTIVE", walletUsdcCents: c(980000), vaultCreditCents: c(120000), bidCredits: 100, joinedAt: "2025-09-01", roles: [] },
+  { id: "0x4C", handle: "@sterling.ldn", tier: "MEMBER", kycStatus: "PENDING", status: "ACTIVE", walletUsdcCents: c(15000), vaultCreditCents: 0, bidCredits: 20, joinedAt: "2026-05-02", roles: [] },
+  { id: "0xF7", handle: "@dana.doh", tier: "MEMBER", kycStatus: "APPROVED", status: "SUSPENDED", walletUsdcCents: c(3200), vaultCreditCents: 0, bidCredits: 0, joinedAt: "2026-01-20", roles: [] },
 ];
 
 export const kycQueue: AdminKycReview[] = [
@@ -51,8 +43,8 @@ export const auctions: AdminAuction[] = [
   { id: "lot-10", lotId: "lot-10", title: "Pumpkin (Yellow) — ed. 47/120", maison: "Yayoi Kusama", atype: "DUTCH", state: "SCHEDULED", priceCents: c(185000), participants: 5 },
   { id: "lot-11", lotId: "lot-11", title: "Air Jordan 1 High — 1 of 8,500", maison: "Nike × Dior", atype: "DUTCH", state: "SCHEDULED", priceCents: c(27000), participants: 11 },
   { id: "lot-12", lotId: "lot-12", title: "No. 1 Imperial Majesty — Baccarat", maison: "Clive Christian", atype: "DUTCH", state: "DRAFT", priceCents: c(96000), participants: 4 },
-  { id: "lot-13", lotId: "lot-13", title: "Crimson Atrium — Oil on Linen", maison: "Estate Commission", atype: "VICKREY", state: "OPEN", priceCents: c(54000), participants: 41, closesAt: "2026-06-15T18:00:00Z" },
-  { id: "lot-14", lotId: "lot-14", title: "Kelly Sellier 25 — Rouge Casaque", maison: "Hermès", atype: "UNIQBID", state: "CLOSING", priceCents: c(38000), participants: 184, closesAt: "2026-06-12T12:00:00Z" },
+  { id: "lot-13", lotId: "lot-13", title: "Crimson Atrium — Oil on Linen", maison: "Estate Commission", atype: "VICKREY", state: "OPEN", priceCents: c(54000), participants: 41, closesAt: "2026-06-15T18:00:00Z", bidCostCredits: 1 },
+  { id: "lot-14", lotId: "lot-14", title: "Kelly Sellier 25 — Rouge Casaque", maison: "Hermès", atype: "UNIQBID", state: "CLOSING", priceCents: c(38000), participants: 184, closesAt: "2026-06-12T12:00:00Z", bidCostCredits: 40 },
 ];
 
 export const memberVault: AdminVaultObject[] = [

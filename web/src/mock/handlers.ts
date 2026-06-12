@@ -7,7 +7,7 @@ import { getSettings } from "./settings";
 import { currentAccount, setSession } from "@/auth/session";
 import type {
   Account, BidPackage, BuyBidsResp, BuybackResp, ConfirmReq, DutchAuction,
-  KycSubmission, LotDetail, PassiveAuction, RedeemInviteResp, Reservation,
+  KycSubmission, LotDetail, PassiveAuction, Reservation,
   Standing, StartKycResp, Trade, TradeState, VaultView, WeeklyGallery,
   Wallet, BidResp, BuybackMode, ReleaseMode, AType, RequestOtpResp, SessionResp,
   OAuthProvider, VaultObject,
@@ -21,7 +21,7 @@ export function me(): Account {
   return { ...currentAccount() };
 }
 
-// ---- auth: mobile OTP + social OAuth (replaces invite redemption) ----
+// ---- auth: mobile OTP + social OAuth ----
 // In dev/demo there is no SMS provider, so requestOtp returns a fixed devCode.
 export function requestOtp(_mobile: string, _purpose?: string): RequestOtpResp {
   return { expiresInSecs: 300, devCode: "000000" };
@@ -199,9 +199,10 @@ export function getPassive(id: string): PassiveAuction {
   return a;
 }
 export function placeBid(id: string, priceCents: number): BidResp {
-  if (db.wallet.balanceCredits <= 0) throw { message: "out of credits", code: "RESOURCE_INVALID" };
-  db.wallet.balanceCredits -= 1;
-  db.wallet.debits.push({ id: uid("dbt"), amountCredits: 1, idempotencyKey: uid("idem"), auctionId: id, createdAt: new Date().toISOString() });
+  const cost = db.bidCostOf(id); // per-auction bid cost (credits)
+  if (db.wallet.balanceCredits < cost) throw { message: "out of credits", code: "RESOURCE_INVALID" };
+  db.wallet.balanceCredits -= cost;
+  db.wallet.debits.push({ id: uid("dbt"), amountCredits: cost, idempotencyKey: uid("idem"), auctionId: id, createdAt: new Date().toISOString() });
   const lot = db.lots.find((l) => l.id === id);
   if (lot?.atype === "VICKREY") {
     db.sealedBids[id] = priceCents;
@@ -299,15 +300,6 @@ export function buyback(id: string, mode: BuybackMode): BuybackResp {
   obj.updatedAt = new Date().toISOString();
   if (mode === "CREDIT") db.vault.creditBalanceCents += payout;
   return { object: { ...obj }, mode, payoutCents: payout, balanceCents: db.vault.creditBalanceCents };
-}
-
-// ---- invite ----
-const VALID_CODES = ["LUX-7F2A-9KQ", "MAISON-04"];
-export function redeemInvite(code: string): RedeemInviteResp {
-  const c = code.trim().toUpperCase();
-  if (!VALID_CODES.includes(c)) throw { message: "Invalid or expired code.", code: "RESOURCE_INVALID" };
-  db.account.tier = "MEMBER";
-  return { code: c, redeemedBy: db.account.id, issuedBy: "0b11c000-0000-4000-8000-0000000b11c0" };
 }
 
 // ---- kyc ----

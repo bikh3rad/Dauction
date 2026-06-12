@@ -67,18 +67,22 @@ export function Auctions() {
   const { data: rows = [] } = useAdminAuctions();
   const setState = useSetAuctionState();
   const create = useCreateAuction();
-  const [form, setForm] = useState<{ lotId: string; atype: AType; floor: string; days: number } | null>(null);
+  const [form, setForm] = useState<{ lotId: string; atype: AType; floor: string; days: number; bidCost: number } | null>(null);
 
   const submit = () => {
     if (!form?.lotId) return;
-    create.mutate({ lotId: form.lotId, atype: form.atype, floorCents: Math.round(Number(form.floor || 0) * 100), durationDays: form.atype === "DUTCH" ? undefined : form.days });
+    create.mutate({
+      lotId: form.lotId, atype: form.atype, floorCents: Math.round(Number(form.floor || 0) * 100),
+      durationDays: form.atype === "DUTCH" ? undefined : form.days,
+      bidCostCredits: form.atype === "DUTCH" ? undefined : form.bidCost,
+    });
     setForm(null);
   };
 
   return (
     <div className="fade-up">
       <SecHead kicker={t("adm_title")} title={t("adm_auctions")}
-        action={<GBtn kind="gold" onClick={() => setForm({ lotId: "", atype: "DUTCH", floor: "", days: 2 })}><Icon name="plus" size={13} /> {t("adm_create_auction")}</GBtn>} />
+        action={<GBtn kind="gold" onClick={() => setForm({ lotId: "", atype: "DUTCH", floor: "", days: 2, bidCost: 1 })}><Icon name="plus" size={13} /> {t("adm_create_auction")}</GBtn>} />
 
       {form && (
         <div style={{ marginBottom: 20, border: "1px solid var(--gold-line)", borderRadius: "var(--r-2)", padding: 18, background: "var(--bg-1)", display: "flex", gap: 14, flexWrap: "wrap", alignItems: "flex-end" }}>
@@ -90,11 +94,16 @@ export function Auctions() {
           </Field>
           <Field label={t("adm_floor")}><input value={form.floor} onChange={(e) => setForm({ ...form, floor: e.target.value.replace(/[^0-9]/g, "") })} placeholder="100000" style={inputS} /></Field>
           {form.atype !== "DUTCH" && (
-            <Field label={t("adm_duration_days")}>
-              <select value={form.days} onChange={(e) => setForm({ ...form, days: Number(e.target.value) })} style={inputS}>
-                {[2, 5, 7].map((d) => <option key={d} value={d}>{d}</option>)}
-              </select>
-            </Field>
+            <>
+              <Field label={t("adm_duration_days")}>
+                <select value={form.days} onChange={(e) => setForm({ ...form, days: Number(e.target.value) })} style={inputS}>
+                  {[2, 5, 7].map((d) => <option key={d} value={d}>{d}</option>)}
+                </select>
+              </Field>
+              <Field label={t("adm_bid_cost")}>
+                <input value={form.bidCost} onChange={(e) => setForm({ ...form, bidCost: Math.max(1, Number(e.target.value.replace(/[^0-9]/g, "")) || 1) })} style={inputS} />
+              </Field>
+            </>
           )}
           <div style={{ display: "flex", gap: 8 }}>
             <GBtn kind="gold" onClick={submit}>{t("adm_create")}</GBtn>
@@ -107,7 +116,7 @@ export function Auctions() {
         {rows.map((a) => (
           <tr key={a.id}>
             <td style={tdS}>{a.title}<div className="mono" style={{ fontSize: 10.5, color: "var(--fg-faint)", marginTop: 2 }}>{a.maison}</div></td>
-            <td style={tdS} className="mono">{a.atype}</td>
+            <td style={tdS} className="mono">{a.atype}{a.atype !== "DUTCH" && a.bidCostCredits != null && <div style={{ fontSize: 10, color: "var(--fg-faint)", marginTop: 2 }}>{a.bidCostCredits} cr/bid</div>}</td>
             <td style={tdS} className="mono"><Money cents={a.priceCents} withCents={false} /></td>
             <td style={tdMuted} className="mono">{a.participants}</td>
             <td style={tdS}><Chip state={a.state} /></td>
@@ -234,7 +243,6 @@ export function Vaults() {
   );
 }
 
-// ============================ Invites ============================
 // ============================ Escrow + dispute court ============================
 export function Escrow() {
   const { t } = useI18n();

@@ -18,26 +18,14 @@ export type AccountStatus = "ACTIVE" | "SUSPENDED";
 export type ReviewStatus = "PENDING" | "APPROVED" | "REJECTED";
 export type CertStatus = "APPRAISING" | "CERTIFIED";
 export type DisputeRuling = "REFUND_BUYER" | "RELEASE_SELLER" | "SPLIT";
-export type InviteAdminStatus = "ACTIVE" | "REDEEMED" | "REVOKED" | "FLAGGED";
 
 export interface AdminStats {
-  activeInvites: number;
-  flaggedInvites: number;
   pendingKyc: number;
   members: number;
   lotsThisWeek: number;
   supplyCap: number;
   openAuctions: number;
   escrowLockedCents: number;
-}
-
-export interface AdminInvite {
-  code: string;
-  issuedBy: string;
-  uses: number;
-  maxUses: number;
-  status: InviteAdminStatus;
-  chain: string;
 }
 
 export interface AdminAccount {
@@ -49,7 +37,6 @@ export interface AdminAccount {
   walletUsdcCents: number;
   vaultCreditCents: number;
   bidCredits: number;
-  invitedBy: string;
   joinedAt: string;
   /** Elevated functional roles (USER is implicit). Admins grant INSPECTOR/ADMIN. */
   roles?: Role[];
@@ -82,6 +69,8 @@ export interface AdminAuction {
   priceCents: number; // current price (Dutch) or floor (passive)
   participants: number;
   closesAt?: string;
+  /** Bid-credit cost per bid (timed auctions); default 1. */
+  bidCostCredits?: number;
 }
 
 export interface CreateAuctionReq {
@@ -89,6 +78,8 @@ export interface CreateAuctionReq {
   atype: AType;
   floorCents: number;
   durationDays?: number;
+  /** Bid-credit cost per bid (timed auctions); default 1. Customizable per auction. */
+  bidCostCredits?: number;
 }
 
 export interface AdminVaultObject {

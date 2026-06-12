@@ -23,7 +23,7 @@ export function LotPage() {
   const { id = "" } = useParams();
   const { t, lang, dir } = useI18n();
   const nav = useNavigate();
-  const { canParticipate, parts, setPart } = useSession();
+  const { isGuest, parts, setPart } = useSession();
   const { data, isLoading, isError, refetch } = useLot(id);
   const reserve = useReserve(id);
   const [certOpen, setCertOpen] = useState(false);
@@ -63,9 +63,9 @@ export function LotPage() {
         <button className="btn btn-gold" style={{ width: "100%" }} onClick={() => nav(`/passive/${lot.id}`)}>
           <Icon name="clock" size={17} /> {t("passive_kicker")}
         </button>
-      ) : !canParticipate ? (
+      ) : isGuest ? (
         <button className="btn btn-burg" style={{ width: "100%" }} onClick={() => nav("/login")}>
-          <Icon name="crown" size={17} /> {t("need_member")}
+          <Icon name="user" size={17} /> {t("need_signin")}
         </button>
       ) : registered ? (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, padding: "13px", border: "1px solid var(--st-good)", borderRadius: "var(--r-1)", background: "var(--st-good-bg)", color: "var(--st-good)", fontWeight: 600 }}>

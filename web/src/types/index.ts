@@ -28,7 +28,6 @@ export type EscrowState =
   | "RELEASED" | "REFUNDED" | "FORFEITED" | "DISPUTED";
 export type ReleaseMode = "CASH" | "VAULT_CREDIT";
 export type BuybackMode = "CASH" | "CREDIT";
-export type InviteStatus = "ISSUED" | "REDEEMED" | "REVOKED" | "FLAGGED";
 export type DocType = "PASSPORT" | "NATIONAL_ID";
 export type KycSubmissionState =
   | "STARTED" | "OTP_VERIFIED" | "SUBMITTED" | "APPROVED" | "REJECTED";
@@ -120,14 +119,6 @@ export interface Access {
   tier: Tier;
   kycStatus: KycStatus;
   eligible: boolean;
-}
-
-// ---- invite ----
-export interface RedeemInviteReq { code: string; }
-export interface RedeemInviteResp {
-  code: string;
-  redeemedBy: string;
-  issuedBy: string;
 }
 
 // ---- kyc ----
@@ -261,6 +252,8 @@ export interface PassiveAuction {
   closesAt: string;
   reserveCents: number;
   participantCount: number;
+  /** Bid-credit cost per bid for this auction (customizable; default 1). */
+  bidCostCredits: number;
   winnerAccountId?: string;
   clearedPriceCents?: number;
 }

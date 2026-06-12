@@ -60,8 +60,6 @@ export function AppRouter({ showNav = true }: { showNav?: boolean } = {}) {
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/membership" element={<Navigate to="/profile" replace />} />
               <Route path="/account" element={<Navigate to="/profile" replace />} />
-              {/* invite system removed — any lingering link lands on sign-in */}
-              <Route path="/invite" element={<Navigate to="/login" replace />} />
               {/* identity check is sign-in itself (mobile SMS / social) — no document step */}
               <Route path="/kyc" element={<Navigate to="/login" replace />} />
               <Route path="/inspector" element={<InspectorPage />} />

@@ -55,7 +55,7 @@ export function GalleryPage() {
         >
           <span style={{ color: "var(--gold)" }}><Icon name="crown" size={20} /></span>
           <span style={{ flex: 1, fontSize: 12.5, lineHeight: 1.45 }}>{t("guest_banner")}</span>
-          <span className="mono up" style={{ fontSize: 10, color: "var(--gold-pale)", whiteSpace: "nowrap" }}>{t("enter_invite")}</span>
+          <span className="mono up" style={{ fontSize: 10, color: "var(--gold-pale)", whiteSpace: "nowrap" }}>{t("auth_login")}</span>
         </button>
       )}
 

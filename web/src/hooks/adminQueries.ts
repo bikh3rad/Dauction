@@ -6,7 +6,6 @@ import type { Role, Tier } from "@/types";
 // ---- query keys ----
 export const aqk = {
   stats: ["adm", "stats"] as const,
-  invites: ["adm", "invites"] as const,
   accounts: ["adm", "accounts"] as const,
   kyc: ["adm", "kyc"] as const,
   cert: ["adm", "cert"] as const,
@@ -26,7 +25,6 @@ function useAdminMutation<V>(fn: (v: V) => Promise<unknown>, keys: readonly (rea
 
 // ---- reads ----
 export const useAdminStats = () => useQuery({ queryKey: aqk.stats, queryFn: admin.stats });
-export const useAdminInvites = () => useQuery({ queryKey: aqk.invites, queryFn: admin.invites });
 export const useAdminAccounts = () => useQuery({ queryKey: aqk.accounts, queryFn: admin.accounts });
 export const useAdminKyc = () => useQuery({ queryKey: aqk.kyc, queryFn: admin.kyc });
 export const useAdminCert = () => useQuery({ queryKey: aqk.cert, queryFn: admin.cert });
@@ -35,9 +33,6 @@ export const useAdminVault = () => useQuery({ queryKey: aqk.vault, queryFn: admi
 export const useAdminEscrow = () => useQuery({ queryKey: aqk.escrow, queryFn: admin.escrow });
 
 // ---- mutations ----
-export const useRevokeInvite = () =>
-  useAdminMutation((code: string) => admin.revokeInvite(code), [aqk.invites]);
-
 export const useSetAccountStatus = () =>
   useAdminMutation((v: { id: string; status: AccountStatus }) => admin.setAccountStatus(v.id, v.status), [aqk.accounts]);
 

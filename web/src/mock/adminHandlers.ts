@@ -5,7 +5,7 @@
 import * as db from "./adminDb";
 import type {
   AccountStatus, AdminAccount, AdminAuction, AdminCertReview, AdminEscrowRow,
-  AdminInvite, AdminKycReview, AdminStats, AdminVaultObject, CreateAuctionReq,
+  AdminKycReview, AdminStats, AdminVaultObject, CreateAuctionReq,
   DisputeRuling,
 } from "@/types/admin";
 import type { Role, Tier } from "@/types";
@@ -19,8 +19,6 @@ export function stats(): AdminStats {
     .filter((e) => ["FULL_LOCKED", "HELD", "DEPOSIT_LOCKED"].includes(e.state))
     .reduce((a, e) => a + e.amountCents + e.premiumCents, 0);
   return {
-    activeInvites: db.invites.filter((i) => i.status === "ACTIVE").length,
-    flaggedInvites: db.invites.filter((i) => i.status === "FLAGGED").length,
     pendingKyc: db.kycQueue.filter((k) => k.status === "PENDING").length,
     members: db.accounts.length,
     lotsThisWeek: db.auctions.length,
@@ -28,17 +26,6 @@ export function stats(): AdminStats {
     openAuctions: db.auctions.filter((a) => a.state === "OPEN" || a.state === "CLOSING").length,
     escrowLockedCents: locked,
   };
-}
-
-// ---- invites ----
-export function listInvites(): AdminInvite[] {
-  return clone(db.invites);
-}
-export function revokeInvite(code: string): AdminInvite {
-  const iv = db.invites.find((i) => i.code === code);
-  if (!iv) throw { message: "invite not found", code: "404" };
-  iv.status = "REVOKED";
-  return clone(iv);
 }
 
 // ---- accounts ----
@@ -106,6 +93,7 @@ export function createAuction(req: CreateAuctionReq): AdminAuction {
     priceCents: req.floorCents,
     participants: 0,
     closesAt: req.atype === "DUTCH" ? undefined : `+${req.durationDays ?? 2}d`,
+    bidCostCredits: req.atype === "DUTCH" ? undefined : (req.bidCostCredits ?? 1),
   };
   db.auctions.unshift(a);
   return clone(a);

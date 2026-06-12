@@ -10,7 +10,7 @@
 import * as mock from "@/mock/adminHandlers";
 import type {
   AccountStatus, AdminAccount, AdminAuction, AdminCertReview, AdminEscrowRow,
-  AdminInvite, AdminKycReview, AdminStats, AdminVaultObject, CreateAuctionReq,
+  AdminKycReview, AdminStats, AdminVaultObject, CreateAuctionReq,
   DisputeRuling,
 } from "@/types/admin";
 import type { Role, Tier } from "@/types";
@@ -19,9 +19,6 @@ const ok = <T>(v: T): Promise<T> => Promise.resolve(v);
 
 export const admin = {
   stats: () => ok<AdminStats>(mock.stats()),
-
-  invites: () => ok<AdminInvite[]>(mock.listInvites()),
-  revokeInvite: (code: string) => ok<AdminInvite>(mock.revokeInvite(code)),
 
   accounts: () => ok<AdminAccount[]>(mock.listAccounts()),
   setAccountStatus: (id: string, status: AccountStatus) =>

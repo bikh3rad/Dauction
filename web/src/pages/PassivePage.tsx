@@ -35,7 +35,7 @@ export function PassivePage() {
   const { id = "" } = useParams();
   const { t, lang } = useI18n();
   const nav = useNavigate();
-  const { canParticipate } = useSession();
+  const { isGuest } = useSession();
   const { data: lotData } = useLot(id);
   const { data: auction, isLoading, isError, refetch } = usePassiveAuction(id);
   const cd = useCountdown(auction?.closesAt, true);
@@ -82,12 +82,15 @@ export function PassivePage() {
           <div>
             <div style={{ fontWeight: 600, fontSize: 13.5, marginBottom: 4 }}>{t(atype === "VICKREY" ? "mode_vickrey" : "mode_uniqbid")} · {t("auc_mode")}</div>
             <p className="muted" style={{ fontSize: 12.5, lineHeight: 1.6, margin: 0 }}>{t(atype === "VICKREY" ? "vickrey_rule" : "uniqbid_rule")}</p>
+            <div className="mono" style={{ fontSize: 11.5, color: "var(--gold-pale)", marginTop: 8 }}>
+              <Icon name="coins" size={13} /> {t("bid_cost_label")}: <b>{auction.bidCostCredits}</b> {auction.bidCostCredits === 1 ? t("credit") : t("credits")} / {t("bid_one")}
+            </div>
           </div>
         </div>
 
-        {!canParticipate ? (
+        {isGuest ? (
           <button className="btn btn-burg" style={{ width: "100%" }} onClick={() => nav("/login")}>
-            <Icon name="crown" size={17} /> {t("need_member")}
+            <Icon name="user" size={17} /> {t("need_signin")}
           </button>
         ) : (
           <>
@@ -154,8 +157,9 @@ function VickreyPanel({ id, auction }: { id: string; auction: PassiveAuction }) 
     setEdit(false);
     setAmt("");
   };
+  const cost = auction.bidCostCredits;
   const sealed = sealedCents != null;
-  const noBids = (wallet?.balanceCredits ?? 0) <= 0 && !sealed;
+  const noBids = (wallet?.balanceCredits ?? 0) < cost && !sealed;
 
   if (!edit && sealed) {
     return (
@@ -181,7 +185,7 @@ function VickreyPanel({ id, auction }: { id: string; auction: PassiveAuction }) 
         <NeedBids />
       ) : (
         <button className="btn btn-gold" style={{ width: "100%", marginTop: 14 }} disabled={!amt || placeBid.isPending} onClick={submit}>
-          <Icon name="lock" size={16} /> {t("submit_sealed")} · 1 {t("credit")}
+          <Icon name="lock" size={16} /> {t("submit_sealed")} · {cost} {cost === 1 ? t("credit") : t("credits")}
         </button>
       )}
     </div>
@@ -206,7 +210,8 @@ function UniqBidPanel({ id, auction }: { id: string; auction: PassiveAuction }) 
     await placeBid.mutateAsync(dollarsVal * 100);
     setPrice("");
   };
-  const noBids = (wallet?.balanceCredits ?? 0) <= 0;
+  const cost = auction.bidCostCredits;
+  const noBids = (wallet?.balanceCredits ?? 0) < cost;
 
   return (
     <div>
@@ -225,10 +230,10 @@ function UniqBidPanel({ id, auction }: { id: string; auction: PassiveAuction }) 
       <div style={{ display: "flex", gap: 8 }}>
         <input className="field field-mono" dir="ltr" inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value.replace(/[^\d]/g, ""))} placeholder="e.g. 237" style={{ flex: 1, fontSize: 17 }} onKeyDown={(e) => e.key === "Enter" && place()} />
         <button className="btn btn-gold" disabled={!price || noBids || placeBid.isPending} onClick={place} style={{ whiteSpace: "nowrap" }}>
-          <Icon name="coins" size={15} /> 1
+          <Icon name="coins" size={15} /> {cost}
         </button>
       </div>
-      <div className="muted mono" style={{ fontSize: 11, margin: "8px 2px 0" }}>{t("list_floor")}: {usdc0(auction.reserveCents)}</div>
+      <div className="muted mono" style={{ fontSize: 11, margin: "8px 2px 0" }}>{t("list_floor")}: {usdc0(auction.reserveCents)} · {cost} {cost === 1 ? t("credit") : t("credits")}/{t("bid_one")}</div>
       {noBids && <div style={{ marginTop: 12 }}><NeedBids /></div>}
 
       {mine.length > 0 && (
