@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Chip } from "@/components/ui/Chip";
 import { Icon } from "@/components/ui/Icon";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { Money } from "@/components/ui/Money";
 import { Ph } from "@/components/ui/ProductArt";
 import { categoryLabel } from "@/lib/enrich";
@@ -19,8 +20,18 @@ function Meta({ lot }: { lot: Lot }) {
   const v = toLotView(lot);
   const seq = Number(lot.id.replace(/\D/g, "")) || 0;
   return (
-    <div className="mono up" style={{ fontSize: 9, color: "var(--gold)", letterSpacing: "0.14em" }}>
+    <div className="mono up" style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 9, color: "var(--gold)", letterSpacing: "0.14em" }}>
+      <span style={{ display: "inline-flex", color: "var(--gold-pale)" }}><CategoryIcon category={v.category} size={12} /></span>
       {t("gal_lot")} {String(seq).padStart(2, "0")} · {categoryLabel(v.category, lang)}
+    </div>
+  );
+}
+
+// A round category badge overlaid on a card image so the type reads at a glance.
+function CatBadge({ category }: { category: Parameters<typeof CategoryIcon>[0]["category"] }) {
+  return (
+    <div style={{ position: "absolute", top: 12, insetInlineEnd: 12, width: 32, height: 32, borderRadius: "50%", background: "rgba(12,8,9,0.66)", border: "1px solid var(--gold-line)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gold-pale)", backdropFilter: "blur(4px)" }}>
+      <CategoryIcon category={category} size={18} />
     </div>
   );
 }
@@ -38,6 +49,7 @@ export function LotCardMagazine({ lot, watching }: { lot: Lot; watching: number 
     >
       <div style={{ position: "relative" }}>
         <Ph art={v.art} artW="54%" artTop="38%" ratio="4 / 3" />
+        <CatBadge category={v.category} />
         <div style={{ position: "absolute", top: 12, insetInlineStart: 12 }}>
           {v.isLive ? (
             <Chip state="live" label={t("auc_live")} pulse />
@@ -81,6 +93,7 @@ export function LotCardGrid({ lot, watching }: { lot: Lot; watching: number }) {
     >
       <div style={{ position: "relative" }}>
         <Ph art={v.art} ratio="1 / 1" />
+        <CatBadge category={v.category} />
         {v.isLive && <div style={{ position: "absolute", top: 8, insetInlineStart: 8 }}><Chip state="live" label={t("auc_live")} pulse /></div>}
         {v.isPassive && <div style={{ position: "absolute", top: 8, insetInlineStart: 8 }}><span className="chip" data-st="warn"><Icon name="clock" size={11} /> {t(lot.atype === "VICKREY" ? "mode_vickrey" : "mode_uniqbid")}</span></div>}
         <div style={{ position: "absolute", bottom: 8, insetInlineEnd: 8, display: "flex", alignItems: "center", gap: 4, background: "rgba(12,8,9,0.7)", padding: "3px 7px", borderRadius: "var(--r-pill)", fontSize: 10, color: "var(--fg-muted)" }}>

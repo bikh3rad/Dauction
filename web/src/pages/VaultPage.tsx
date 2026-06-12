@@ -7,18 +7,14 @@ import { LangPill } from "@/components/ui/LangPill";
 import { Sheet } from "@/components/ui/Sheet";
 import { Icon } from "@/components/ui/Icon";
 import { Money } from "@/components/ui/Money";
-import { Ph, ProductArt } from "@/components/ui/ProductArt";
+import { Ph } from "@/components/ui/ProductArt";
+import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { Chip } from "@/components/ui/Chip";
 import { Label } from "@/components/ui/Primitives";
 import { LoadingScreen, ErrorState } from "@/components/ui/States";
-import { artOf, maisonOf, CATEGORIES, CATEGORY_META, categoryLabel } from "@/lib/enrich";
+import { artOf, maisonOf, CATEGORIES, categoryLabel, categoryOf } from "@/lib/enrich";
 import { usdc0 } from "@/lib/format";
 import type { AType, Category, VaultObject } from "@/types";
-
-// The single icon for an object: its explicit category if set, else inferred.
-function objectArt(o: VaultObject): string {
-  return o.category ? CATEGORY_META[o.category].art : artOf(o);
-}
 
 export function VaultPage() {
   const { t } = useI18n();
@@ -70,11 +66,11 @@ export function VaultPage() {
                   <div style={{ position: "relative", aspectRatio: mag ? "5 / 3" : "1 / 1", overflow: "hidden", background: "var(--bg-0)" }}>
                     {o.imageRefs && o.imageRefs.length > 0
                       ? <img src={o.imageRefs[0]} alt={maisonOf(o.title)} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                      : <Ph art={objectArt(o)} ratio={mag ? "5 / 3" : "1 / 1"} label={maisonOf(o.title)} />}
+                      : <Ph art={artOf(o)} ratio={mag ? "5 / 3" : "1 / 1"} label={maisonOf(o.title)} />}
                     <div style={{ position: "absolute", top: 8, insetInlineStart: 8 }}><Chip state={o.state} label={t(stateKey(o.state))} /></div>
                     {/* the object's category icon — the one icon shown everywhere */}
-                    <div style={{ position: "absolute", bottom: 8, insetInlineEnd: 8, width: 30, height: 30, borderRadius: "50%", background: "rgba(12,8,9,0.72)", border: "1px solid var(--gold-line)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                      <ProductArt cat={objectArt(o)} w="20px" />
+                    <div style={{ position: "absolute", bottom: 8, insetInlineEnd: 8, width: 30, height: 30, borderRadius: "50%", background: "rgba(12,8,9,0.72)", border: "1px solid var(--gold-line)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gold-pale)" }}>
+                      <CategoryIcon category={categoryOf(o)} size={18} />
                     </div>
                   </div>
                   <div style={{ padding: "10px 12px" }}>
@@ -171,8 +167,8 @@ function AddObjectSheet({ open, onClose }: { open: boolean; onClose: () => void 
         {CATEGORIES.map((c) => {
           const on = cat === c;
           return (
-            <button key={c} onClick={() => setCat(c)} style={{ cursor: "pointer", border: "1px solid", borderColor: on ? "var(--gold)" : "var(--line-strong)", borderRadius: "var(--r-2)", background: on ? "linear-gradient(120deg,var(--burg-deep),var(--bg-1))" : "var(--bg-0)", padding: "10px 6px", display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-              <div style={{ width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center" }}><ProductArt cat={CATEGORY_META[c].art} w="30px" /></div>
+            <button key={c} onClick={() => setCat(c)} style={{ cursor: "pointer", border: "1px solid", borderColor: on ? "var(--gold)" : "var(--line-strong)", borderRadius: "var(--r-2)", background: on ? "linear-gradient(120deg,var(--burg-deep),var(--bg-1))" : "var(--bg-0)", padding: "12px 6px", display: "flex", flexDirection: "column", alignItems: "center", gap: 7, color: on ? "var(--gold)" : "var(--fg-muted)" }}>
+              <CategoryIcon category={c} size={28} stroke={1.6} />
               <span style={{ fontSize: 10, color: on ? "var(--gold-pale)" : "var(--fg-muted)", textAlign: "center", lineHeight: 1.2 }}>{categoryLabel(c, lang)}</span>
             </button>
           );
