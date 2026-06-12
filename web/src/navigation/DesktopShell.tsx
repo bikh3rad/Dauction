@@ -7,10 +7,9 @@ import { AppRouter } from "./AppRouter";
 // Desktop nav mirrors the mobile bottom-nav tabs, but lives in a full-bleed
 // top bar. The routed screens themselves are reused unchanged inside a
 // centered phone-width frame (see desktop.css).
+// Just the gallery in the top nav — the Vault and Profile live in the user menu.
 const TABS = [
   { path: "/", icon: "layers", key: "nav_gallery", match: ["/", "/lot", "/auction", "/passive", "/escrow", "/bidstore"] },
-  { path: "/vault", icon: "package", key: "nav_closet", match: ["/vault"] },
-  { path: "/profile", icon: "user", key: "nav_profile", match: ["/profile", "/membership", "/account"] },
 ];
 
 export function DesktopShell() {

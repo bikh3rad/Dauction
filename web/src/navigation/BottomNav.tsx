@@ -2,10 +2,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Icon } from "@/components/ui/Icon";
 
+// The nav is just the gallery — the Vault and Profile live in the top-corner
+// user menu (UserChip), so the bottom of the screen stays focused on browsing.
 const TABS = [
   { path: "/", icon: "layers", key: "nav_gallery", match: ["/", "/lot", "/auction", "/passive", "/escrow", "/bidstore"] },
-  { path: "/vault", icon: "package", key: "nav_closet", match: ["/vault"] },
-  { path: "/profile", icon: "user", key: "nav_profile", match: ["/profile", "/membership", "/account"] },
 ];
 
 export function BottomNav() {

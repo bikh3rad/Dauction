@@ -31,12 +31,15 @@ export function GalleryPage() {
 
   const lots = data?.lots ?? [];
   const shown = useMemo(() => {
-    return lots.filter((l) => {
-      const v = toLotView(l);
-      if (filter === "live") return v.isLive;
-      if (filter === "upcoming") return !v.isLive;
-      return true;
-    });
+    // Live first: an open auction you can participate in (Dutch live or a timed
+    // passive auction accepting bids) sorts to the top of the list; upcoming
+    // (scheduled) lots follow, soonest first.
+    const rank = (v: ReturnType<typeof toLotView>) => (v.isLive ? 0 : v.isPassive ? 1 : 2);
+    return lots
+      .map((l) => ({ l, v: toLotView(l) }))
+      .filter(({ v }) => (filter === "live" ? v.isLive || v.isPassive : filter === "upcoming" ? !v.isLive && !v.isPassive : true))
+      .sort((a, b) => rank(a.v) - rank(b.v) || a.v.opensInSec - b.v.opensInSec)
+      .map(({ l }) => l);
   }, [lots, filter]);
 
   const supplyCap = data?.supplyCap ?? 32;
