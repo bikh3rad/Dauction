@@ -12,7 +12,8 @@ import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { Chip } from "@/components/ui/Chip";
 import { Label } from "@/components/ui/Primitives";
 import { LoadingScreen, ErrorState } from "@/components/ui/States";
-import { artOf, maisonOf, CATEGORIES, categoryLabel, categoryOf } from "@/lib/enrich";
+import { artOf, maisonOf, categoryOf } from "@/lib/enrich";
+import { useSettings } from "@/mock/settings";
 import { usdc0 } from "@/lib/format";
 import type { AType, Category, VaultObject } from "@/types";
 
@@ -111,6 +112,7 @@ export function VaultPage() {
 function stateKey(state: VaultObject["state"]): string {
   switch (state) {
     case "IN_VAULT": return "st_in_closet";
+    case "PENDING_INSPECTION": return "st_appraising";
     case "APPRAISING": return "st_appraising";
     case "IN_AUCTION": return "st_live";
     case "SOLD": case "BOUGHT_BACK": return "st_completed";
@@ -121,8 +123,9 @@ function stateKey(state: VaultObject["state"]): string {
 // AddObjectSheet — register a new object in the vault: maison + title, ONE
 // category (its icon), a declared value, and up to 7 images of the object.
 function AddObjectSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const add = useAddObject();
+  const cats = useSettings().categories.filter((c) => c.active); // admin-editable
   const [maison, setMaison] = useState("");
   const [title, setTitle] = useState("");
   const [cat, setCat] = useState<Category>("horology");
@@ -164,12 +167,13 @@ function AddObjectSheet({ open, onClose }: { open: boolean; onClose: () => void 
       {/* category — one icon per object, compatible with the type */}
       <Label>{t("add_category")}</Label>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(88px, 1fr))", gap: 8, marginBottom: 14 }}>
-        {CATEGORIES.map((c) => {
+        {cats.map((cc) => {
+          const c = cc.key;
           const on = cat === c;
           return (
             <button key={c} onClick={() => setCat(c)} style={{ cursor: "pointer", border: "1px solid", borderColor: on ? "var(--gold)" : "var(--line-strong)", borderRadius: "var(--r-2)", background: on ? "linear-gradient(120deg,var(--burg-deep),var(--bg-1))" : "var(--bg-0)", padding: "12px 6px", display: "flex", flexDirection: "column", alignItems: "center", gap: 7, color: on ? "var(--gold)" : "var(--fg-muted)" }}>
               <CategoryIcon category={c} size={28} stroke={1.6} />
-              <span style={{ fontSize: 10, color: on ? "var(--gold-pale)" : "var(--fg-muted)", textAlign: "center", lineHeight: 1.2 }}>{categoryLabel(c, lang)}</span>
+              <span style={{ fontSize: 10, color: on ? "var(--gold-pale)" : "var(--fg-muted)", textAlign: "center", lineHeight: 1.2 }}>{cc.label}</span>
             </button>
           );
         })}

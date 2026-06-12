@@ -66,7 +66,7 @@ export function AuthPage({ mode }: { mode: Mode }) {
     } catch { setErr(t("auth_err_oauth")); }
   };
 
-  const demoLogin = async (p: string) => { await demo.mutateAsync(p); nav("/"); };
+  const demoLogin = async (p: string) => { await demo.mutateAsync(p); nav(p === "inspector" ? "/inspector" : "/"); };
   const busy = requestOtp.isPending || checkOtp.isPending || verifyOtp.isPending || oauth.isPending;
 
   return (

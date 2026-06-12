@@ -50,6 +50,14 @@ export const auth = {
   demo: (profile: string) => Promise.resolve(mock.demoLogin(profile)),
 };
 
+// ---------- inspector (auditor) ----------
+import type { PendingInspection } from "@/mock/db";
+export const inspector = {
+  queue: () => Promise.resolve<PendingInspection[]>(mock.listInspections()),
+  approve: (id: string) => Promise.resolve(mock.approveInspection(id)),
+  reject: (id: string) => Promise.resolve(mock.rejectInspection(id)),
+};
+
 // ---------- catalog ----------
 export const catalog = {
   weekly: (week?: string) =>

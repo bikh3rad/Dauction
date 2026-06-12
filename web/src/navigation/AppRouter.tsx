@@ -12,6 +12,7 @@ import { BidStorePage } from "@/pages/BidStorePage";
 import { EscrowPage } from "@/pages/EscrowPage";
 import { VaultPage } from "@/pages/VaultPage";
 import { ProfilePage } from "@/pages/ProfilePage";
+import { InspectorPage } from "@/pages/InspectorPage";
 import { AdminPage } from "@/pages/admin/AdminPage";
 
 // App-like page transition: subtle slide + fade, swapped on path change.
@@ -63,6 +64,7 @@ export function AppRouter({ showNav = true }: { showNav?: boolean } = {}) {
               <Route path="/invite" element={<Navigate to="/login" replace />} />
               {/* identity check is sign-in itself (mobile SMS / social) — no document step */}
               <Route path="/kyc" element={<Navigate to="/login" replace />} />
+              <Route path="/inspector" element={<InspectorPage />} />
               <Route path="/admin" element={<AdminPage />} />
               <Route path="*" element={<GalleryPage />} />
             </Routes>

@@ -4,7 +4,8 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { LABELS, LANGS } from "@/i18n/locales";
 import { useSession } from "@/hooks/useSession";
 import { useWallet, useVault, useSignOut, useSetAvatar, useUpgradeMembership } from "@/hooks/queries";
-import { LEVELS, levelInfo, type MembershipLevel } from "@/lib/membership";
+import { getLevels, levelInfo, type MembershipLevel } from "@/lib/membership";
+import { useSettings } from "@/mock/settings";
 import { ScreenShell } from "@/components/ui/ScreenShell";
 import { TopBar } from "@/components/ui/TopBar";
 import { LangPill } from "@/components/ui/LangPill";
@@ -29,6 +30,8 @@ export function ProfilePage() {
   const upgrade = useUpgradeMembership();
   const fileRef = useRef<HTMLInputElement>(null);
   const [pay, setPay] = useState<MembershipLevel | null>(null);
+  useSettings(); // re-render when an admin edits the membership levels
+  const LEVELS = getLevels();
 
   if (isGuest) {
     return (
@@ -127,9 +130,6 @@ export function ProfilePage() {
           <div className="resp-cards" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <button className="btn btn-ghost" onClick={() => nav("/bidstore")}><Icon name="coins" size={16} /> {t("buy_bids")}</button>
             <button className="btn btn-ghost" onClick={() => nav("/vault")}><Icon name="package" size={16} /> {t("clo_title")}</button>
-            {(roles.includes("INSPECTOR") || roles.includes("ADMIN")) && (
-              <button className="btn btn-ghost" onClick={() => nav("/admin")}><Icon name="shield" size={16} /> {t("adm_title")}</button>
-            )}
           </div>
 
           <div style={{ display: "flex", gap: 8, marginTop: 20 }}>

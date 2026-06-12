@@ -10,7 +10,7 @@
    ============================================================ */
 
 import type {
-  Account, BidPackage, DutchAuction, Lot, PassiveAuction, Trade,
+  Account, BidPackage, Category, DutchAuction, Lot, PassiveAuction, Trade,
   VaultObject, Wallet,
 } from "@/types";
 
@@ -185,6 +185,75 @@ export function listFromObject(obj: VaultObject, atype: Lot["atype"], durationDa
     passiveSeed[lotId] = { closesInMs: (durationDays ?? 5) * 86400_000, participants: 1 };
   }
   return lot;
+}
+
+// ---- inspector queue: objects awaiting authenticity approval (§3.5) ----
+export interface PendingInspection {
+  id: string;
+  objectId: string;
+  ownerHandle: string;
+  title: string;          // full "Maison — Body" title
+  category?: Category;
+  imageRefs?: string[];
+  valueCents: number;
+  atype: Lot["atype"];
+  durationDays?: number;
+  submittedAt: string;
+}
+
+export const inspections: PendingInspection[] = [
+  { id: "insp-1", objectId: "obj-seed-1", ownerHandle: "@noor.auh", title: "Rolex — Submariner ‘Hulk’ 116610LV", category: "horology", valueCents: c(28000), atype: "DUTCH", submittedAt: iso(-3600_000) },
+  { id: "insp-2", objectId: "obj-seed-2", ownerHandle: "@sterling.ldn", title: "Hermès — Constance 18 — Rouge Casaque", category: "bag", valueCents: c(19500), atype: "VICKREY", durationDays: 5, submittedAt: iso(-7200_000) },
+];
+
+let inspSeq = 100;
+
+// submitForInspection enqueues a listed object for the Inspector.
+export function submitForInspection(obj: VaultObject, atype: Lot["atype"], durationDays?: number): PendingInspection {
+  // de-dup: drop any prior pending entry for this object
+  const stale = inspections.findIndex((i) => i.objectId === obj.id);
+  if (stale >= 0) inspections.splice(stale, 1);
+  const p: PendingInspection = {
+    id: `insp-${inspSeq++}`,
+    objectId: obj.id,
+    ownerHandle: `@${account.handle ?? "you"}`,
+    title: obj.title,
+    category: obj.category,
+    imageRefs: obj.imageRefs,
+    valueCents: obj.appraisedValueCents,
+    atype,
+    durationDays,
+    submittedAt: iso(0),
+  };
+  inspections.unshift(p);
+  return p;
+}
+
+// approveInspection publishes the pending object to the gallery and clears it.
+export function approveInspection(id: string): Lot | undefined {
+  const idx = inspections.findIndex((i) => i.id === id);
+  if (idx < 0) return undefined;
+  const p = inspections[idx];
+  const objLike: VaultObject = {
+    id: p.objectId, title: p.title, description: "", appraisedValueCents: p.valueCents,
+    state: "IN_VAULT", category: p.category, imageRefs: p.imageRefs,
+    createdAt: iso(0), updatedAt: iso(0),
+  };
+  const lot = listFromObject(objLike, p.atype, p.durationDays);
+  const owned = vault.objects.find((o) => o.id === p.objectId);
+  if (owned) { owned.state = "IN_AUCTION"; owned.updatedAt = iso(0); }
+  inspections.splice(idx, 1);
+  return lot;
+}
+
+// rejectInspection blocks the object (returns it to the owner's vault) and clears it.
+export function rejectInspection(id: string): void {
+  const idx = inspections.findIndex((i) => i.id === id);
+  if (idx < 0) return;
+  const p = inspections[idx];
+  const owned = vault.objects.find((o) => o.id === p.objectId);
+  if (owned) { owned.state = "IN_VAULT"; owned.updatedAt = iso(0); }
+  inspections.splice(idx, 1);
 }
 
 // deterministic competing prices (cents) for a UniqBid/Vickrey lot, so standing feels alive

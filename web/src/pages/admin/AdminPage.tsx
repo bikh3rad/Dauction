@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Icon } from "@/components/ui/Icon";
-import { Overview, Auctions, Accounts, Memberships, Vaults, Escrow } from "./sections";
+import { Overview, Auctions, Accounts, Escrow } from "./sections";
+import { Settings, Inspections } from "./SettingsSection";
 
 // Admin route protection. Dev-only Basic credential check (admin/admin) gating
 // the console; the auth flag is held for the session. Production replaces this
@@ -57,8 +58,8 @@ function AdminLogin({ onAuthed }: { onAuthed: () => void }) {
 // reached via /admin. Sections mirror the prototype's admin.jsx, expanded with
 // auction control, account management, memberships and member-vault views.
 
-type SectionKey = "overview" | "auctions" | "accounts" | "memberships" | "vaults" | "escrow";
-const SECTIONS: SectionKey[] = ["overview", "auctions", "accounts", "memberships", "vaults", "escrow"];
+type SectionKey = "overview" | "users" | "inspections" | "auctions" | "escrow" | "settings";
+const SECTIONS: SectionKey[] = ["overview", "users", "inspections", "auctions", "escrow", "settings"];
 
 export function AdminPage() {
   const { t } = useI18n();
@@ -73,11 +74,11 @@ export function AdminPage() {
 
   const navItems: { k: SectionKey; icon: string; label: string }[] = [
     { k: "overview", icon: "grid", label: t("adm_overview") },
+    { k: "users", icon: "users", label: t("adm_accounts") },
+    { k: "inspections", icon: "shield", label: t("insp_title") },
     { k: "auctions", icon: "gavel", label: t("adm_auctions") },
-    { k: "accounts", icon: "users", label: t("adm_accounts") },
-    { k: "memberships", icon: "shield", label: t("adm_memberships") },
-    { k: "vaults", icon: "package", label: t("adm_vaults") },
     { k: "escrow", icon: "scale", label: t("adm_escrow") },
+    { k: "settings", icon: "package", label: t("adm_settings") },
   ];
 
   return (
@@ -113,11 +114,11 @@ export function AdminPage() {
         {/* content */}
         <div style={{ flex: 1, overflow: "auto", padding: "28px 32px" }}>
           {sec === "overview" && <Overview go={(s) => setSec(s as SectionKey)} />}
+          {sec === "users" && <Accounts />}
+          {sec === "inspections" && <Inspections />}
           {sec === "auctions" && <Auctions />}
-          {sec === "accounts" && <Accounts />}
-          {sec === "memberships" && <Memberships />}
-          {sec === "vaults" && <Vaults />}
           {sec === "escrow" && <Escrow />}
+          {sec === "settings" && <Settings />}
         </div>
       </div>
     </div>

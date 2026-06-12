@@ -33,7 +33,7 @@ export function Overview({ go }: { go: (s: string) => void }) {
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 20 }}>
         <div>
-          <div className="mono up" style={{ fontSize: 10, color: "var(--gold)", marginBottom: 10, cursor: "pointer" }} onClick={() => go("accounts")}>{t("adm_accounts")} ↗</div>
+          <div className="mono up" style={{ fontSize: 10, color: "var(--gold)", marginBottom: 10, cursor: "pointer" }} onClick={() => go("users")}>{t("adm_accounts")} ↗</div>
           <DTable cols={[{ label: t("adm_account") }, { label: t("adm_tier") }, { label: t("adm_roles") || "Roles", end: true }]}>
             {accounts.slice(0, 4).map((a) => (
               <tr key={a.id}>

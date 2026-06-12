@@ -3,6 +3,7 @@
 // difference. Mutations persist for the session.
 
 import * as db from "./db";
+import { getSettings } from "./settings";
 import { currentAccount, setSession } from "@/auth/session";
 import type {
   Account, BidPackage, BuyBidsResp, BuybackResp, ConfirmReq, DutchAuction,
@@ -142,7 +143,7 @@ export function upgradeMembership(level: number): Account {
 
 // ---- catalog ----
 export function galleryWeekly(): WeeklyGallery {
-  return { week: db.WEEK, supplyCap: 32, lots: db.lots.map((l) => ({ ...l })) };
+  return { week: db.WEEK, supplyCap: getSettings().economics.weeklyCap, lots: db.lots.map((l) => ({ ...l })) };
 }
 export function lotDetail(id: string): LotDetail {
   const lot = db.lots.find((l) => l.id === id);
@@ -235,10 +236,10 @@ export function getWallet(): Wallet {
   return { ...db.wallet, purchases: [...db.wallet.purchases], debits: [...db.wallet.debits] };
 }
 export function getPackages(): BidPackage[] {
-  return db.packages.map((p) => ({ ...p }));
+  return getSettings().packages.map((p) => ({ ...p })); // editable in the admin panel
 }
 export function buyBids(packageId: string): BuyBidsResp {
-  const pkg = db.packages.find((p) => p.id === packageId);
+  const pkg = getSettings().packages.find((p) => p.id === packageId);
   if (!pkg) throw { message: "unknown package", code: "404" };
   db.wallet.balanceCredits += pkg.credits;
   db.wallet.purchases.push({ id: uid("pur"), packageId: pkg.id, creditsGranted: pkg.credits, usdcChargedCents: pkg.priceCents, createdAt: new Date().toISOString() });
@@ -268,17 +269,32 @@ export function addObject(req: import("@/types").CreateObjectReq): VaultObject {
 export function listObject(id: string, atype: AType, durationDays?: number) {
   const obj = db.vault.objects.find((o) => o.id === id);
   if (!obj) throw { message: "object not found", code: "404" };
-  // Publish a live gallery lot from this object (carries its category icon +
-  // photos), and mark the object as in-auction.
-  db.listFromObject(obj, atype, durationDays);
-  obj.state = "IN_AUCTION";
+  // Listing submits the object to the Inspector queue — it only reaches the
+  // public gallery after an Inspector approves its authenticity (§3.5).
+  db.submitForInspection(obj, atype, durationDays);
+  obj.state = "PENDING_INSPECTION";
   obj.updatedAt = new Date().toISOString();
   return { ...obj };
+}
+
+// ---- inspector (auditor) ----
+export function listInspections() {
+  return db.inspections.map((i) => ({ ...i }));
+}
+export function approveInspection(id: string): { ok: boolean } {
+  db.approveInspection(id); // publishes the gallery lot + clears the queue item
+  return { ok: true };
+}
+export function rejectInspection(id: string): { ok: boolean } {
+  db.rejectInspection(id);
+  return { ok: true };
 }
 export function buyback(id: string, mode: BuybackMode): BuybackResp {
   const obj = db.vault.objects.find((o) => o.id === id);
   if (!obj) throw { message: "object not found", code: "404" };
-  const payout = Math.round(obj.appraisedValueCents * (mode === "CASH" ? 0.5 : 0.85));
+  const econ = getSettings().economics;
+  const pct = (mode === "CASH" ? econ.buybackCashPct : econ.buybackCreditPct) / 100;
+  const payout = Math.round(obj.appraisedValueCents * pct);
   obj.state = "BOUGHT_BACK";
   obj.updatedAt = new Date().toISOString();
   if (mode === "CREDIT") db.vault.creditBalanceCents += payout;

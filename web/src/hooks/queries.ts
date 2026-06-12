@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  auth, bids, catalog, dutch, escrow, invite, kyc, passive, profile, vault,
+  auth, bids, catalog, dutch, escrow, inspector, invite, kyc, passive, profile, vault,
 } from "@/services";
 import { signOut as clearSession } from "@/auth/session";
 import type { AType, BuybackMode, CreateObjectReq, DocType, OAuthProvider, ReleaseMode } from "@/types";
@@ -67,6 +67,23 @@ export function useSignOut() {
     mutationFn: async () => { clearSession(); },
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.me }),
   });
+}
+
+// ---------------- inspector (auditor) ----------------
+export const qkInspections = ["inspections"] as const;
+export function useInspections() {
+  return useQuery({ queryKey: qkInspections, queryFn: inspector.queue });
+}
+export function useInspect() {
+  const qc = useQueryClient();
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: qkInspections });
+    qc.invalidateQueries({ queryKey: ["gallery"] });
+    qc.invalidateQueries({ queryKey: qk.vault });
+  };
+  const approve = useMutation({ mutationFn: (id: string) => inspector.approve(id), onSuccess: invalidate });
+  const reject = useMutation({ mutationFn: (id: string) => inspector.reject(id), onSuccess: invalidate });
+  return { approve, reject };
 }
 
 // ---------------- membership (paid leveling) ----------------
