@@ -13,36 +13,41 @@ import type {
   RequestOtpResp, SessionResp, OAuthProvider, CreateObjectReq,
 } from "@/types";
 
-// ---------- identity ----------
-export const identity = {
+// ---------- profile (account + membership, merged into one service) ----------
+export const profile = {
   me: () => withFallback<Account>(() => get("/me"), mock.me),
+  upgrade: (level: number) =>
+    withFallback<Account>(() => post("/membership/upgrade", { level }), () => mock.upgradeMembership(level)),
+  setAvatar: (dataUrl: string) => Promise.resolve(mock.updateAvatar(dataUrl)),
 };
 
-// ---------- auth (mobile OTP + social OAuth) ----------
+// ---------- auth (mobile OTP + social OAuth + 2-step register wizard) ----------
 export const auth = {
   requestOtp: (mobileE164: string, purpose = "SIGNUP") =>
     withFallback<RequestOtpResp>(
       () => post("/auth/otp/request", { mobileE164, purpose }),
       () => mock.requestOtp(mobileE164, purpose),
     ),
+  // register wizard step 1: verify the mobile code without creating the account.
+  checkOtp: (mobileE164: string, code: string) =>
+    withFallback<{ ok: boolean }>(
+      () => post("/auth/otp/check", { mobileE164, code }),
+      () => mock.checkOtp(mobileE164, code),
+    ),
   verifyOtp: (mobileE164: string, code: string, handle?: string) =>
     withFallback<SessionResp>(
       () => post("/auth/otp/verify", { mobileE164, code, handle }),
       () => mock.verifyOtp(mobileE164, code, handle),
     ),
-  oauth: (provider: OAuthProvider) =>
+  // register wizard step 2 (and one-tap social login): connect Google/Facebook,
+  // which supplies the profile image. opts carries the verified mobile + name.
+  oauth: (provider: OAuthProvider, opts?: { mobile?: string; name?: string }) =>
     withFallback<SessionResp>(
       () => get(`/auth/oauth/${provider.toLowerCase()}/callback`, { params: { code: "demo" } }),
-      () => mock.oauthLogin(provider),
+      () => mock.oauthLogin(provider, opts),
     ),
   // Demo profiles (member / gold / platinum / inspector) — mock-only convenience.
   demo: (profile: string) => Promise.resolve(mock.demoLogin(profile)),
-};
-
-// ---------- membership (paid leveling) ----------
-export const membership = {
-  upgrade: (level: number) =>
-    withFallback<Account>(() => post("/membership/upgrade", { level }), () => mock.upgradeMembership(level)),
 };
 
 // ---------- catalog ----------

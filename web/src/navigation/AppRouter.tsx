@@ -11,8 +11,7 @@ import { PassivePage } from "@/pages/PassivePage";
 import { BidStorePage } from "@/pages/BidStorePage";
 import { EscrowPage } from "@/pages/EscrowPage";
 import { VaultPage } from "@/pages/VaultPage";
-import { MembershipPage } from "@/pages/MembershipPage";
-import { AccountPage } from "@/pages/AccountPage";
+import { ProfilePage } from "@/pages/ProfilePage";
 import { AdminPage } from "@/pages/admin/AdminPage";
 
 // App-like page transition: subtle slide + fade, swapped on path change.
@@ -56,8 +55,10 @@ export function AppRouter({ showNav = true }: { showNav?: boolean } = {}) {
               <Route path="/bidstore" element={<BidStorePage />} />
               <Route path="/escrow/:id" element={<EscrowPage />} />
               <Route path="/vault" element={<VaultPage />} />
-              <Route path="/membership" element={<MembershipPage />} />
-              <Route path="/account" element={<AccountPage />} />
+              {/* account + membership merged into one Profile view */}
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/membership" element={<Navigate to="/profile" replace />} />
+              <Route path="/account" element={<Navigate to="/profile" replace />} />
               {/* invite system removed — any lingering link lands on sign-in */}
               <Route path="/invite" element={<Navigate to="/login" replace />} />
               {/* identity check is sign-in itself (mobile SMS / social) — no document step */}

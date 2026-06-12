@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Icon } from "@/components/ui/Icon";
+import { UserChip } from "@/components/ui/UserChip";
 import { AppRouter } from "./AppRouter";
 
 // Desktop nav mirrors the mobile bottom-nav tabs, but lives in a full-bleed
@@ -9,8 +10,7 @@ import { AppRouter } from "./AppRouter";
 const TABS = [
   { path: "/", icon: "layers", key: "nav_gallery", match: ["/", "/lot", "/auction", "/passive", "/escrow", "/bidstore"] },
   { path: "/vault", icon: "package", key: "nav_closet", match: ["/vault"] },
-  { path: "/membership", icon: "crown", key: "nav_membership", match: ["/membership"] },
-  { path: "/account", icon: "user", key: "nav_account", match: ["/account"] },
+  { path: "/profile", icon: "user", key: "nav_profile", match: ["/profile", "/membership", "/account"] },
 ];
 
 export function DesktopShell() {
@@ -43,6 +43,8 @@ export function DesktopShell() {
             </button>
           ))}
         </div>
+        <div style={{ flex: 1 }} />
+        <UserChip />
       </header>
       <main className="desk-main">
         <div className={`desk-center ${wide ? "wide" : "readable"}`}>

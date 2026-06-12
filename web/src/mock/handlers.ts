@@ -29,10 +29,40 @@ export function requestOtp(_mobile: string, _purpose?: string): RequestOtpResp {
 // verifyOtp signs the user in by mobile number. In this product, verifying the
 // SMS code IS the identity check — the account is verified (MEMBER) immediately;
 // there is no separate document/KYC step.
-function newMember(mobile: string, handle = ""): Account {
+// Usernames are unique. A few are reserved (the seeded admin accounts) so demo
+// users never collide with them; mkUsername slugifies a base and appends a
+// counter until free.
+const usedUsernames = new Set<string>(["aurelia.dxb", "noor.auh", "khalid.vip", "admin"]);
+function mkUsername(base: string): string {
+  const slug = (base || "member").toLowerCase().trim()
+    .replace(/[^a-z0-9._]+/g, "_").replace(/^[._]+|[._]+$/g, "").slice(0, 20) || "member";
+  let name = slug, i = 1;
+  while (usedUsernames.has(name)) name = `${slug}_${i++}`;
+  usedUsernames.add(name);
+  return name;
+}
+
+// avatarFor returns a deterministic profile image (an inline SVG data URL with a
+// gradient + initial). In a real integration the Google/Facebook userinfo call
+// returns the provider's picture URL; here we synthesise one so it works offline.
+function avatarFor(seed: string, provider?: OAuthProvider): string {
+  const initial = (seed.trim()[0] || "U").toUpperCase();
+  const h = [...seed].reduce((a, ch) => a + ch.charCodeAt(0), provider === "FACEBOOK" ? 210 : provider === "GOOGLE" ? 8 : 0) % 360;
+  const svg =
+    `<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'>` +
+    `<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>` +
+    `<stop offset='0' stop-color='hsl(${h},58%,46%)'/><stop offset='1' stop-color='hsl(${(h + 38) % 360},58%,30%)'/>` +
+    `</linearGradient></defs><rect width='120' height='120' rx='16' fill='url(#g)'/>` +
+    `<text x='50%' y='55%' font-size='58' fill='white' font-family='sans-serif' font-weight='600' text-anchor='middle' dominant-baseline='middle'>${initial}</text></svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+function newMember(mobile: string, usernameBase: string, avatarUrl?: string): Account {
+  const handle = mkUsername(usernameBase);
   return {
     id: uid("acc"),
     handle,
+    avatarUrl: avatarUrl ?? avatarFor(handle),
     tier: "MEMBER",
     kycStatus: "APPROVED",
     eligible: true,
@@ -45,38 +75,52 @@ function newMember(mobile: string, handle = ""): Account {
   };
 }
 
+// checkOtp validates a code WITHOUT creating the account — used by step 1 of the
+// registration wizard (mobile verification before connecting a social account).
+export function checkOtp(_mobile: string, code: string): { ok: boolean } {
+  if (!code || code.length < 4) throw { message: "invalid code", code: "RESOURCE_INVALID" };
+  return { ok: true };
+}
+
 export function verifyOtp(mobile: string, code: string, handle = ""): SessionResp {
   if (!code || code.length < 4) throw { message: "invalid code", code: "RESOURCE_INVALID" };
-  const account = newMember(mobile, handle);
+  // Register supplies a name -> username; bare login derives one from the number.
+  const account = newMember(mobile, handle || `user_${mobile.replace(/\D/g, "").slice(-4)}`);
   setSession(account);
   return { token: account.id, created: true, account };
 }
 
-// oauthLogin signs the user in via a social provider. Social sign-in is a
-// complete identity check — the account is verified (MEMBER) immediately.
-export function oauthLogin(provider: OAuthProvider): SessionResp {
-  const account = newMember("");
+// oauthLogin signs the user in via a social provider. The provider supplies the
+// profile image. In the registration wizard, opts carries the already-verified
+// mobile + chosen name so the new account is fully populated.
+export function oauthLogin(provider: OAuthProvider, opts?: { mobile?: string; name?: string }): SessionResp {
+  const base = opts?.name?.trim() || `${provider.toLowerCase()}_user`;
+  const account = newMember(opts?.mobile ?? "", base, avatarFor(opts?.name?.trim() || provider, provider));
   setSession(account);
   return { token: account.id, created: true, account };
+}
+
+// updateAvatar sets an uploaded profile image on the session account.
+export function updateAvatar(dataUrl: string): Account {
+  const acc = currentAccount();
+  if (acc.id === "guest") throw { message: "sign in first", code: "ACCESS_DENIED" };
+  const next = { ...acc, avatarUrl: dataUrl, updatedAt: new Date().toISOString() };
+  setSession(next);
+  return next;
 }
 
 // demoLogin signs in as a ready-made profile so the demo can be explored at any
 // membership level or as an inspector/auditor, without an SMS/OAuth round-trip.
 export function demoLogin(profile: string): SessionResp {
-  const acc = newMember("+10000000000", "");
-  switch (profile) {
-    case "gold":
-      Object.assign(acc, { handle: "Gold Member", membershipLevel: 2, tier: "VIP" });
-      break;
-    case "platinum":
-      Object.assign(acc, { handle: "Platinum Member", membershipLevel: 3, tier: "VIP" });
-      break;
-    case "inspector":
-      Object.assign(acc, { handle: "Inspector (Auditor)", roles: ["INSPECTOR"] });
-      break;
-    default:
-      Object.assign(acc, { handle: "Member" }); // standard, Level 1
-  }
+  const cfg: Record<string, Partial<Account>> = {
+    gold: { handle: "gold_demo", membershipLevel: 2, tier: "VIP" },
+    platinum: { handle: "platinum_demo", membershipLevel: 3, tier: "VIP" },
+    inspector: { handle: "inspector_demo", roles: ["INSPECTOR"] },
+    member: { handle: "member_demo" },
+  };
+  const patch = cfg[profile] ?? cfg.member;
+  const acc = newMember("+10000000000", patch.handle!, avatarFor(patch.handle!));
+  Object.assign(acc, patch);
   setSession(acc);
   return { token: acc.id, created: false, account: acc };
 }

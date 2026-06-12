@@ -116,3 +116,7 @@
 
 /* shared key/value table tweak used by desktop lot details */
 .desk-main .kv .v { max-width: 280px; }
+
+/* On desktop the desk-nav carries the user chip, so hide the per-page TopBar one. */
+.desk-stage .tb-user { display: none; }
+.desk-nav .user-chip { margin-inline-start: 8px; }

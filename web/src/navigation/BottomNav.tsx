@@ -5,8 +5,7 @@ import { Icon } from "@/components/ui/Icon";
 const TABS = [
   { path: "/", icon: "layers", key: "nav_gallery", match: ["/", "/lot", "/auction", "/passive", "/escrow", "/bidstore"] },
   { path: "/vault", icon: "package", key: "nav_closet", match: ["/vault"] },
-  { path: "/membership", icon: "crown", key: "nav_membership", match: ["/membership"] },
-  { path: "/account", icon: "user", key: "nav_account", match: ["/account"] },
+  { path: "/profile", icon: "user", key: "nav_profile", match: ["/profile", "/membership", "/account"] },
 ];
 
 export function BottomNav() {
@@ -34,5 +33,5 @@ export function BottomNav() {
 
 // Whether the bottom nav should show for a given path (tab roots only).
 export function showBottomNav(pathname: string): boolean {
-  return ["/", "/vault", "/membership", "/account"].includes(pathname);
+  return ["/", "/vault", "/profile"].includes(pathname);
 }

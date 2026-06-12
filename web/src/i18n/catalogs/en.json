@@ -1,4 +1,12 @@
 {
+  "nav_profile": "Profile",
+  "auth_step_mobile": "Verify mobile",
+  "auth_step_connect": "Connect account",
+  "auth_mobile_verified": "Mobile verified",
+  "auth_connect_body": "Connect a social account to finish — it sets your profile photo.",
+  "auth_connect_google": "Connect Google",
+  "auth_connect_facebook": "Connect Facebook",
+  "acc_change_photo": "Change photo",
   "auth_login_title": "Welcome back",
   "auth_login_sub": "Sign in to your account",
   "auth_register_title": "Create your account",

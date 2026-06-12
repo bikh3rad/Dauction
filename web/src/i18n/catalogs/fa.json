@@ -1,4 +1,12 @@
 {
+  "nav_profile": "پروفایل",
+  "auth_step_mobile": "تأیید موبایل",
+  "auth_step_connect": "اتصال حساب",
+  "auth_mobile_verified": "موبایل تأیید شد",
+  "auth_connect_body": "برای تکمیل، یک حساب اجتماعی متصل کنید — تصویر پروفایل شما را تنظیم می‌کند.",
+  "auth_connect_google": "اتصال گوگل",
+  "auth_connect_facebook": "اتصال فیس‌بوک",
+  "acc_change_photo": "تغییر تصویر",
   "auth_login_title": "خوش آمدید",
   "auth_login_sub": "به حساب خود وارد شوید",
   "auth_register_title": "ساخت حساب کاربری",

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Icon } from "./Icon";
+import { UserChip } from "./UserChip";
 import { iconBtnStyle } from "./Primitives";
 
 // Sticky frosted header. A back chevron (when onBack given) else the house crown.
@@ -40,6 +41,9 @@ export function TopBar({
           <div className="serif" style={{ fontSize: 19, lineHeight: 1.1, color: "var(--fg)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{title}</div>
         </div>
         {right}
+        {/* the user's @username lives in the top corner (hidden on desktop, where
+            the desk-nav carries it instead) */}
+        <span className="tb-user"><UserChip compact /></span>
       </div>
     </div>
   );

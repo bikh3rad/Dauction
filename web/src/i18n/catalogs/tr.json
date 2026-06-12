@@ -1,4 +1,12 @@
 {
+  "nav_profile": "Profil",
+  "auth_step_mobile": "Telefonu doğrula",
+  "auth_step_connect": "Hesabı bağla",
+  "auth_mobile_verified": "Telefon doğrulandı",
+  "auth_connect_body": "Tamamlamak için bir sosyal hesap bağlayın — profil fotoğrafınızı ayarlar.",
+  "auth_connect_google": "Google'ı bağla",
+  "auth_connect_facebook": "Facebook'u bağla",
+  "acc_change_photo": "Fotoğrafı değiştir",
   "auth_login_title": "Tekrar hoş geldiniz",
   "auth_login_sub": "Hesabınıza giriş yapın",
   "auth_register_title": "Hesabınızı oluşturun",

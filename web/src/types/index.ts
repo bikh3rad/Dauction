@@ -99,8 +99,10 @@ export interface Account {
   eligible: boolean;
   createdAt: string;
   updatedAt: string;
-  /** Display name chosen at registration (optional). */
+  /** Unique username (shown in the top corner; @handle). */
   handle?: string;
+  /** Profile image — uploaded, or from the connected Google/Facebook account. */
+  avatarUrl?: string;
   /** Elevated functional roles (USER is implicit). */
   roles?: Role[];
   status?: AccountStatus;

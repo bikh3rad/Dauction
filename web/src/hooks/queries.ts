@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  auth, bids, catalog, dutch, escrow, identity, invite, kyc, membership, passive, vault,
+  auth, bids, catalog, dutch, escrow, invite, kyc, passive, profile, vault,
 } from "@/services";
 import { signOut as clearSession } from "@/auth/session";
 import type { AType, BuybackMode, CreateObjectReq, DocType, OAuthProvider, ReleaseMode } from "@/types";
@@ -20,14 +20,24 @@ export const qk = {
   trade: (id: string) => ["trade", id] as const,
 };
 
-// ---------------- identity ----------------
+// ---------------- profile (account + membership) ----------------
 export function useAccount() {
-  return useQuery({ queryKey: qk.me, queryFn: identity.me, staleTime: 30_000 });
+  return useQuery({ queryKey: qk.me, queryFn: profile.me, staleTime: 30_000 });
+}
+export function useSetAvatar() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (dataUrl: string) => profile.setAvatar(dataUrl),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.me }),
+  });
 }
 
 // ---------------- auth (mobile OTP + OAuth) ----------------
 export function useRequestOtp() {
   return useMutation({ mutationFn: (mobile: string) => auth.requestOtp(mobile) });
+}
+export function useCheckOtp() {
+  return useMutation({ mutationFn: (v: { mobile: string; code: string }) => auth.checkOtp(v.mobile, v.code) });
 }
 export function useVerifyOtp() {
   const qc = useQueryClient();
@@ -39,7 +49,8 @@ export function useVerifyOtp() {
 export function useOAuthLogin() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (provider: OAuthProvider) => auth.oauth(provider),
+    mutationFn: (v: { provider: OAuthProvider; mobile?: string; name?: string }) =>
+      auth.oauth(v.provider, { mobile: v.mobile, name: v.name }),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.me }),
   });
 }
@@ -62,7 +73,7 @@ export function useSignOut() {
 export function useUpgradeMembership() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (level: number) => membership.upgrade(level),
+    mutationFn: (level: number) => profile.upgrade(level),
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.me }),
   });
 }

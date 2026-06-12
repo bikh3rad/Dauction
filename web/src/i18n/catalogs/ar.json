@@ -1,4 +1,12 @@
 {
+  "nav_profile": "الملف الشخصي",
+  "auth_step_mobile": "تأكيد الجوال",
+  "auth_step_connect": "ربط حساب",
+  "auth_mobile_verified": "تم تأكيد الجوال",
+  "auth_connect_body": "اربط حسابًا اجتماعيًا لإكمال التسجيل — سيحدّد صورة ملفك.",
+  "auth_connect_google": "ربط Google",
+  "auth_connect_facebook": "ربط Facebook",
+  "acc_change_photo": "تغيير الصورة",
   "auth_login_title": "مرحبًا بعودتك",
   "auth_login_sub": "سجّل الدخول إلى حسابك",
   "auth_register_title": "أنشئ حسابك",
