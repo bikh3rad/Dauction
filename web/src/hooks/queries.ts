@@ -180,6 +180,13 @@ export function useAddObject() {
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.vault }),
   });
 }
+export function useUpdateObject() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (v: { id: string; req: CreateObjectReq }) => vault.update(v.id, v.req),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.vault }),
+  });
+}
 export function useListObject() {
   const qc = useQueryClient();
   return useMutation({

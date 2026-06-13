@@ -11,6 +11,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Seal } from "@/components/ui/Seal";
 import { Ph } from "@/components/ui/ProductArt";
 import { Chip } from "@/components/ui/Chip";
+import { AuctionStatusGuide } from "@/components/ui/AuctionStatusGuide";
 import { MiniStat } from "@/components/ui/Primitives";
 import { LoadingScreen, ErrorState } from "@/components/ui/States";
 import { useLot } from "@/hooks/queries";
@@ -185,6 +186,7 @@ export function AuctionPage() {
             </div>
             {RoomBar}
           </div>
+          <div style={{ padding: "22px 20px 30px" }}><AuctionStatusGuide /></div>
         </div>
       </ScreenShell>
 

@@ -102,6 +102,8 @@ export const vault = {
   view: () => withFallback<VaultView>(() => get("/vault"), mock.getVault),
   add: (req: CreateObjectReq) =>
     withFallback<VaultObject>(() => post("/vault/objects", req), () => mock.addObject(req)),
+  update: (id: string, req: CreateObjectReq) =>
+    withFallback<VaultObject>(() => post(`/vault/objects/${id}`, req), () => mock.updateObject(id, req)),
   list: (id: string, atype: AType, durationDays?: number) =>
     withFallback<VaultObject>(
       () => post(`/vault/objects/${id}/list`, { atype, durationDays }),

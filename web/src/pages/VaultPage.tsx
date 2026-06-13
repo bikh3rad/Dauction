@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useI18n } from "@/i18n/I18nProvider";
-import { useAddObject, useBuyback, useListObject, useVault } from "@/hooks/queries";
+import { useAddObject, useUpdateObject, useBuyback, useListObject, useVault } from "@/hooks/queries";
 import { ScreenShell } from "@/components/ui/ScreenShell";
 import { TopBar } from "@/components/ui/TopBar";
 import { LangPill } from "@/components/ui/LangPill";
@@ -23,7 +23,8 @@ export function VaultPage() {
   const [bb, setBb] = useState<VaultObject | null>(null);
   const [listItem, setListItem] = useState<VaultObject | null>(null);
   const [listed, setListed] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
+  // null = closed; { editing } = open (editing an object, or null to add a new one)
+  const [sheet, setSheet] = useState<{ editing: VaultObject | null } | null>(null);
   const [mag] = useState(false);
 
   if (isLoading) return <ScreenShell top={<TopBar title={t("clo_title")} right={<LangPill />} />}><LoadingScreen /></ScreenShell>;
@@ -62,9 +63,11 @@ export function VaultPage() {
           <div style={{ display: "grid", gridTemplateColumns: mag ? "1fr" : "1fr 1fr", gap: 12 }}>
             {objs.map((o) => {
               const inVault = o.state === "IN_VAULT";
+              const editable = o.state === "PENDING_INSPECTION" || o.state === "IN_VAULT";
+              const openEdit = editable ? () => setSheet({ editing: o }) : undefined;
               return (
                 <div key={o.id} className="fade-up" style={{ background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-2)", overflow: "hidden" }}>
-                  <div style={{ position: "relative", aspectRatio: mag ? "5 / 3" : "1 / 1", overflow: "hidden", background: "var(--bg-0)" }}>
+                  <div onClick={openEdit} style={{ position: "relative", aspectRatio: mag ? "5 / 3" : "1 / 1", overflow: "hidden", background: "var(--bg-0)", cursor: editable ? "pointer" : "default" }}>
                     {o.imageRefs && o.imageRefs.length > 0
                       ? <img src={o.imageRefs[0]} alt={maisonOf(o.title)} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                       : <Ph art={artOf(o)} ratio={mag ? "5 / 3" : "1 / 1"} label={maisonOf(o.title)} />}
@@ -73,9 +76,14 @@ export function VaultPage() {
                     <div style={{ position: "absolute", bottom: 8, insetInlineEnd: 8, width: 30, height: 30, borderRadius: "50%", background: "rgba(12,8,9,0.72)", border: "1px solid var(--gold-line)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gold-pale)" }}>
                       <CategoryIcon category={categoryOf(o)} size={18} />
                     </div>
+                    {editable && (
+                      <div style={{ position: "absolute", bottom: 8, insetInlineStart: 8, width: 30, height: 30, borderRadius: "50%", background: "rgba(12,8,9,0.72)", border: "1px solid var(--gold-line)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gold-pale)" }}>
+                        <Icon name="edit" size={15} />
+                      </div>
+                    )}
                   </div>
                   <div style={{ padding: "10px 12px" }}>
-                    <div className="serif" style={{ fontSize: 13.5, color: "var(--fg)", marginBottom: 4, lineHeight: 1.2 }}>{o.title.split(/\s+[—–-]\s+/).slice(1).join(" — ") || o.title}</div>
+                    <div onClick={openEdit} className="serif" style={{ fontSize: 13.5, color: "var(--fg)", marginBottom: 4, lineHeight: 1.2, cursor: editable ? "pointer" : "default" }}>{o.title.split(/\s+[—–-]\s+/).slice(1).join(" — ") || o.title}</div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
                       <Money cents={o.appraisedValueCents} withCents={false} gold />
                       {inVault ? (
@@ -95,13 +103,16 @@ export function VaultPage() {
             })}
           </div>
 
-          <button onClick={() => setAddOpen(true)} className="btn btn-ghost" style={{ width: "100%", margin: "16px 0", borderStyle: "dashed", borderColor: "var(--gold-line)", color: "var(--gold-pale)" }}>
+          <button onClick={() => setSheet({ editing: null })} className="btn btn-ghost" style={{ width: "100%", margin: "16px 0", borderStyle: "dashed", borderColor: "var(--gold-line)", color: "var(--gold-pale)" }}>
             <Icon name="plus" size={18} /> {t("clo_add")}
           </button>
+          <div className="mono up" style={{ fontSize: 9, color: "var(--fg-faint)", textAlign: "center", marginTop: -4, marginBottom: 14 }}>{t("clo_edit_hint")}</div>
+
+          <VaultStatusGuide />
         </div>
       </ScreenShell>
 
-      <AddObjectSheet open={addOpen} onClose={() => setAddOpen(false)} />
+      {sheet && <ObjectSheet open onClose={() => setSheet(null)} editing={sheet.editing} key={sheet.editing?.id ?? "new"} />}
       <BuybackSheet item={bb} onClose={() => setBb(null)} />
       <ListToAuctionSheet item={listItem} onClose={() => setListItem(null)} onSubmitted={() => { setListItem(null); setListed(true); setTimeout(() => setListed(false), 2200); }} />
       {listed && (
@@ -126,19 +137,20 @@ function stateKey(state: VaultObject["state"]): string {
   }
 }
 
-// AddObjectSheet — register a new object in the vault: maison + title, ONE
-// category (its icon), a declared value, and up to 7 images of the object.
-function AddObjectSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+// ObjectSheet — add a new vault object, or edit an existing one: maison + title,
+// ONE category (its icon), a declared value, and up to 7 images.
+function ObjectSheet({ open, onClose, editing }: { open: boolean; onClose: () => void; editing?: VaultObject | null }) {
   const { t } = useI18n();
   const add = useAddObject();
+  const update = useUpdateObject();
   const cats = useSettings().categories.filter((c) => c.active); // admin-editable
-  const [maison, setMaison] = useState("");
-  const [title, setTitle] = useState("");
-  const [cat, setCat] = useState<Category>("horology");
-  const [value, setValue] = useState("");
-  const [images, setImages] = useState<string[]>([]);
+  const isEdit = !!editing;
+  const [maison, setMaison] = useState(editing ? maisonOf(editing.title) : "");
+  const [title, setTitle] = useState(editing ? (editing.title.split(/\s+[—–-]\s+/).slice(1).join(" — ") || editing.title) : "");
+  const [cat, setCat] = useState<Category>(editing?.category ?? "horology");
+  const [value, setValue] = useState(editing ? String(editing.appraisedValueCents / 100) : "");
+  const [images, setImages] = useState<string[]>(editing?.imageRefs ?? []);
 
-  const reset = () => { setMaison(""); setTitle(""); setCat("horology"); setValue(""); setImages([]); };
   const valid = title.trim().length > 1 && Number(value) > 0;
 
   const onPick = (files: FileList | null) => {
@@ -149,20 +161,21 @@ function AddObjectSheet({ open, onClose }: { open: boolean; onClose: () => void 
 
   const submit = async () => {
     if (!valid) return;
-    await add.mutateAsync({
+    const req = {
       maison: maison.trim() || undefined,
       title: title.trim(),
       category: cat,
       appraisedValueCents: Math.round(Number(value) * 100),
       imageRefs: images,
-    });
-    reset();
+    };
+    if (isEdit && editing) await update.mutateAsync({ id: editing.id, req });
+    else await add.mutateAsync(req);
     onClose();
   };
 
   return (
     <Sheet open={open} onClose={onClose}>
-      <div className="serif" style={{ fontSize: 20, color: "var(--gold-pale)", marginBottom: 14 }}>{t("clo_add")}</div>
+      <div className="serif" style={{ fontSize: 20, color: "var(--gold-pale)", marginBottom: 14 }}>{isEdit ? t("clo_edit") : t("clo_add")}</div>
 
       <Label>{t("add_maison")}</Label>
       <input className="field" value={maison} onChange={(e) => setMaison(e.target.value)} placeholder="Rolex" style={{ width: "100%", marginBottom: 12 }} />
@@ -205,10 +218,36 @@ function AddObjectSheet({ open, onClose }: { open: boolean; onClose: () => void 
         )}
       </div>
 
-      <button className="btn btn-gold" style={{ width: "100%" }} onClick={submit} disabled={!valid || add.isPending}>
-        <Icon name="plus" size={17} /> {t("clo_add")}
+      <button className="btn btn-gold" style={{ width: "100%" }} onClick={submit} disabled={!valid || add.isPending || update.isPending}>
+        <Icon name={isEdit ? "check" : "plus"} size={17} /> {isEdit ? t("clo_save") : t("clo_add")}
       </button>
     </Sheet>
+  );
+}
+
+// A compact legend that defines every status an item can have in your vault.
+function VaultStatusGuide() {
+  const { t } = useI18n();
+  const rows: Array<{ st: string; label: string; desc: string }> = [
+    { st: "warn", label: t("st_pending"), desc: t("vs_pending_d") },
+    { st: "good", label: t("st_in_closet"), desc: t("vs_invault_d") },
+    { st: "live", label: t("st_live"), desc: t("vs_inauction_d") },
+    { st: "neut", label: t("st_completed"), desc: t("vs_sold_d") },
+    { st: "neut", label: t("st_to_house"), desc: t("vs_tohouse_d") },
+    { st: "bad", label: t("st_rejected"), desc: t("vs_rejected_d") },
+  ];
+  return (
+    <div style={{ borderTop: "1px solid var(--line)", paddingTop: 16, marginBottom: 8 }}>
+      <div className="mono up" style={{ fontSize: 10, color: "var(--gold)", letterSpacing: "0.12em", marginBottom: 10 }}>{t("vs_guide_title")}</div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {rows.map((r) => (
+          <div key={r.label} style={{ display: "flex", alignItems: "flex-start", gap: 11 }}>
+            <span className="chip" data-st={r.st} style={{ flexShrink: 0, minWidth: 96, justifyContent: "center" }}>{r.label}</span>
+            <p className="muted" style={{ fontSize: 12, lineHeight: 1.5, margin: 0 }}>{r.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 

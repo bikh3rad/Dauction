@@ -269,6 +269,17 @@ export function addObject(req: import("@/types").CreateObjectReq): VaultObject {
   db.submitForInspection(obj); // enqueue for authenticity verification
   return { ...obj };
 }
+export function updateObject(id: string, req: import("@/types").CreateObjectReq): VaultObject {
+  const obj = db.vault.objects.find((o) => o.id === id);
+  if (!obj) throw { message: "object not found", code: "404" };
+  obj.title = req.maison ? `${req.maison} — ${req.title}` : req.title;
+  obj.description = req.description ?? obj.description;
+  obj.appraisedValueCents = req.appraisedValueCents;
+  obj.category = req.category;
+  obj.imageRefs = (req.imageRefs ?? []).slice(0, 7);
+  obj.updatedAt = new Date().toISOString();
+  return { ...obj };
+}
 export function listObject(id: string, atype: AType, durationDays?: number) {
   const obj = db.vault.objects.find((o) => o.id === id);
   if (!obj) throw { message: "object not found", code: "404" };

@@ -5,6 +5,7 @@ const PATHS: Record<string, string> = {
   "chevron-left": "M15 18l-6-6 6-6",
   "chevron-right": "M9 18l6-6-6-6",
   "chevron-down": "M6 9l6 6 6-6",
+  edit: "M12 20h9 M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z",
   "arrow-right": "M5 12h14 M13 6l6 6-6 6",
   "arrow-left": "M19 12H5 M11 6l-6 6 6 6",
   lock: "M5 11h14v10H5z M8 11V7a4 4 0 0 1 8 0v4",

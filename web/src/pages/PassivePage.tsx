@@ -8,6 +8,7 @@ import { ScreenShell } from "@/components/ui/ScreenShell";
 import { TopBar } from "@/components/ui/TopBar";
 import { Icon } from "@/components/ui/Icon";
 import { Ph } from "@/components/ui/ProductArt";
+import { AuctionStatusGuide } from "@/components/ui/AuctionStatusGuide";
 import { Label } from "@/components/ui/Primitives";
 import { LoadingScreen, ErrorState } from "@/components/ui/States";
 import { toLotView } from "@/lib/lotView";
@@ -103,6 +104,8 @@ export function PassivePage() {
           <Label>{t("lot_about") || "About"}</Label>
           <p className="muted" style={{ fontSize: 13.5, lineHeight: 1.7, margin: 0 }}>{lot?.description}</p>
         </div>
+
+        <div style={{ marginTop: 20 }}><AuctionStatusGuide /></div>
       </div>
     </ScreenShell>
   );

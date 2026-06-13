@@ -10,6 +10,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Seal } from "@/components/ui/Seal";
 import { Money } from "@/components/ui/Money";
 import { LotCarousel } from "@/components/ui/LotCarousel";
+import { AuctionStatusGuide } from "@/components/ui/AuctionStatusGuide";
 import { Label, Stat, iconBtnStyle } from "@/components/ui/Primitives";
 import { LoadingScreen, ErrorState } from "@/components/ui/States";
 import { categoryLabel } from "@/lib/enrich";
@@ -114,10 +115,12 @@ export function LotPage() {
             <div className="k">{t("auc_premium")}</div><div className="v">{Math.round(PREMIUM_PCT * 100)}%</div>
           </div>
 
-          <div style={{ marginTop: 18, marginBottom: 24 }}>
+          <div style={{ marginTop: 18 }}>
             <Label>{t("lot_about") || "About"}</Label>
             <p className="muted" style={{ fontSize: 14, lineHeight: 1.7, margin: 0 }}>{lot.description}</p>
           </div>
+
+          <div style={{ marginTop: 18, marginBottom: 24 }}><AuctionStatusGuide /></div>
         </div>
       </ScreenShell>
 
