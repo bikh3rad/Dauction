@@ -138,7 +138,7 @@ export function Inspections() {
             <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", borderBottom: "1px solid var(--line)" }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14 }}>{p.title}</div>
-                <div className="mono" style={{ fontSize: 11, color: "var(--fg-faint)", marginTop: 2 }}>{p.ownerHandle} · {p.atype} · <Money cents={p.valueCents} withCents={false} /></div>
+                <div className="mono" style={{ fontSize: 11, color: "var(--fg-faint)", marginTop: 2 }}>{p.ownerHandle} · <Money cents={p.valueCents} withCents={false} /></div>
               </div>
               <GBtn small kind="gold" onClick={() => approve.mutate(p.id)}>{t("insp_approve")}</GBtn>
               <GBtn small kind="bad" onClick={() => reject.mutate(p.id)}>{t("insp_reject")}</GBtn>

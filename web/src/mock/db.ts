@@ -205,7 +205,9 @@ export function listFromObject(obj: VaultObject, atype: Lot["atype"], durationDa
   return lot;
 }
 
-// ---- inspector queue: objects awaiting authenticity approval (§3.5) ----
+// ---- inspector queue: objects awaiting authenticity verification (§3.5) ----
+// An object added to a vault must be verified by an Inspector before its owner
+// can list it for auction or sell it to the house.
 export interface PendingInspection {
   id: string;
   objectId: string;
@@ -214,21 +216,20 @@ export interface PendingInspection {
   category?: Category;
   imageRefs?: string[];
   valueCents: number;
-  atype: Lot["atype"];
-  durationDays?: number;
   submittedAt: string;
 }
 
 export const inspections: PendingInspection[] = [
-  { id: "insp-1", objectId: "obj-seed-1", ownerHandle: "@noor.auh", title: "Rolex — Submariner ‘Hulk’ 116610LV", category: "horology", valueCents: c(28000), atype: "DUTCH", submittedAt: iso(-3600_000) },
-  { id: "insp-2", objectId: "obj-seed-2", ownerHandle: "@sterling.ldn", title: "Hermès — Constance 18 — Rouge Casaque", category: "bag", valueCents: c(19500), atype: "VICKREY", durationDays: 5, submittedAt: iso(-7200_000) },
+  { id: "insp-1", objectId: "obj-seed-1", ownerHandle: "@noor.auh", title: "Rolex — Submariner ‘Hulk’ 116610LV", category: "horology", valueCents: c(28000), submittedAt: iso(-3600_000) },
+  { id: "insp-2", objectId: "obj-seed-2", ownerHandle: "@sterling.ldn", title: "Hermès — Constance 18 — Rouge Casaque", category: "bag", valueCents: c(19500), submittedAt: iso(-7200_000) },
+  // a pending object in YOUR vault (v2) so the verify → unlock flow is demoable.
+  { id: "insp-v2", objectId: "v2", ownerHandle: "@you", title: "Chanel — Classic Flap Medium — Black Caviar", category: "bag", valueCents: c(12400), submittedAt: iso(-1800_000) },
 ];
 
 let inspSeq = 100;
 
-// submitForInspection enqueues a listed object for the Inspector.
-export function submitForInspection(obj: VaultObject, atype: Lot["atype"], durationDays?: number): PendingInspection {
-  // de-dup: drop any prior pending entry for this object
+// submitForInspection enqueues a newly added object for authenticity verification.
+export function submitForInspection(obj: VaultObject): PendingInspection {
   const stale = inspections.findIndex((i) => i.objectId === obj.id);
   if (stale >= 0) inspections.splice(stale, 1);
   const p: PendingInspection = {
@@ -239,38 +240,30 @@ export function submitForInspection(obj: VaultObject, atype: Lot["atype"], durat
     category: obj.category,
     imageRefs: obj.imageRefs,
     valueCents: obj.appraisedValueCents,
-    atype,
-    durationDays,
     submittedAt: iso(0),
   };
   inspections.unshift(p);
   return p;
 }
 
-// approveInspection publishes the pending object to the gallery and clears it.
-export function approveInspection(id: string): Lot | undefined {
-  const idx = inspections.findIndex((i) => i.id === id);
-  if (idx < 0) return undefined;
-  const p = inspections[idx];
-  const objLike: VaultObject = {
-    id: p.objectId, title: p.title, description: "", appraisedValueCents: p.valueCents,
-    state: "IN_VAULT", category: p.category, imageRefs: p.imageRefs,
-    createdAt: iso(0), updatedAt: iso(0),
-  };
-  const lot = listFromObject(objLike, p.atype, p.durationDays);
-  const owned = vault.objects.find((o) => o.id === p.objectId);
-  if (owned) { owned.state = "IN_AUCTION"; owned.updatedAt = iso(0); }
-  inspections.splice(idx, 1);
-  return lot;
-}
-
-// rejectInspection blocks the object (returns it to the owner's vault) and clears it.
-export function rejectInspection(id: string): void {
+// approveInspection marks the object verified (IN_VAULT) — it does NOT publish an
+// auction. The owner then chooses to list it or sell it to the house.
+export function approveInspection(id: string): void {
   const idx = inspections.findIndex((i) => i.id === id);
   if (idx < 0) return;
   const p = inspections[idx];
   const owned = vault.objects.find((o) => o.id === p.objectId);
   if (owned) { owned.state = "IN_VAULT"; owned.updatedAt = iso(0); }
+  inspections.splice(idx, 1);
+}
+
+// rejectInspection marks the object REJECTED (authenticity not confirmed).
+export function rejectInspection(id: string): void {
+  const idx = inspections.findIndex((i) => i.id === id);
+  if (idx < 0) return;
+  const p = inspections[idx];
+  const owned = vault.objects.find((o) => o.id === p.objectId);
+  if (owned) { owned.state = "REJECTED"; owned.updatedAt = iso(0); }
   inspections.splice(idx, 1);
 }
 
@@ -310,7 +303,7 @@ export const vault: { objects: VaultObject[]; creditBalanceCents: number } = {
   creditBalanceCents: c(34850),
   objects: [
     { id: "v1", title: "Rolex — Daytona 116500LN — Panda Dial", description: "Steel Daytona, panda dial, 2021.", appraisedValueCents: c(38500), state: "IN_VAULT", createdAt: "2025-12-01T00:00:00Z", updatedAt: "2026-05-01T00:00:00Z" },
-    { id: "v2", title: "Chanel — Classic Flap Medium — Black Caviar", description: "Medium classic flap, black caviar, 2022.", appraisedValueCents: c(12400), state: "APPRAISING", createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-05-20T00:00:00Z" },
+    { id: "v2", title: "Chanel — Classic Flap Medium — Black Caviar", description: "Medium classic flap, black caviar, 2022.", appraisedValueCents: c(12400), state: "PENDING_INSPECTION", category: "bag", createdAt: "2026-01-01T00:00:00Z", updatedAt: "2026-05-20T00:00:00Z" },
     { id: "v3", title: "Andy Warhol — Flowers (1970) — Screenprint", description: "Screenprint, 1970.", appraisedValueCents: c(96000), state: "IN_AUCTION", createdAt: "2025-10-01T00:00:00Z", updatedAt: "2026-06-01T00:00:00Z" },
     { id: "v4", title: "Cartier — Love Bracelet — Pavé Diamond, Gold", description: "Pavé diamond Love bracelet, gold, 2020.", appraisedValueCents: c(28900), state: "SOLD", createdAt: "2025-09-01T00:00:00Z", updatedAt: "2026-04-01T00:00:00Z" },
     { id: "v5", title: "Private Collection — Gilded Horizon — Oil, home collection", description: "Oil on canvas, 2009, home collection.", appraisedValueCents: c(46000), state: "IN_VAULT", createdAt: "2026-02-01T00:00:00Z", updatedAt: "2026-05-15T00:00:00Z" },

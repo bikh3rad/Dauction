@@ -258,22 +258,25 @@ export function addObject(req: import("@/types").CreateObjectReq): VaultObject {
     title,
     description: req.description ?? "",
     appraisedValueCents: req.appraisedValueCents,
-    state: "IN_VAULT",
+    // A new object must be verified by an Inspector before it can be listed/sold.
+    state: "PENDING_INSPECTION",
     category: req.category,
     imageRefs: (req.imageRefs ?? []).slice(0, 7),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
   db.vault.objects.unshift(obj);
+  db.submitForInspection(obj); // enqueue for authenticity verification
   return { ...obj };
 }
 export function listObject(id: string, atype: AType, durationDays?: number) {
   const obj = db.vault.objects.find((o) => o.id === id);
   if (!obj) throw { message: "object not found", code: "404" };
-  // Listing submits the object to the Inspector queue — it only reaches the
-  // public gallery after an Inspector approves its authenticity (§3.5).
-  db.submitForInspection(obj, atype, durationDays);
-  obj.state = "PENDING_INSPECTION";
+  if (obj.state !== "IN_VAULT") throw { message: "object must be verified first", code: "RESOURCE_INVALID" };
+  // The object is already Inspector-verified, so listing publishes it straight
+  // to the public gallery and marks it in-auction.
+  db.listFromObject(obj, atype, durationDays);
+  obj.state = "IN_AUCTION";
   obj.updatedAt = new Date().toISOString();
   return { ...obj };
 }

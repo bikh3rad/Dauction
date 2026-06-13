@@ -13,7 +13,7 @@ export type AType = "DUTCH" | "VICKREY" | "UNIQBID";
 export type LotState = "DRAFT" | "CERTIFIED" | "SCHEDULED" | "REJECTED";
 export type AttestationResult = "PASS" | "FAIL";
 export type VaultObjectState =
-  | "IN_VAULT" | "PENDING_INSPECTION" | "APPRAISING" | "IN_AUCTION" | "SOLD" | "BOUGHT_BACK";
+  | "PENDING_INSPECTION" | "IN_VAULT" | "REJECTED" | "APPRAISING" | "IN_AUCTION" | "SOLD" | "BOUGHT_BACK";
 export type DutchState =
   | "DRAFT" | "APPRAISING" | "SCHEDULED" | "OPEN" | "HAMMER"
   | "SETTLING" | "COMPLETED" | "CANCELLED" | "ABORTED";

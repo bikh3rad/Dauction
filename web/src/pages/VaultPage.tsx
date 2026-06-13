@@ -78,12 +78,16 @@ export function VaultPage() {
                     <div className="serif" style={{ fontSize: 13.5, color: "var(--fg)", marginBottom: 4, lineHeight: 1.2 }}>{o.title.split(/\s+[—–-]\s+/).slice(1).join(" — ") || o.title}</div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
                       <Money cents={o.appraisedValueCents} withCents={false} gold />
-                      {inVault && (
+                      {inVault ? (
                         <div style={{ display: "flex", gap: 10 }}>
                           <button onClick={() => setListItem(o)} className="mono" style={{ fontSize: 10, color: "var(--gold-pale)", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>{t("list_title")}</button>
                           <button onClick={() => setBb(o)} className="mono" style={{ fontSize: 10, color: "var(--gold)", background: "none", border: "none", cursor: "pointer", fontWeight: 600 }}>{t("clo_buyback")}</button>
                         </div>
-                      )}
+                      ) : o.state === "PENDING_INSPECTION" ? (
+                        <span className="mono" style={{ fontSize: 9.5, color: "var(--st-warn)" }}><Icon name="shield" size={11} /> {t("st_pending")}</span>
+                      ) : o.state === "REJECTED" ? (
+                        <span className="mono" style={{ fontSize: 9.5, color: "var(--st-bad)" }}>{t("st_rejected")}</span>
+                      ) : null}
                     </div>
                   </div>
                 </div>
@@ -111,11 +115,13 @@ export function VaultPage() {
 
 function stateKey(state: VaultObject["state"]): string {
   switch (state) {
+    case "PENDING_INSPECTION": return "st_pending";
     case "IN_VAULT": return "st_in_closet";
-    case "PENDING_INSPECTION": return "st_appraising";
+    case "REJECTED": return "st_rejected";
     case "APPRAISING": return "st_appraising";
     case "IN_AUCTION": return "st_live";
-    case "SOLD": case "BOUGHT_BACK": return "st_completed";
+    case "BOUGHT_BACK": return "st_to_house";
+    case "SOLD": return "st_completed";
     default: return "st_in_closet";
   }
 }

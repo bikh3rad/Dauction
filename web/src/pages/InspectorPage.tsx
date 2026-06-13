@@ -81,7 +81,7 @@ function InspectionCard({ p, onApprove, onReject, busy }: { p: PendingInspection
             <CategoryIcon category={p.category} size={17} />
           </div>
         )}
-        <span className="chip" data-st="warn" style={{ position: "absolute", top: 10, insetInlineStart: 10 }}>{p.atype}</span>
+        <span className="chip" data-st="warn" style={{ position: "absolute", top: 10, insetInlineStart: 10 }}><Icon name="shield" size={11} /> {t("insp_verify")}</span>
       </div>
       {hasImg && p.imageRefs!.length > 1 && (
         <div style={{ display: "flex", gap: 6, padding: "8px 12px 0", overflowX: "auto" }}>
