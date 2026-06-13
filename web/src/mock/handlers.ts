@@ -150,7 +150,7 @@ export function lotDetail(id: string): LotDetail {
   if (!lot) throw { message: "lot not found", code: "404" };
   return {
     lot: { ...lot },
-    certified: lot.state === "CERTIFIED" || lot.state === "SCHEDULED",
+    certified: lot.certified ?? (lot.state === "CERTIFIED" || lot.state === "SCHEDULED"),
     attestations: [
       { id: uid("att"), lotId: lot.id, inspectorId: "0xA1", result: "PASS", recordedAt: lot.createdAt },
     ],
@@ -199,6 +199,8 @@ export function getPassive(id: string): PassiveAuction {
   return a;
 }
 export function placeBid(id: string, priceCents: number): BidResp {
+  const floor = db.floorOf(id); // low price — the minimum allowable bid
+  if (priceCents < floor) throw { message: "below the minimum bid", code: "BID_TOO_LOW" };
   const cost = db.bidCostOf(id); // per-auction bid cost (credits)
   if (db.wallet.balanceCredits < cost) throw { message: "out of credits", code: "RESOURCE_INVALID" };
   db.wallet.balanceCredits -= cost;

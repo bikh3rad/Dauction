@@ -12,6 +12,7 @@ import { Seal } from "@/components/ui/Seal";
 import { Ph } from "@/components/ui/ProductArt";
 import { Chip } from "@/components/ui/Chip";
 import { AuctionStatusGuide } from "@/components/ui/AuctionStatusGuide";
+import { CertBadge } from "@/components/ui/CertBadge";
 import { MiniStat } from "@/components/ui/Primitives";
 import { LoadingScreen, ErrorState } from "@/components/ui/States";
 import { useLot } from "@/hooks/queries";
@@ -176,7 +177,8 @@ export function AuctionPage() {
                 <HeatRing nextIn={engine.nextInSec} every={engine.intervalSec} size={224} atFloor={engine.atFloor} />
               </div>
             </div>
-            <div className="serif" style={{ fontSize: 19, color: "var(--gold-pale)", lineHeight: 1.2, marginBottom: 18, maxWidth: 280 }}>{title}</div>
+            <div className="serif" style={{ fontSize: 19, color: "var(--gold-pale)", lineHeight: 1.2, marginBottom: lotData?.certified ? 12 : 18, maxWidth: 280 }}>{title}</div>
+            {lotData?.certified && <div style={{ marginBottom: 18 }}><CertBadge /></div>}
 
             <div className="mono up" style={{ fontSize: 10, color: "var(--gold)", marginBottom: 6 }}>{t("auc_current")}</div>
             <PriceBig cents={engine.priceCents} flash={flash} size={52} />

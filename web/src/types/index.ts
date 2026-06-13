@@ -250,7 +250,10 @@ export interface PassiveAuction {
   atype: Extract<AType, "VICKREY" | "UNIQBID">;
   state: PassiveState;
   closesAt: string;
+  /** Low price — the floor / minimum bid you may place. */
   reserveCents: number;
+  /** High price — the item's appraised / ceiling value. */
+  highCents: number;
   participantCount: number;
   /** Bid-credit cost per bid for this auction (customizable; default 1). */
   bidCostCredits: number;

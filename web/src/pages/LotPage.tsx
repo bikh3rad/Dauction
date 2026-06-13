@@ -10,6 +10,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Seal } from "@/components/ui/Seal";
 import { Money } from "@/components/ui/Money";
 import { LotCarousel } from "@/components/ui/LotCarousel";
+import { CertBadge } from "@/components/ui/CertBadge";
 import { AuctionStatusGuide } from "@/components/ui/AuctionStatusGuide";
 import { Label, Stat, iconBtnStyle } from "@/components/ui/Primitives";
 import { LoadingScreen, ErrorState } from "@/components/ui/States";
@@ -90,7 +91,8 @@ export function LotPage() {
 
         <div style={{ padding: "18px 20px 0" }}>
           <h1 className="serif" style={{ fontSize: 24, lineHeight: 1.18, margin: "0 0 4px", color: "var(--gold-pale)" }}>{v.body}</h1>
-          <div className="muted" style={{ fontSize: 13, marginBottom: 18 }}>{t(lot.atype === "DUTCH" ? "mode_dutch" : lot.atype === "VICKREY" ? "mode_vickrey" : "mode_uniqbid")}</div>
+          <div className="muted" style={{ fontSize: 13, marginBottom: data.certified ? 12 : 18 }}>{t(lot.atype === "DUTCH" ? "mode_dutch" : lot.atype === "VICKREY" ? "mode_vickrey" : "mode_uniqbid")}</div>
+          {data.certified && <div style={{ marginBottom: 18 }}><CertBadge /></div>}
 
           <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
             <Stat label={t("gal_start")} value={<Money cents={lot.appraisedValueCents} withCents={false} />} />

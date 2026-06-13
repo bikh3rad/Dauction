@@ -9,6 +9,7 @@ import { TopBar } from "@/components/ui/TopBar";
 import { Icon } from "@/components/ui/Icon";
 import { Ph } from "@/components/ui/ProductArt";
 import { AuctionStatusGuide } from "@/components/ui/AuctionStatusGuide";
+import { CertBadge } from "@/components/ui/CertBadge";
 import { Label } from "@/components/ui/Primitives";
 import { LoadingScreen, ErrorState } from "@/components/ui/States";
 import { toLotView } from "@/lib/lotView";
@@ -72,6 +73,7 @@ export function PassivePage() {
       </div>
 
       <div style={{ padding: "18px 20px 40px" }}>
+        {lotData?.certified && <div style={{ marginBottom: 16 }}><CertBadge /></div>}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", border: "1px solid var(--gold-line)", borderRadius: "var(--r-2)", background: "var(--bg-1)", marginBottom: 18 }}>
           <div className="mono up" style={{ fontSize: 10, color: "var(--gold)" }}>{t("ends_in")}</div>
           <CountdownPill d={cd.d} h={cd.h} m={cd.m} s={cd.s} />
@@ -86,6 +88,18 @@ export function PassivePage() {
             <div className="mono" style={{ fontSize: 11.5, color: "var(--gold-pale)", marginTop: 8 }}>
               <Icon name="coins" size={13} /> {t("bid_cost_label")}: <b>{auction.bidCostCredits}</b> {auction.bidCostCredits === 1 ? t("credit") : t("credits")} / {t("bid_one")}
             </div>
+          </div>
+        </div>
+
+        {/* the item's two prices: low (minimum bid) and high (appraised) */}
+        <div style={{ display: "flex", gap: 10, marginBottom: 18 }}>
+          <div style={{ flex: 1, padding: "12px 14px", border: "1px solid var(--gold-line)", borderRadius: "var(--r-2)", background: "var(--bg-1)" }}>
+            <div className="mono up" style={{ fontSize: 9, color: "var(--gold)" }}>{t("price_low")}</div>
+            <div className="mono" style={{ fontSize: 18, color: "var(--gold-pale)", marginTop: 4 }}>{usdc0(auction.reserveCents)}</div>
+          </div>
+          <div style={{ flex: 1, padding: "12px 14px", border: "1px solid var(--line)", borderRadius: "var(--r-2)", background: "var(--bg-1)" }}>
+            <div className="mono up" style={{ fontSize: 9, color: "var(--fg-faint)" }}>{t("price_high")}</div>
+            <div className="mono" style={{ fontSize: 18, color: "var(--fg)", marginTop: 4 }}>{usdc0(auction.highCents)}</div>
           </div>
         </div>
 
@@ -161,6 +175,7 @@ function VickreyPanel({ id, auction }: { id: string; auction: PassiveAuction }) 
     setAmt("");
   };
   const cost = auction.bidCostCredits;
+  const below = amt !== "" && Number(amt) * 100 < auction.reserveCents;
   const sealed = sealedCents != null;
   const noBids = (wallet?.balanceCredits ?? 0) < cost && !sealed;
 
@@ -183,11 +198,12 @@ function VickreyPanel({ id, auction }: { id: string; auction: PassiveAuction }) 
     <div>
       <Label>{t("enter_amount")}</Label>
       <input className="field field-mono" dir="ltr" inputMode="numeric" value={amt} onChange={(e) => setAmt(e.target.value.replace(/[^\d]/g, ""))} placeholder={String(Math.round(auction.reserveCents / 100))} style={{ fontSize: 18 }} />
-      <div className="muted mono" style={{ fontSize: 11, margin: "8px 2px 0" }}>{t("list_floor")}: {usdc0(auction.reserveCents)}</div>
+      <div className="muted mono" style={{ fontSize: 11, margin: "8px 2px 0" }}>{t("price_low")} · {usdc0(auction.reserveCents)}</div>
+      {below && <div className="mono" style={{ fontSize: 11, color: "var(--st-bad)", marginTop: 6 }}>{t("bid_below_min")} {usdc0(auction.reserveCents)}</div>}
       {noBids ? (
         <NeedBids />
       ) : (
-        <button className="btn btn-gold" style={{ width: "100%", marginTop: 14 }} disabled={!amt || placeBid.isPending} onClick={submit}>
+        <button className="btn btn-gold" style={{ width: "100%", marginTop: 14 }} disabled={!amt || below || placeBid.isPending} onClick={submit}>
           <Icon name="lock" size={16} /> {t("submit_sealed")} · {cost} {cost === 1 ? t("credit") : t("credits")}
         </button>
       )}
@@ -214,6 +230,7 @@ function UniqBidPanel({ id, auction }: { id: string; auction: PassiveAuction }) 
     setPrice("");
   };
   const cost = auction.bidCostCredits;
+  const below = price !== "" && Number(price) * 100 < auction.reserveCents;
   const noBids = (wallet?.balanceCredits ?? 0) < cost;
 
   return (
@@ -232,11 +249,12 @@ function UniqBidPanel({ id, auction }: { id: string; auction: PassiveAuction }) 
       <Label>{t("enter_amount")}</Label>
       <div style={{ display: "flex", gap: 8 }}>
         <input className="field field-mono" dir="ltr" inputMode="numeric" value={price} onChange={(e) => setPrice(e.target.value.replace(/[^\d]/g, ""))} placeholder="e.g. 237" style={{ flex: 1, fontSize: 17 }} onKeyDown={(e) => e.key === "Enter" && place()} />
-        <button className="btn btn-gold" disabled={!price || noBids || placeBid.isPending} onClick={place} style={{ whiteSpace: "nowrap" }}>
+        <button className="btn btn-gold" disabled={!price || below || noBids || placeBid.isPending} onClick={place} style={{ whiteSpace: "nowrap" }}>
           <Icon name="coins" size={15} /> {cost}
         </button>
       </div>
-      <div className="muted mono" style={{ fontSize: 11, margin: "8px 2px 0" }}>{t("list_floor")}: {usdc0(auction.reserveCents)} · {cost} {cost === 1 ? t("credit") : t("credits")}/{t("bid_one")}</div>
+      <div className="muted mono" style={{ fontSize: 11, margin: "8px 2px 0" }}>{t("price_low")}: {usdc0(auction.reserveCents)} · {cost} {cost === 1 ? t("credit") : t("credits")}/{t("bid_one")}</div>
+      {below && <div className="mono" style={{ fontSize: 11, color: "var(--st-bad)", marginTop: 6 }}>{t("bid_below_min")} {usdc0(auction.reserveCents)}</div>}
       {noBids && <div style={{ marginTop: 12 }}><NeedBids /></div>}
 
       {mine.length > 0 && (

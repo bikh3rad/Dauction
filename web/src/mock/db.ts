@@ -151,9 +151,17 @@ export function passiveAuction(id: string): PassiveAuction | undefined {
   if (!lot || !seed || (lot.atype !== "VICKREY" && lot.atype !== "UNIQBID")) return undefined;
   return {
     id, lotId: id, atype: lot.atype, state: "OPEN",
-    closesAt: iso(seed.closesInMs), reserveCents: lot.reserveCents,
+    closesAt: iso(seed.closesInMs),
+    reserveCents: lot.reserveCents,          // low — minimum bid
+    highCents: lot.appraisedValueCents,      // high — appraised value
     participantCount: seed.participants, bidCostCredits: seed.bidCost,
   };
+}
+
+// floorOf returns a passive auction's low price (the minimum allowable bid).
+export function floorOf(id: string): number {
+  const lot = lots.find((l) => l.id === id);
+  return lot?.reserveCents ?? 0;
 }
 
 // bidCostOf returns the per-bid credit cost for a passive auction (default 1).
@@ -190,6 +198,7 @@ export function listFromObject(obj: VaultObject, atype: Lot["atype"], durationDa
     reserveCents: floor, appraisedValueCents: obj.appraisedValueCents,
     state: "SCHEDULED", isoWeek: WEEK, createdAt: iso(0), scheduledAt: iso(-1000),
     category: obj.category, imageRefs: obj.imageRefs,
+    certified: true, // the object was Inspector-verified before listing
   };
   lots.unshift(lot);
 
