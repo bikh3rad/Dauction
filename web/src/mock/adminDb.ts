@@ -4,7 +4,14 @@
    admin mutations (revoke, approve, open/disable auction, suspend, rule a
    dispute…) mutate these arrays so the panel behaves like a live console while
    offline. Mirrors the style of mock/db.ts.
+
+   The `auctions` rows are DERIVED from the shared catalog (mock/db.ts) at load,
+   so the admin console and the buyer-facing gallery start from one source of
+   truth. Admin edits (floor / high / bid-cost) write back through mock/db.ts —
+   see adminHandlers.updateAuction — so an edit here changes the live auction.
    ============================================================ */
+import * as cat from "./db";
+import { maisonOf } from "@/lib/enrich";
 import type {
   AdminAccount, AdminAuction, AdminCertReview, AdminEscrowRow,
   AdminKycReview, AdminVaultObject,
@@ -26,38 +33,50 @@ export const kycQueue: AdminKycReview[] = [
   { id: "kyc-f7", accountId: "0xF7", handle: "@dana.doh", docType: "NATIONAL_ID", status: "APPROVED", issuedBy: "House" },
 ];
 
-export const certQueue: AdminCertReview[] = [
-  { lotId: "lot-08", object: "Birkin 25 Himalaya", maison: "Hermès", valueCents: c(285000), status: "APPRAISING" },
-  { lotId: "lot-09", object: "RM 11-03 Flyback", maison: "Richard Mille", valueCents: c(198000), status: "APPRAISING" },
-  { lotId: "v2", object: "Classic Flap Medium", maison: "Chanel", valueCents: c(12400), status: "APPRAISING" },
-  { lotId: "lot-07", object: "Nautilus 5711/1A", maison: "Patek Philippe", valueCents: c(620000), status: "CERTIFIED" },
-];
+// ---- auctions: derived from the shared catalog (one source of truth) ----
+const bodyOf = (title: string) => title.split(/\s+[—–-]\s+/).slice(1).join(" — ") || title;
+const partsOf = (id: string) => { let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0; return 4 + (h % 18); };
 
-// Mirrors the canonical catalog (mock/db.ts lot-07…lot-14): six live/scheduled
-// Dutch lots plus the two timed passive auctions, in a mix of states so the
-// open / schedule / disable controls all have something to act on.
-export const auctions: AdminAuction[] = [
-  { id: "lot-07", lotId: "lot-07", title: "Nautilus 5711/1A — Tiffany Blue Dial", maison: "Patek Philippe", atype: "DUTCH", state: "OPEN", priceCents: c(1085600), participants: 14, closesAt: undefined },
-  { id: "lot-08", lotId: "lot-08", title: "Birkin 25 Himalaya — Niloticus", maison: "Hermès", atype: "DUTCH", state: "SCHEDULED", priceCents: c(520000), participants: 9 },
-  { id: "lot-09", lotId: "lot-09", title: "RM 11-03 Flyback Chronograph", maison: "Richard Mille", atype: "DUTCH", state: "SCHEDULED", priceCents: c(395000), participants: 7 },
-  { id: "lot-10", lotId: "lot-10", title: "Pumpkin (Yellow) — ed. 47/120", maison: "Yayoi Kusama", atype: "DUTCH", state: "SCHEDULED", priceCents: c(185000), participants: 5 },
-  { id: "lot-11", lotId: "lot-11", title: "Air Jordan 1 High — 1 of 8,500", maison: "Nike × Dior", atype: "DUTCH", state: "SCHEDULED", priceCents: c(27000), participants: 11 },
-  { id: "lot-12", lotId: "lot-12", title: "No. 1 Imperial Majesty — Baccarat", maison: "Clive Christian", atype: "DUTCH", state: "DRAFT", priceCents: c(96000), participants: 4 },
-  { id: "lot-13", lotId: "lot-13", title: "Crimson Atrium — Oil on Linen", maison: "Estate Commission", atype: "VICKREY", state: "OPEN", priceCents: c(54000), participants: 41, closesAt: "2026-06-15T18:00:00Z", bidCostCredits: 1 },
-  { id: "lot-14", lotId: "lot-14", title: "Kelly Sellier 25 — Rouge Casaque", maison: "Hermès", atype: "UNIQBID", state: "CLOSING", priceCents: c(38000), participants: 184, closesAt: "2026-06-12T12:00:00Z", bidCostCredits: 40 },
+function buildAuctions(): AdminAuction[] {
+  return cat.lots.map((l) => {
+    const passive = cat.passiveAuction(l.id);
+    const dutch = cat.dutchAuction(l.id);
+    const state: AdminAuction["state"] = passive ? "OPEN" : dutch?.state === "OPEN" ? "OPEN" : "SCHEDULED";
+    return {
+      id: l.id, lotId: l.id,
+      title: bodyOf(l.title),
+      maison: maisonOf(l.title),
+      atype: l.atype,
+      state,
+      priceCents: passive ? passive.reserveCents : dutch?.currentPriceCents ?? l.reserveCents,
+      highCents: l.appraisedValueCents,
+      participants: passive?.participantCount ?? partsOf(l.id),
+      closesAt: passive?.closesAt,
+      bidCostCredits: passive?.bidCostCredits,
+    };
+  });
+}
+export const auctions: AdminAuction[] = buildAuctions();
+
+// Certification queue mirrors the catalog's inspector gate.
+export const certQueue: AdminCertReview[] = [
+  { lotId: "lot-08", object: "Birkin 30 — Gold Togo", maison: "Hermès", valueCents: c(48000), status: "APPRAISING" },
+  { lotId: "lot-11", object: "Diamond Solitaire 3.01ct", maison: "Tiffany & Co.", valueCents: c(64000), status: "APPRAISING" },
+  { lotId: "v2", object: "Capucines MM — Taurillon", maison: "Louis Vuitton", valueCents: c(12400), status: "APPRAISING" },
+  { lotId: "lot-07", object: "Royal Oak ‘Jumbo’ 15202ST", maison: "Audemars Piguet", valueCents: c(92000), status: "CERTIFIED" },
 ];
 
 export const memberVault: AdminVaultObject[] = [
   { id: "v1", ownerHandle: "@aurelia.dxb", title: "Daytona 116500LN — Panda Dial", maison: "Rolex", valueCents: c(38500), state: "IN_VAULT" },
-  { id: "v2", ownerHandle: "@aurelia.dxb", title: "Classic Flap Medium — Black Caviar", maison: "Chanel", valueCents: c(12400), state: "APPRAISING" },
+  { id: "v2", ownerHandle: "@aurelia.dxb", title: "Capucines MM — Taurillon", maison: "Louis Vuitton", valueCents: c(12400), state: "APPRAISING" },
   { id: "v3", ownerHandle: "@khalid.vip", title: "Flowers (1970) — Screenprint", maison: "Andy Warhol", valueCents: c(96000), state: "IN_AUCTION" },
   { id: "v4", ownerHandle: "@khalid.vip", title: "Love Bracelet — Pavé Diamond, Gold", maison: "Cartier", valueCents: c(28900), state: "SOLD" },
-  { id: "v5", ownerHandle: "@noor.auh", title: "Gilded Horizon — Oil, home collection", maison: "Private Collection", valueCents: c(46000), state: "IN_VAULT" },
+  { id: "v5", ownerHandle: "@noor.auh", title: "Gilded Horizon — Oil", maison: "Private Collection", valueCents: c(46000), state: "IN_VAULT" },
 ];
 
 export const escrow: AdminEscrowRow[] = [
-  { id: "esc-07", lot: "Nautilus 5711/1A", memberHandle: "0x7A4E", amountCents: c(962000), premiumCents: c(96200), state: "HELD" },
+  { id: "esc-07", lot: "Royal Oak ‘Jumbo’", memberHandle: "0x7A4E", amountCents: c(78000), premiumCents: c(7800), state: "HELD" },
   { id: "esc-05", lot: "Flowers (1970)", memberHandle: "0x91", amountCents: c(96000), premiumCents: c(11520), state: "FULL_LOCKED" },
   { id: "esc-03", lot: "Love Bracelet", memberHandle: "0x4C", amountCents: c(28900), premiumCents: c(3757), state: "RELEASED" },
-  { id: "esc-02", lot: "Air Jordan 1 × Dior", memberHandle: "0xF7", amountCents: c(11000), premiumCents: c(1430), state: "DISPUTED" },
+  { id: "esc-02", lot: "Air Jordan 1 ‘Chicago’", memberHandle: "0xF7", amountCents: c(8500), premiumCents: c(1105), state: "DISPUTED" },
 ];

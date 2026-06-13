@@ -9,7 +9,7 @@ import { TopBar } from "@/components/ui/TopBar";
 import { Sheet } from "@/components/ui/Sheet";
 import { Icon } from "@/components/ui/Icon";
 import { Seal } from "@/components/ui/Seal";
-import { Ph } from "@/components/ui/ProductArt";
+import { LotImage } from "@/components/ui/LotImage";
 import { Chip } from "@/components/ui/Chip";
 import { AuctionStatusGuide } from "@/components/ui/AuctionStatusGuide";
 import { CertBadge } from "@/components/ui/CertBadge";
@@ -172,7 +172,7 @@ export function AuctionPage() {
           {/* STAGE layout — central price + heat ring */}
           <div style={{ padding: "22px 20px 0", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
             <div style={{ position: "relative", width: 200, height: 200, marginBottom: 18 }}>
-              <Ph art={art} ratio="1 / 1" label={maison} style={{ borderRadius: "var(--r-3)", width: "100%", height: "100%" }} />
+              <LotImage src={lot?.imageRefs?.[0]} art={art} ratio="1 / 1" label={maison} style={{ borderRadius: "var(--r-3)", width: "100%", height: "100%" }} />
               <div style={{ position: "absolute", inset: -10, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
                 <HeatRing nextIn={engine.nextInSec} every={engine.intervalSec} size={224} atFloor={engine.atFloor} />
               </div>

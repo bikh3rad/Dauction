@@ -134,6 +134,8 @@
   "adm_lot": "Lot / object",
   "adm_mode": "Mode",
   "adm_floor": "Floor (USDC)",
+  "adm_high": "High (USDC)",
+  "adm_title_field": "Title",
   "adm_duration_days": "Duration (days)",
   "adm_bid_cost": "Bid cost (credits)",
   "adm_create": "Create",

@@ -7,7 +7,7 @@ import { useCountdown } from "@/hooks/useCountdown";
 import { ScreenShell } from "@/components/ui/ScreenShell";
 import { TopBar } from "@/components/ui/TopBar";
 import { Icon } from "@/components/ui/Icon";
-import { Ph } from "@/components/ui/ProductArt";
+import { LotImage } from "@/components/ui/LotImage";
 import { AuctionStatusGuide } from "@/components/ui/AuctionStatusGuide";
 import { CertBadge } from "@/components/ui/CertBadge";
 import { Label } from "@/components/ui/Primitives";
@@ -62,7 +62,7 @@ export function PassivePage() {
       }
     >
       <div style={{ position: "relative" }}>
-        <Ph art={v?.art ?? "frame"} artW="50%" artTop="38%" ratio="4 / 3" style={{ borderRadius: 0, borderInline: 0 }} />
+        <LotImage src={lot?.imageRefs?.[0]} art={v?.art ?? "frame"} artW="50%" artTop="38%" ratio="4 / 3" label={v?.maison} style={{ borderRadius: 0, borderInline: 0 }} />
         <div style={{ position: "absolute", top: 14, insetInlineStart: 14 }}>
           <span className="chip" data-st="warn"><Icon name="clock" size={12} /> {t("passive_kicker")}</span>
         </div>

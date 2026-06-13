@@ -34,6 +34,7 @@ export function LotCarousel({ images, art, label }: LotCarouselProps) {
   const real = (images ?? []).slice(0, MAX_LOT_IMAGES);
   const count = real.length > 0 ? real.length : FRAMING.length; // placeholder = 7
   const [i, setI] = useState(0);
+  const [failed, setFailed] = useState<Record<number, boolean>>({});
 
   const go = useCallback(
     (delta: number) => setI((p) => (p + delta + count) % count),
@@ -50,15 +51,18 @@ export function LotCarousel({ images, art, label }: LotCarouselProps) {
     return () => window.removeEventListener("keydown", onKey);
   }, [go, dir]);
 
+  // A real photo when present and loadable; otherwise the category line-art so a
+  // broken/missing URL never leaves an empty slide.
   const slide = (idx: number) =>
-    real.length > 0 ? (
+    real.length > 0 && !failed[idx] ? (
       <img
         src={real[idx]}
         alt={`${label ?? ""} ${idx + 1}/${count}`}
-        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        onError={() => setFailed((f) => ({ ...f, [idx]: true }))}
+        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", aspectRatio: "1 / 1" }}
       />
     ) : (
-      <Ph art={art} artW={FRAMING[idx].artW} artTop={FRAMING[idx].artTop} ratio="1 / 1" style={{ borderRadius: 0, borderInline: 0 }} />
+      <Ph art={art} artW={FRAMING[idx % FRAMING.length].artW} artTop={FRAMING[idx % FRAMING.length].artTop} ratio="1 / 1" style={{ borderRadius: 0, borderInline: 0 }} />
     );
 
   const prevIcon = dir === "rtl" ? "chevron-right" : "chevron-left";

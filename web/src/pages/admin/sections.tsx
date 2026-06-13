@@ -69,7 +69,7 @@ export function Auctions() {
   const create = useCreateAuction();
   const update = useUpdateAuction();
   const [form, setForm] = useState<{ lotId: string; atype: AType; floor: string; days: number; bidCost: number } | null>(null);
-  const [edit, setEdit] = useState<{ id: string; title: string; isPassive: boolean; bidCost: number; floor: number } | null>(null);
+  const [edit, setEdit] = useState<{ id: string; title: string; isPassive: boolean; bidCost: number; floor: number; high: number } | null>(null);
 
   const submit = () => {
     if (!form?.lotId) return;
@@ -83,7 +83,7 @@ export function Auctions() {
 
   const saveEdit = () => {
     if (!edit) return;
-    update.mutate({ id: edit.id, floorCents: Math.round(edit.floor * 100), bidCostCredits: edit.isPassive ? edit.bidCost : undefined });
+    update.mutate({ id: edit.id, title: edit.title, floorCents: Math.round(edit.floor * 100), appraisedCents: Math.round(edit.high * 100), bidCostCredits: edit.isPassive ? edit.bidCost : undefined });
     setEdit(null);
   };
 
@@ -124,10 +124,15 @@ export function Auctions() {
         <div style={{ marginBottom: 20, border: "1px solid var(--gold)", borderRadius: "var(--r-2)", padding: 18, background: "var(--bg-1)", display: "flex", gap: 14, flexWrap: "wrap", alignItems: "flex-end" }}>
           <div style={{ flexBasis: "100%", marginBottom: 4 }}>
             <span className="mono up" style={{ fontSize: 9.5, color: "var(--gold)" }}>{t("adm_edit")}</span>
-            <div className="serif" style={{ fontSize: 16, color: "var(--gold-pale)" }}>{edit.title}</div>
           </div>
-          <Field label={t("adm_floor")}>
+          <Field label={t("adm_title_field")}>
+            <input value={edit.title} onChange={(e) => setEdit({ ...edit, title: e.target.value })} style={{ ...inputS, minWidth: 240 }} />
+          </Field>
+          <Field label={`${t("adm_floor")} · ${t("price_low")}`}>
             <input value={edit.floor} onChange={(e) => setEdit({ ...edit, floor: Number(e.target.value.replace(/[^0-9]/g, "")) || 0 })} style={inputS} />
+          </Field>
+          <Field label={`${t("adm_high")} · ${t("price_high")}`}>
+            <input value={edit.high} onChange={(e) => setEdit({ ...edit, high: Number(e.target.value.replace(/[^0-9]/g, "")) || 0 })} style={inputS} />
           </Field>
           {edit.isPassive && (
             <Field label={t("adm_bid_cost")}>
@@ -150,7 +155,7 @@ export function Auctions() {
             <td style={tdMuted} className="mono">{a.participants}</td>
             <td style={tdS}><Chip state={a.state} /></td>
             <td style={tdEnd}><Actions>
-              <GBtn small onClick={() => setEdit({ id: a.id, title: a.title, isPassive: a.atype !== "DUTCH", bidCost: a.bidCostCredits ?? 1, floor: Math.round(a.priceCents / 100) })}>{t("adm_edit")}</GBtn>
+              <GBtn small onClick={() => setEdit({ id: a.id, title: a.title, isPassive: a.atype !== "DUTCH", bidCost: a.bidCostCredits ?? 1, floor: Math.round(a.priceCents / 100), high: Math.round((a.highCents ?? a.priceCents) / 100) })}>{t("adm_edit")}</GBtn>
               {a.state === "DRAFT" && <GBtn small onClick={() => setState.mutate({ id: a.id, state: "SCHEDULED" })}>{t("adm_schedule")}</GBtn>}
               {a.state === "SCHEDULED" && <GBtn kind="gold" small onClick={() => setState.mutate({ id: a.id, state: "OPEN" })}>{t("adm_open")}</GBtn>}
               {(a.state === "OPEN" || a.state === "CLOSING") && <GBtn kind="bad" small onClick={() => setState.mutate({ id: a.id, state: "ABORTED" })}>{t("adm_disable")}</GBtn>}

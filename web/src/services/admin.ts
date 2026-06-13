@@ -37,7 +37,7 @@ export const admin = {
   createAuction: (req: CreateAuctionReq) => ok<AdminAuction>(mock.createAuction(req)),
   setAuctionState: (id: string, state: AdminAuction["state"]) =>
     ok<AdminAuction>(mock.setAuctionState(id, state)),
-  updateAuction: (id: string, patch: { bidCostCredits?: number; floorCents?: number }) =>
+  updateAuction: (id: string, patch: { bidCostCredits?: number; floorCents?: number; appraisedCents?: number; title?: string }) =>
     ok<AdminAuction>(mock.updateAuction(id, patch)),
 
   vault: () => ok<AdminVaultObject[]>(mock.listVault()),

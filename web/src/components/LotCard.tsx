@@ -4,7 +4,7 @@ import { Chip } from "@/components/ui/Chip";
 import { Icon } from "@/components/ui/Icon";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { Money } from "@/components/ui/Money";
-import { Ph } from "@/components/ui/ProductArt";
+import { LotImage } from "@/components/ui/LotImage";
 import { categoryLabel } from "@/lib/enrich";
 import { toLotView } from "@/lib/lotView";
 import type { Lot } from "@/types";
@@ -48,7 +48,7 @@ export function LotCardMagazine({ lot, watching }: { lot: Lot; watching: number 
       style={{ textAlign: "start", background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-3)", overflow: "hidden", cursor: "pointer", color: "var(--fg)", padding: 0, width: "100%" }}
     >
       <div style={{ position: "relative" }}>
-        <Ph art={v.art} artW="54%" artTop="38%" ratio="4 / 3" />
+        <LotImage src={lot.imageRefs?.[0]} art={v.art} artW="54%" artTop="38%" ratio="4 / 3" label={v.maison} />
         <CatBadge category={v.category} />
         <div style={{ position: "absolute", top: 12, insetInlineStart: 12 }}>
           {v.isLive ? (
@@ -92,7 +92,7 @@ export function LotCardGrid({ lot, watching }: { lot: Lot; watching: number }) {
       style={{ textAlign: "start", background: "var(--bg-1)", border: "1px solid var(--line)", borderRadius: "var(--r-2)", overflow: "hidden", cursor: "pointer", color: "var(--fg)", padding: 0, width: "100%" }}
     >
       <div style={{ position: "relative" }}>
-        <Ph art={v.art} ratio="1 / 1" />
+        <LotImage src={lot.imageRefs?.[0]} art={v.art} ratio="1 / 1" label={v.maison} />
         <CatBadge category={v.category} />
         {v.isLive && <div style={{ position: "absolute", top: 8, insetInlineStart: 8 }}><Chip state="live" label={t("auc_live")} pulse /></div>}
         {v.isPassive && <div style={{ position: "absolute", top: 8, insetInlineStart: 8 }}><span className="chip" data-st="warn"><Icon name="clock" size={11} /> {t(lot.atype === "VICKREY" ? "mode_vickrey" : "mode_uniqbid")}</span></div>}

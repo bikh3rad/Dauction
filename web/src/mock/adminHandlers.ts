@@ -3,7 +3,7 @@
 // live. Each returns the response shape the real `/apis/admin/*` route will.
 
 import * as db from "./adminDb";
-import { setBidCost, setLotReserve } from "./db";
+import { setBidCost, setLotReserve, setLotAppraised, setLotTitle } from "./db";
 import type {
   AccountStatus, AdminAccount, AdminAuction, AdminCertReview, AdminEscrowRow,
   AdminKycReview, AdminStats, AdminVaultObject, CreateAuctionReq,
@@ -109,9 +109,13 @@ export function setAuctionState(id: string, state: AdminAuction["state"]): Admin
 // updateAuction edits an existing auction — e.g. customize the per-bid credit
 // cost or the floor price. Changes flow through to the live auction the buyers
 // see (passive bid cost + lot reserve), not just the admin row.
-export function updateAuction(id: string, patch: { bidCostCredits?: number; floorCents?: number }): AdminAuction {
+export function updateAuction(id: string, patch: { bidCostCredits?: number; floorCents?: number; appraisedCents?: number; title?: string }): AdminAuction {
   const a = db.auctions.find((x) => x.id === id);
   if (!a) throw { message: "auction not found", code: "404" };
+  if (patch.title != null && patch.title.trim()) {
+    a.title = patch.title.trim();
+    setLotTitle(a.lotId, patch.title);
+  }
   if (patch.bidCostCredits != null && a.atype !== "DUTCH") {
     a.bidCostCredits = Math.max(1, Math.round(patch.bidCostCredits));
     setBidCost(a.lotId, a.bidCostCredits);
@@ -119,6 +123,10 @@ export function updateAuction(id: string, patch: { bidCostCredits?: number; floo
   if (patch.floorCents != null) {
     a.priceCents = Math.max(0, Math.round(patch.floorCents));
     setLotReserve(a.lotId, a.priceCents);
+  }
+  if (patch.appraisedCents != null) {
+    a.highCents = Math.max(0, Math.round(patch.appraisedCents));
+    setLotAppraised(a.lotId, a.highCents);
   }
   return clone(a);
 }

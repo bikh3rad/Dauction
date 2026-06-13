@@ -66,7 +66,9 @@ export interface AdminAuction {
   maison: string;
   atype: AType;
   state: AdminAuctionState;
-  priceCents: number; // current price (Dutch) or floor (passive)
+  priceCents: number; // current price (Dutch) or low/floor (passive)
+  /** High / appraised price — the Dutch ceiling or the passive item's appraised value. */
+  highCents?: number;
   participants: number;
   closesAt?: string;
   /** Bid-credit cost per bid (timed auctions); default 1. */
