@@ -108,6 +108,28 @@ export function GalleryPage() {
           )}
         </div>
       )}
+
+      {/* status legend — what each badge on a lot means */}
+      <div style={{ padding: "8px 16px 30px" }}>
+        <div className="mono up" style={{ fontSize: 10, color: "var(--gold)", letterSpacing: "0.12em", marginBottom: 10 }}>{t("gal_legend_title")}</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {[
+            { chip: <span className="chip" data-st="live"><span className="dot" /> {t("gal_live")}</span>, desc: t("gal_live_desc") },
+            { chip: <span className="chip" data-st="proposed">{t("gal_upcoming")}</span>, desc: t("gal_upcoming_desc") },
+            { chip: <span className="chip" data-st="warn"><Icon name="clock" size={11} /> {t("gal_timed")}</span>, desc: t("gal_timed_desc") },
+          ].map((r, i) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", border: "1px solid var(--line)", borderRadius: "var(--r-2)", background: "var(--bg-1)" }}>
+              <div style={{ flexShrink: 0, minWidth: 104 }}>{r.chip}</div>
+              <div className="muted" style={{ fontSize: 12.5, lineHeight: 1.4 }}>{r.desc}</div>
+            </div>
+          ))}
+        </div>
+        <div className="mono" style={{ fontSize: 10, color: "var(--fg-faint)", marginTop: 14, lineHeight: 1.8 }}>
+          <b style={{ color: "var(--fg-muted)" }}>{t("mode_dutch")}</b> — {t("dutch_rule_short")}<br />
+          <b style={{ color: "var(--fg-muted)" }}>{t("mode_vickrey")}</b> — {t("vickrey_rule_short")}<br />
+          <b style={{ color: "var(--fg-muted)" }}>{t("mode_uniqbid")}</b> — {t("uniqbid_rule_short")}
+        </div>
+      </div>
     </ScreenShell>
   );
 }

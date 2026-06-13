@@ -71,13 +71,18 @@ export function useSignOut() {
 
 // ---------------- inspector (auditor) ----------------
 export const qkInspections = ["inspections"] as const;
+export const qkInspectionsDecided = ["inspections", "decided"] as const;
 export function useInspections() {
   return useQuery({ queryKey: qkInspections, queryFn: inspector.queue });
+}
+export function useDecidedInspections() {
+  return useQuery({ queryKey: qkInspectionsDecided, queryFn: inspector.decided });
 }
 export function useInspect() {
   const qc = useQueryClient();
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: qkInspections });
+    qc.invalidateQueries({ queryKey: qkInspectionsDecided });
     qc.invalidateQueries({ queryKey: ["gallery"] });
     qc.invalidateQueries({ queryKey: qk.vault });
   };

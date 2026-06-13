@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useI18n } from "@/i18n/I18nProvider";
 import { useSession } from "@/hooks/useSession";
-import { useInspections, useInspect, useSignOut, useDemoLogin } from "@/hooks/queries";
+import { useInspections, useDecidedInspections, useInspect, useSignOut, useDemoLogin } from "@/hooks/queries";
 import { Icon } from "@/components/ui/Icon";
 import { CategoryIcon } from "@/components/ui/CategoryIcon";
 import { Ph } from "@/components/ui/ProductArt";
@@ -19,6 +19,7 @@ export function InspectorPage() {
   const demo = useDemoLogin();
   const signOut = useSignOut();
   const { data: queue = [], isLoading } = useInspections();
+  const { data: decided = [] } = useDecidedInspections();
   const { approve, reject } = useInspect();
   const isInspector = (account?.roles ?? []).includes("INSPECTOR");
 
@@ -59,6 +60,27 @@ export function InspectorPage() {
                 onApprove={() => approve.mutate(p.id)} onReject={() => reject.mutate(p.id)}
                 busy={approve.isPending || reject.isPending} />
             ))}
+          </div>
+        )}
+
+        {/* history: items already verified or rejected */}
+        {decided.length > 0 && (
+          <div style={{ marginTop: 36 }}>
+            <div className="mono up" style={{ fontSize: 10, color: "var(--gold)", letterSpacing: "0.12em", marginBottom: 6 }}>{t("insp_reviewed")}</div>
+            <div style={{ border: "1px solid var(--line)", borderRadius: "var(--r-2)", overflow: "hidden", background: "var(--bg-1)" }}>
+              {decided.map((d) => (
+                <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 16px", borderBottom: "1px solid var(--line)" }}>
+                  {d.category && <span style={{ color: "var(--fg-muted)", flexShrink: 0 }}><CategoryIcon category={d.category} size={18} /></span>}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.title}</div>
+                    <div className="mono" style={{ fontSize: 10.5, color: "var(--fg-faint)", marginTop: 2 }} dir="ltr">{d.ownerHandle} · <Money cents={d.valueCents} withCents={false} /></div>
+                  </div>
+                  <span className="chip" data-st={d.verdict === "APPROVED" ? "good" : "bad"}>
+                    <Icon name={d.verdict === "APPROVED" ? "check" : "shield"} size={12} /> {d.verdict === "APPROVED" ? t("insp_approved") : t("insp_rejectedst")}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

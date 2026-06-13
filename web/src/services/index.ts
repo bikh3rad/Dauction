@@ -51,9 +51,10 @@ export const auth = {
 };
 
 // ---------- inspector (auditor) ----------
-import type { PendingInspection } from "@/mock/db";
+import type { PendingInspection, DecidedInspection } from "@/mock/db";
 export const inspector = {
   queue: () => Promise.resolve<PendingInspection[]>(mock.listInspections()),
+  decided: () => Promise.resolve<DecidedInspection[]>(mock.listDecidedInspections()),
   approve: (id: string) => Promise.resolve(mock.approveInspection(id)),
   reject: (id: string) => Promise.resolve(mock.rejectInspection(id)),
 };

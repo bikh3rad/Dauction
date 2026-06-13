@@ -226,6 +226,16 @@ export const inspections: PendingInspection[] = [
   { id: "insp-v2", objectId: "v2", ownerHandle: "@you", title: "Chanel — Classic Flap Medium — Black Caviar", category: "bag", valueCents: c(12400), submittedAt: iso(-1800_000) },
 ];
 
+// Items the Inspector has already decided (history). Newest first.
+export interface DecidedInspection extends PendingInspection {
+  verdict: "APPROVED" | "REJECTED";
+  decidedAt: string;
+}
+export const decidedInspections: DecidedInspection[] = [
+  { id: "insp-d1", objectId: "obj-d1", ownerHandle: "@khalid.vip", title: "Patek Philippe — Nautilus 5712/1A", category: "horology", valueCents: c(180000), submittedAt: iso(-90000_000), verdict: "APPROVED", decidedAt: iso(-82800_000) },
+  { id: "insp-d2", objectId: "obj-d2", ownerHandle: "@dana.doh", title: "Atelier Copy — ‘Royal Oak’ Homage", category: "horology", valueCents: c(8000), submittedAt: iso(-96000_000), verdict: "REJECTED", decidedAt: iso(-90000_000) },
+];
+
 let inspSeq = 100;
 
 // submitForInspection enqueues a newly added object for authenticity verification.
@@ -247,23 +257,24 @@ export function submitForInspection(obj: VaultObject): PendingInspection {
 }
 
 // approveInspection marks the object verified (IN_VAULT) — it does NOT publish an
-// auction. The owner then chooses to list it or sell it to the house.
+// auction. The owner then chooses to list it or sell it to the house. The item
+// moves to the Inspector's decided history.
 export function approveInspection(id: string): void {
-  const idx = inspections.findIndex((i) => i.id === id);
-  if (idx < 0) return;
-  const p = inspections[idx];
-  const owned = vault.objects.find((o) => o.id === p.objectId);
-  if (owned) { owned.state = "IN_VAULT"; owned.updatedAt = iso(0); }
-  inspections.splice(idx, 1);
+  decide(id, "APPROVED");
 }
 
 // rejectInspection marks the object REJECTED (authenticity not confirmed).
 export function rejectInspection(id: string): void {
+  decide(id, "REJECTED");
+}
+
+function decide(id: string, verdict: "APPROVED" | "REJECTED"): void {
   const idx = inspections.findIndex((i) => i.id === id);
   if (idx < 0) return;
   const p = inspections[idx];
   const owned = vault.objects.find((o) => o.id === p.objectId);
-  if (owned) { owned.state = "REJECTED"; owned.updatedAt = iso(0); }
+  if (owned) { owned.state = verdict === "APPROVED" ? "IN_VAULT" : "REJECTED"; owned.updatedAt = iso(0); }
+  decidedInspections.unshift({ ...p, verdict, decidedAt: iso(0) });
   inspections.splice(idx, 1);
 }
 

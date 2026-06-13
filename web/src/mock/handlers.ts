@@ -285,6 +285,9 @@ export function listObject(id: string, atype: AType, durationDays?: number) {
 export function listInspections() {
   return db.inspections.map((i) => ({ ...i }));
 }
+export function listDecidedInspections() {
+  return db.decidedInspections.map((i) => ({ ...i }));
+}
 export function approveInspection(id: string): { ok: boolean } {
   db.approveInspection(id); // publishes the gallery lot + clears the queue item
   return { ok: true };
