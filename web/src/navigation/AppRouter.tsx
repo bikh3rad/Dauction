@@ -1,7 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { BottomNav, showBottomNav } from "./BottomNav";
-import { hasSession } from "@/auth/session";
 import { AuthPage } from "@/pages/AuthPage";
 // Sample data is presented as live (the offline banner is intentionally omitted).
 import { GalleryPage } from "@/pages/GalleryPage";
@@ -24,12 +23,8 @@ const variants = {
 
 export function AppRouter({ showNav = true }: { showNav?: boolean } = {}) {
   const location = useLocation();
-  // First run: no session at all -> land on the sign-in page (mobile OTP / OAuth).
-  // Once the user signs in OR chooses "browse as guest", a session exists and the
-  // app is reachable normally.
-  if (!hasSession() && location.pathname !== "/login" && location.pathname !== "/register") {
-    return <Navigate to="/login" replace />;
-  }
+  // The gallery IS the home page: the app opens straight onto it (as a Guest),
+  // with sign-in offered via the guest banner + top-corner menu — never a wall.
   // On desktop the top nav drives navigation, so the bottom nav is suppressed.
   const withNav = showNav && showBottomNav(location.pathname);
 
